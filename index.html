@@ -305,8 +305,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t1);displ
       <div id="reg-al" style="display:none"></div>
       <div class="form-group">
         <label class="form-label">CPF Number <span class="req">*</span></label>
-        <input class="form-input cpf" id="n-cpf" placeholder="000.000.000-00" maxlength="14" inputmode="numeric" oninput="maskCPF(this)"/>
-        <div class="form-hint">Brazilian CPF — 11 digits</div>
+        <input class="form-input cpf" id="n-cpf" placeholder="e.g. 12345" maxlength="6" inputmode="numeric"/>
+        <div class="form-hint">Your CPF — 5 or 6 digit number</div>
       </div>
       <div class="form-group">
         <label class="form-label">Full Name <span class="req">*</span></label>
@@ -557,7 +557,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t1);displ
   <div class="mo-box">
     <div class="mo-handle"></div>
     <div class="mo-title">➕ ADD PLAYER</div>
-    <div class="af-group"><label class="af-label">CPF *</label><input class="af-input mono" id="mp-cpf" maxlength="14" inputmode="numeric" oninput="maskCPF(this)" placeholder="000.000.000-00"/></div>
+    <div class="af-group"><label class="af-label">CPF *</label><input class="af-input mono" id="mp-cpf" maxlength="6" inputmode="numeric" placeholder="e.g. 12345"/></div>
     <div class="af-group"><label class="af-label">Full Name *</label><input class="af-input" id="mp-name"/></div>
     <div class="af-grid2">
       <div class="af-group"><label class="af-label">Age *</label><input class="af-input" id="mp-age" type="number" inputmode="numeric"/></div>
@@ -860,15 +860,10 @@ function updateHeader(){
 // ═══════════════════════════════════════════
 // CPF
 // ═══════════════════════════════════════════
-function maskCPF(el){
-  let v=el.value.replace(/\D/g,'').substring(0,11);
-  if(v.length>9)      v=v.replace(/(\d{3})(\d{3})(\d{3})(\d{0,2})/,'$1.$2.$3-$4');
-  else if(v.length>6) v=v.replace(/(\d{3})(\d{3})(\d{0,3})/,'$1.$2.$3');
-  else if(v.length>3) v=v.replace(/(\d{3})(\d{0,3})/,'$1.$2');
-  el.value=v;
-}
+// CPF
+function maskCPF(el){ el.value=el.value.replace(/\D/g,'').substring(0,6); }
 function cleanCPF(c){ return c.replace(/\D/g,''); }
-function validCPF(c){ return cleanCPF(c).length===11; }
+function validCPF(c){ const l=cleanCPF(c).length; return l>=5&&l<=6; }
 
 // ═══════════════════════════════════════════
 // STANDINGS ENGINE
@@ -965,7 +960,7 @@ async function submitReg(){
   const al=document.getElementById('reg-al');
   const err=m=>{ al.className='al al-err'; al.innerHTML=m; al.style.display='flex'; };
   if(!cpf||!name||!age||!gender){err('Please fill all required fields.');return;}
-  if(!validCPF(cpf)){err('CPF must be 11 digits.');return;}
+  if(!validCPF(cpf)){err('CPF must be 5 or 6 digits.');return;}
   const cc=cleanCPF(cpf);
   if(DB.noms.find(n=>cleanCPF(n.cpf)===cc)){err('This CPF is already registered.');return;}
   al.style.display='none';
