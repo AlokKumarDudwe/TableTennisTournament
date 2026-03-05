@@ -1558,11 +1558,26 @@ function toast(msg,t='s'){
 // ═══════════════════════════════════════════
 // INIT
 // ═══════════════════════════════════════════
+
+// HARDCODED SCRIPT URL — set this once, works for everyone
+const HARDCODED_URL = ''; // Admin: paste your Script URL between these quotes
+
+// On every load: if hardcoded URL exists, use it regardless of localStorage
+if(HARDCODED_URL) {
+  DB.settings.scriptURL = HARDCODED_URL;
+  saveLocal(DB);
+}
+
 updateHeader();
 renderHome();
-// Auto-sync on load if URL is set
-if(DB.settings.scriptURL){ syncNow(true); }
-else { setSyncState('err','No URL'); document.getElementById('setup-notice').style.display='block'; }
+
+// Auto-sync on every page load for ALL visitors
+if(DB.settings.scriptURL){
+  syncNow(true);
+} else {
+  setSyncState('err','No URL');
+  document.getElementById('setup-notice').style.display='block';
+}
 </script>
 </body>
 </html>
