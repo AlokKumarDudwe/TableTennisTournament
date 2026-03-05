@@ -952,7 +952,6 @@ function updateCatPreview(){
   else el.style.display='none';
 }
 async function submitReg(){
-  DB=loadDB();
   const cpf=document.getElementById('n-cpf').value.trim();
   const name=document.getElementById('n-name').value.trim();
   const age=parseInt(document.getElementById('n-age').value)||0;
@@ -961,13 +960,36 @@ async function submitReg(){
   const err=m=>{ al.className='al al-err'; al.innerHTML=m; al.style.display='flex'; };
   if(!cpf||!name||!age||!gender){err('Please fill all required fields.');return;}
   if(!validCPF(cpf)){err('CPF must be 5 or 6 digits.');return;}
+
+  // Show loading
+  const btn=document.querySelector('#reg-form .btn-lime');
+  btn.textContent='Submitting…'; btn.disabled=true;
+
+  // Always pull latest from server first before adding
+  const url=DB.settings.scriptURL;
+  if(url){
+    try{
+      const res=await fetch(url+'?action=get');
+      const remote=await res.json();
+      if(!remote.error){
+        remote.settings.scriptURL=url;
+        DB=remote; saveLocal(DB);
+      }
+    }catch(e){ /* use local if offline */ }
+  }
+
   const cc=cleanCPF(cpf);
-  if(DB.noms.find(n=>cleanCPF(n.cpf)===cc)){err('This CPF is already registered.');return;}
+  if(DB.noms.find(n=>cleanCPF(n.cpf)===cc)){
+    err('This CPF is already registered.');
+    btn.textContent='Submit Registration →'; btn.disabled=false;
+    return;
+  }
   al.style.display='none';
   const ck=catOf(gender,age);
   DB.noms.push({id:DB.nid++,cpf,name,age,gender,cat:ck,status:'pending',ts:new Date().toISOString()});
   saveLocal(DB);
   await pushDB();
+  btn.textContent='Submit Registration →'; btn.disabled=false;
   document.getElementById('reg-form').style.display='none';
   document.getElementById('reg-ok').style.display='block';
   document.getElementById('reg-ok-cat').innerHTML=`<span class="chip ${CATS[ck].css}">${CATS[ck].label}</span>`;
