@@ -692,7 +692,7 @@ let DB=loadDB();
 // ═══════════════════════════════════════════
 let syncing=false;
 
-// Pull full DB from server — server is always source of truth
+// Pull full DB from server — with safety: never lose local data to empty server
 async function syncNow(silent){
   if(syncing) return;
   const url=DB.settings.scriptURL;
@@ -709,6 +709,28 @@ async function syncNow(silent){
     const remote=await res.json();
     if(remote.error) throw new Error(remote.error);
     remote.settings.scriptURL=url;
+
+    // SAFETY: if server has no players but local does, recover local data to server first
+    const localNoms=DB.noms||[];
+    const serverNoms=remote.noms||[];
+    if(serverNoms.length===0 && localNoms.length>0){
+      setSyncState('loading','Recovering data…');
+      // push each local player to server one by one
+      for(const nom of localNoms){
+        const n={...nom}; delete n.id; // let server assign new id
+        await fetch(url,{method:'POST',body:JSON.stringify({action:'addNom',nom:n}),headers:{'Content-Type':'application/json'}});
+      }
+      // now pull again with recovered data
+      const res2=await fetch(url+'?action=get');
+      const remote2=await res2.json();
+      remote2.settings.scriptURL=url;
+      DB=remote2; saveLocal(DB);
+      setSyncState('ok','Recovered ✅');
+      toast('✅ Local data recovered to server!');
+      refreshCurrentPage(); updateHeader();
+      sincing=false; return;
+    }
+
     DB=remote; saveLocal(DB);
     setSyncState('ok','Live');
     document.getElementById('setup-notice').style.display='none';
