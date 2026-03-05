@@ -1,15 +1,15 @@
 // ═══════════════════════════════════════════════════════
-//  TABLE TENNIS TOURNAMENT — Google Apps Script Backend
-//  Copy ALL of this into your Apps Script editor
+// TABLE TENNIS TOURNAMENT — Google Apps Script Backend v2
+// Server handles ALL data mutations atomically
 // ═══════════════════════════════════════════════════════
 
-const DATA_SHEET = 'TT_Data';
+const SHEET_NAME = 'TT_Data';
 
 function getSheet() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
-  let sh = ss.getSheetByName(DATA_SHEET);
+  let sh = ss.getSheetByName(SHEET_NAME);
   if (!sh) {
-    sh = ss.insertSheet(DATA_SHEET);
+    sh = ss.insertSheet(SHEET_NAME);
     sh.getRange('A1').setValue(JSON.stringify(defaultDB()));
   }
   return sh;
@@ -18,113 +18,179 @@ function getSheet() {
 function defaultDB() {
   return {
     settings: {
-      name:'Table Tennis Tournament 2025',
-      startDate:'',endDate:'',venue:'',city:'',
-      org:'',email:'',mpg:4,fmt:'Best of 5',msg:'',gf:''
+      name: 'Table Tennis Tournament 2025',
+      startDate: '', endDate: '', venue: '', city: '',
+      mpg: 4, fmt: 'Best of 5', msg: '', gf: '', scriptURL: ''
     },
-    noms:[],
-    groups:{M45:{},M45P:{},F45:{},F45P:{}},
-    schedule:[],results:[],archive:[],nid:1
+    noms: [],
+    groups: { M45: {}, M45P: {}, F45: {}, F45P: {} },
+    schedule: [], results: [], nid: 1
   };
 }
 
 function readDB() {
   try {
     const raw = getSheet().getRange('A1').getValue();
-    return JSON.parse(raw) || defaultDB();
-  } catch(e) { return defaultDB(); }
-}
-
-function writeDB(data) {
-  getSheet().getRange('A1').setValue(JSON.stringify(data));
-}
-
-// ── MAIN API ENTRY POINTS ──────────────────────────────
-
-function doGet(e) {
-  try {
-    const action = (e && e.parameter && e.parameter.action) || 'get';
-    let result;
-    if      (action === 'get')      result = readDB();
-    else if (action === 'syncForm') result = syncFormResponses();
-    else if (action === 'ping')     result = { ok:true, ts:new Date().toISOString() };
-    else                            result = { error:'Unknown action: '+action };
-    return out(result);
-  } catch(err) {
-    return out({ error: err.toString() });
+    const db = JSON.parse(raw);
+    return db || defaultDB();
+  } catch(e) {
+    return defaultDB();
   }
 }
 
-function doPost(e) {
-  try {
-    const data = JSON.parse(e.postData.contents);
-    writeDB(data);
-    return out({ ok:true });
-  } catch(err) {
-    return out({ error: err.toString() });
-  }
+function writeDB(db) {
+  getSheet().getRange('A1').setValue(JSON.stringify(db));
 }
 
-function out(obj) {
+function respond(obj) {
   return ContentService
     .createTextOutput(JSON.stringify(obj))
     .setMimeType(ContentService.MimeType.JSON);
 }
 
-// ── GOOGLE FORM SYNC ───────────────────────────────────
+// ── GET ──────────────────────────────────────────────
+function doGet(e) {
+  try {
+    const action = (e && e.parameter && e.parameter.action) || 'get';
+    if (action === 'get')      return respond(readDB());
+    if (action === 'ping')     return respond({ ok: true, ts: new Date().toISOString() });
+    if (action === 'syncForm') return respond(syncFormResponses());
+    return respond({ error: 'Unknown action' });
+  } catch(err) {
+    return respond({ error: err.toString() });
+  }
+}
 
+// ── POST — all mutations go through here ─────────────
+function doPost(e) {
+  try {
+    const req = JSON.parse(e.postData.contents);
+    const action = req.action;
+    const db = readDB();
+    let result = { ok: true };
+
+    if (action === 'addNom') {
+      // Check duplicate CPF
+      const cpfClean = req.nom.cpf.replace(/\D/g, '');
+      const exists = db.noms.some(n => n.cpf.replace(/\D/g, '') === cpfClean);
+      if (exists) return respond({ ok: false, error: 'CPF already registered' });
+      req.nom.id = db.nid++;
+      db.noms.push(req.nom);
+    }
+    else if (action === 'updateNomStatus') {
+      const n = db.noms.find(x => x.id === req.id);
+      if (n) n.status = req.status;
+    }
+    else if (action === 'deleteNom') {
+      db.noms = db.noms.filter(x => x.id !== req.id);
+    }
+    else if (action === 'addPlayerDirect') {
+      const cpfClean = req.nom.cpf.replace(/\D/g, '');
+      const exists = db.noms.some(n => n.cpf.replace(/\D/g, '') === cpfClean);
+      if (exists) return respond({ ok: false, error: 'CPF already registered' });
+      req.nom.id = db.nid++;
+      db.noms.push(req.nom);
+    }
+    else if (action === 'saveGroups') {
+      db.groups = req.groups;
+    }
+    else if (action === 'addMatch') {
+      req.match.id = db.nid++;
+      db.schedule.push(req.match);
+      result.id = req.match.id;
+    }
+    else if (action === 'updateMatch') {
+      db.schedule = db.schedule.map(x => x.id === req.match.id ? req.match : x);
+    }
+    else if (action === 'deleteMatch') {
+      db.schedule = db.schedule.filter(x => x.id !== req.id);
+    }
+    else if (action === 'addResult') {
+      req.result.id = db.nid++;
+      db.results.push(req.result);
+      result.id = req.result.id;
+    }
+    else if (action === 'updateResult') {
+      db.results = db.results.map(x => x.id === req.result.id ? req.result : x);
+    }
+    else if (action === 'deleteResult') {
+      db.results = db.results.filter(x => x.id !== req.id);
+    }
+    else if (action === 'saveSettings') {
+      db.settings = { ...db.settings, ...req.settings };
+    }
+    else if (action === 'clearMatches') {
+      db.schedule = []; db.results = [];
+    }
+    else if (action === 'clearGroups') {
+      db.groups = { M45: {}, M45P: {}, F45: {}, F45P: {} };
+    }
+    else if (action === 'clearAll') {
+      const url = db.settings.scriptURL;
+      const fresh = defaultDB();
+      fresh.settings.scriptURL = url;
+      writeDB(fresh);
+      return respond({ ok: true });
+    }
+    else {
+      return respond({ ok: false, error: 'Unknown action: ' + action });
+    }
+
+    writeDB(db);
+    return respond(result);
+  } catch(err) {
+    return respond({ ok: false, error: err.toString() });
+  }
+}
+
+// ── GOOGLE FORM SYNC ──────────────────────────────────
 function syncFormResponses() {
-  const ss    = SpreadsheetApp.getActiveSpreadsheet();
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
   const sheets = ss.getSheets();
-
-  // Find the Form Responses sheet
   const formSh = sheets.find(s =>
     s.getName().toLowerCase().includes('form response') ||
     s.getName().toLowerCase().includes('respostas')
   );
-  if (!formSh) {
-    return { ok:false, msg:'No Google Form response sheet found. Open your Google Form → Responses → Link to Sheets.' };
-  }
+  if (!formSh) return { ok: false, msg: 'No Form Responses sheet found. Link your Google Form to this spreadsheet first.' };
 
-  const db   = readDB();
+  const db = readDB();
   const rows = formSh.getDataRange().getValues();
-  if (rows.length < 2) return { ok:true, synced:0, msg:'No responses yet.' };
+  if (rows.length < 2) return { ok: true, synced: 0, msg: 'No responses yet.' };
 
-  const hdrs     = rows[0].map(h => h.toString().toLowerCase());
-  const cpfIdx   = hdrs.findIndex(h => h.includes('cpf'));
-  const nameIdx  = hdrs.findIndex(h => h.includes('name') || h.includes('nome'));
-  const ageIdx   = hdrs.findIndex(h => h.includes('age')  || h.includes('idade'));
-  const genderIdx= hdrs.findIndex(h => h.includes('gender')|| h.includes('sexo'));
+  const hdrs = rows[0].map(h => h.toString().toLowerCase());
+  const cpfIdx    = hdrs.findIndex(h => h.includes('cpf'));
+  const nameIdx   = hdrs.findIndex(h => h.includes('name') || h.includes('nome'));
+  const ageIdx    = hdrs.findIndex(h => h.includes('age')  || h.includes('idade'));
+  const genderIdx = hdrs.findIndex(h => h.includes('gender') || h.includes('sexo'));
 
-  if ([cpfIdx,nameIdx,ageIdx,genderIdx].some(i => i < 0)) {
-    return { ok:false, msg:'Could not detect columns. Headers found: ' + hdrs.join(', ') };
+  if ([cpfIdx, nameIdx, ageIdx, genderIdx].some(i => i < 0)) {
+    return { ok: false, msg: 'Columns not found. Headers: ' + hdrs.join(', ') };
   }
 
-  const existingCPFs = new Set(db.noms.map(n => n.cpf.replace(/\D/g,'')));
+  const existingCPFs = new Set(db.noms.map(n => n.cpf.replace(/\D/g, '')));
   let synced = 0, skipped = 0;
 
   for (let i = 1; i < rows.length; i++) {
-    const row    = rows[i];
-    const rawCPF = String(row[cpfIdx]||'').replace(/\D/g,'');
-    if (rawCPF.length !== 11 || existingCPFs.has(rawCPF)) { skipped++; continue; }
+    const row = rows[i];
+    const rawCPF = String(row[cpfIdx] || '').replace(/\D/g, '');
+    if (!rawCPF || existingCPFs.has(rawCPF)) { skipped++; continue; }
 
-    const name   = String(row[nameIdx]||'').trim();
-    const age    = parseInt(String(row[ageIdx]||'0')) || 0;
-    const gender = String(row[genderIdx]||'').trim();
+    const name   = String(row[nameIdx] || '').trim();
+    const age    = parseInt(String(row[ageIdx] || '0')) || 0;
+    const gender = String(row[genderIdx] || '').trim();
     if (!name || !age) { skipped++; continue; }
 
-    const gL  = gender.toLowerCase();
-    const male= gL.includes('male')||gL==='m'||gL.includes('masc');
-    const cat = male ? (age>=45?'M45P':'M45') : (age>=45?'F45P':'F45');
-    const cpfFmt = rawCPF.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+    const male = gender.toLowerCase().startsWith('m');
+    const cat  = male ? (age >= 45 ? 'M45P' : 'M45') : (age >= 45 ? 'F45P' : 'F45');
 
-    db.noms.push({ id:db.nid||1, cpf:cpfFmt, name, age, gender, cat,
-      status:'pending', ts:new Date().toISOString(), source:'google_form' });
-    db.nid = (db.nid||1)+1;
+    db.noms.push({
+      id: db.nid++, cpf: rawCPF, name, age, gender, cat,
+      status: 'pending', ts: new Date().toISOString(), source: 'google_form'
+    });
     existingCPFs.add(rawCPF);
     synced++;
   }
 
   writeDB(db);
-  return { ok:true, synced, skipped, total:rows.length-1 };
+  return { ok: true, synced, skipped };
 }
