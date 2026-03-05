@@ -1,6 +1,6 @@
 // ═══════════════════════════════════════════════════════
-// TABLE TENNIS TOURNAMENT — Google Apps Script Backend v2
-// Server handles ALL data mutations atomically
+// TABLE TENNIS TOURNAMENT — Google Apps Script Backend v3
+// Uses GET-only requests to avoid CORS issues
 // ═══════════════════════════════════════════════════════
 
 const SHEET_NAME = 'TT_Data';
@@ -22,8 +22,7 @@ function defaultDB() {
       startDate: '', endDate: '', venue: '', city: '',
       mpg: 4, fmt: 'Best of 5', msg: '', gf: '', scriptURL: ''
     },
-    noms: [],
-    groups: { M45: {}, M45P: {}, F45: {}, F45P: {} },
+    noms: [], groups: { M45: {}, M45P: {}, F45: {}, F45P: {} },
     schedule: [], results: [], nid: 1
   };
 }
@@ -31,11 +30,8 @@ function defaultDB() {
 function readDB() {
   try {
     const raw = getSheet().getRange('A1').getValue();
-    const db = JSON.parse(raw);
-    return db || defaultDB();
-  } catch(e) {
-    return defaultDB();
-  }
+    return JSON.parse(raw) || defaultDB();
+  } catch(e) { return defaultDB(); }
 }
 
 function writeDB(db) {
@@ -48,76 +44,73 @@ function respond(obj) {
     .setMimeType(ContentService.MimeType.JSON);
 }
 
-// ── GET ──────────────────────────────────────────────
+// ── ALL REQUESTS ARE GET ──────────────────────────────
+// This avoids CORS preflight issues entirely
 function doGet(e) {
   try {
-    const action = (e && e.parameter && e.parameter.action) || 'get';
+    const p = e.parameter || {};
+    const action = p.action || 'get';
+
+    // Read-only actions
     if (action === 'get')      return respond(readDB());
     if (action === 'ping')     return respond({ ok: true, ts: new Date().toISOString() });
     if (action === 'syncForm') return respond(syncFormResponses());
-    return respond({ error: 'Unknown action' });
-  } catch(err) {
-    return respond({ error: err.toString() });
-  }
-}
 
-// ── POST — all mutations go through here ─────────────
-function doPost(e) {
-  try {
-    const req = JSON.parse(e.postData.contents);
-    const action = req.action;
+    // Write actions — payload is base64-encoded JSON in 'data' param
     const db = readDB();
-    let result = { ok: true };
+    let req = {};
+    if (p.data) {
+      try { req = JSON.parse(Utilities.newBlob(Utilities.base64Decode(p.data)).getDataAsString()); }
+      catch(e) { return respond({ ok: false, error: 'Bad payload: ' + e.toString() }); }
+    }
 
     if (action === 'addNom') {
-      // Check duplicate CPF
-      const cpfClean = req.nom.cpf.replace(/\D/g, '');
+      const cpfClean = (req.cpf || '').replace(/\D/g, '');
+      if (!cpfClean) return respond({ ok: false, error: 'Invalid CPF' });
       const exists = db.noms.some(n => n.cpf.replace(/\D/g, '') === cpfClean);
       if (exists) return respond({ ok: false, error: 'CPF already registered' });
-      req.nom.id = db.nid++;
-      db.noms.push(req.nom);
+      req.id = db.nid++;
+      db.noms.push(req);
+    }
+    else if (action === 'addPlayerDirect') {
+      const cpfClean = (req.cpf || '').replace(/\D/g, '');
+      const exists = db.noms.some(n => n.cpf.replace(/\D/g, '') === cpfClean);
+      if (exists) return respond({ ok: false, error: 'CPF already registered' });
+      req.id = db.nid++;
+      db.noms.push(req);
     }
     else if (action === 'updateNomStatus') {
-      const n = db.noms.find(x => x.id === req.id);
+      const n = db.noms.find(x => x.id === Number(req.id));
       if (n) n.status = req.status;
     }
     else if (action === 'deleteNom') {
-      db.noms = db.noms.filter(x => x.id !== req.id);
-    }
-    else if (action === 'addPlayerDirect') {
-      const cpfClean = req.nom.cpf.replace(/\D/g, '');
-      const exists = db.noms.some(n => n.cpf.replace(/\D/g, '') === cpfClean);
-      if (exists) return respond({ ok: false, error: 'CPF already registered' });
-      req.nom.id = db.nid++;
-      db.noms.push(req.nom);
+      db.noms = db.noms.filter(x => x.id !== Number(req.id));
     }
     else if (action === 'saveGroups') {
       db.groups = req.groups;
     }
     else if (action === 'addMatch') {
-      req.match.id = db.nid++;
-      db.schedule.push(req.match);
-      result.id = req.match.id;
+      req.id = db.nid++;
+      db.schedule.push(req);
     }
     else if (action === 'updateMatch') {
-      db.schedule = db.schedule.map(x => x.id === req.match.id ? req.match : x);
+      db.schedule = db.schedule.map(x => x.id === Number(req.id) ? req : x);
     }
     else if (action === 'deleteMatch') {
-      db.schedule = db.schedule.filter(x => x.id !== req.id);
+      db.schedule = db.schedule.filter(x => x.id !== Number(req.id));
     }
     else if (action === 'addResult') {
-      req.result.id = db.nid++;
-      db.results.push(req.result);
-      result.id = req.result.id;
+      req.id = db.nid++;
+      db.results.push(req);
     }
     else if (action === 'updateResult') {
-      db.results = db.results.map(x => x.id === req.result.id ? req.result : x);
+      db.results = db.results.map(x => x.id === Number(req.id) ? req : x);
     }
     else if (action === 'deleteResult') {
-      db.results = db.results.filter(x => x.id !== req.id);
+      db.results = db.results.filter(x => x.id !== Number(req.id));
     }
     else if (action === 'saveSettings') {
-      db.settings = { ...db.settings, ...req.settings };
+      db.settings = { ...db.settings, ...req };
     }
     else if (action === 'clearMatches') {
       db.schedule = []; db.results = [];
@@ -132,30 +125,48 @@ function doPost(e) {
       writeDB(fresh);
       return respond({ ok: true });
     }
+    else if (action === 'recoverNoms') {
+      // Recover local noms to server without overwriting existing
+      const incoming = req.noms || [];
+      const existingCPFs = new Set(db.noms.map(n => n.cpf.replace(/\D/g,'')));
+      for (const nom of incoming) {
+        const c = nom.cpf.replace(/\D/g,'');
+        if (!existingCPFs.has(c)) {
+          nom.id = db.nid++;
+          db.noms.push(nom);
+          existingCPFs.add(c);
+        }
+      }
+    }
     else {
       return respond({ ok: false, error: 'Unknown action: ' + action });
     }
 
     writeDB(db);
-    return respond(result);
+    return respond({ ok: true });
+
   } catch(err) {
     return respond({ ok: false, error: err.toString() });
   }
 }
 
+// POST not used but kept for compatibility
+function doPost(e) {
+  return respond({ ok: false, error: 'Use GET requests only' });
+}
+
 // ── GOOGLE FORM SYNC ──────────────────────────────────
 function syncFormResponses() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const sheets = ss.getSheets();
-  const formSh = sheets.find(s =>
+  const formSh = ss.getSheets().find(s =>
     s.getName().toLowerCase().includes('form response') ||
     s.getName().toLowerCase().includes('respostas')
   );
-  if (!formSh) return { ok: false, msg: 'No Form Responses sheet found. Link your Google Form to this spreadsheet first.' };
+  if (!formSh) return { ok: false, msg: 'No Form Responses sheet found.' };
 
   const db = readDB();
   const rows = formSh.getDataRange().getValues();
-  if (rows.length < 2) return { ok: true, synced: 0, msg: 'No responses yet.' };
+  if (rows.length < 2) return { ok: true, synced: 0 };
 
   const hdrs = rows[0].map(h => h.toString().toLowerCase());
   const cpfIdx    = hdrs.findIndex(h => h.includes('cpf'));
@@ -163,34 +174,27 @@ function syncFormResponses() {
   const ageIdx    = hdrs.findIndex(h => h.includes('age')  || h.includes('idade'));
   const genderIdx = hdrs.findIndex(h => h.includes('gender') || h.includes('sexo'));
 
-  if ([cpfIdx, nameIdx, ageIdx, genderIdx].some(i => i < 0)) {
-    return { ok: false, msg: 'Columns not found. Headers: ' + hdrs.join(', ') };
-  }
+  if ([cpfIdx, nameIdx, ageIdx, genderIdx].some(i => i < 0))
+    return { ok: false, msg: 'Columns not detected. Headers: ' + hdrs.join(', ') };
 
-  const existingCPFs = new Set(db.noms.map(n => n.cpf.replace(/\D/g, '')));
-  let synced = 0, skipped = 0;
+  const existingCPFs = new Set(db.noms.map(n => n.cpf.replace(/\D/g,'')));
+  let synced = 0;
 
   for (let i = 1; i < rows.length; i++) {
     const row = rows[i];
-    const rawCPF = String(row[cpfIdx] || '').replace(/\D/g, '');
-    if (!rawCPF || existingCPFs.has(rawCPF)) { skipped++; continue; }
-
-    const name   = String(row[nameIdx] || '').trim();
-    const age    = parseInt(String(row[ageIdx] || '0')) || 0;
-    const gender = String(row[genderIdx] || '').trim();
-    if (!name || !age) { skipped++; continue; }
-
+    const rawCPF = String(row[cpfIdx]||'').replace(/\D/g,'');
+    if (!rawCPF || existingCPFs.has(rawCPF)) continue;
+    const name   = String(row[nameIdx]||'').trim();
+    const age    = parseInt(String(row[ageIdx]||'0'))||0;
+    const gender = String(row[genderIdx]||'').trim();
+    if (!name || !age) continue;
     const male = gender.toLowerCase().startsWith('m');
-    const cat  = male ? (age >= 45 ? 'M45P' : 'M45') : (age >= 45 ? 'F45P' : 'F45');
-
-    db.noms.push({
-      id: db.nid++, cpf: rawCPF, name, age, gender, cat,
-      status: 'pending', ts: new Date().toISOString(), source: 'google_form'
-    });
+    const cat  = male ? (age>=45?'M45P':'M45') : (age>=45?'F45P':'F45');
+    db.noms.push({ id:db.nid++, cpf:rawCPF, name, age, gender, cat,
+      status:'pending', ts:new Date().toISOString(), source:'form' });
     existingCPFs.add(rawCPF);
     synced++;
   }
-
   writeDB(db);
-  return { ok: true, synced, skipped };
+  return { ok: true, synced };
 }

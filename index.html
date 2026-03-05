@@ -716,10 +716,8 @@ async function syncNow(silent){
     if(serverNoms.length===0 && localNoms.length>0){
       setSyncState('loading','Recovering data…');
       // push each local player to server one by one
-      for(const nom of localNoms){
-        const n={...nom}; delete n.id; // let server assign new id
-        await fetch(url,{method:'POST',body:JSON.stringify({action:'addNom',nom:n}),headers:{'Content-Type':'application/json'}});
-      }
+      // recover all local noms in one request
+      await serverCmd('recoverNoms', {noms: localNoms.map(n=>({...n, id:undefined}))});
       // now pull again with recovered data
       const res2=await fetch(url+'?action=get');
       const remote2=await res2.json();
@@ -743,25 +741,25 @@ async function syncNow(silent){
   syncing=false;
 }
 
-// Send ONE atomic command to server — never push full DB
-async function serverCmd(payload){
+// Send ONE atomic command to server via GET (avoids CORS issues)
+async function serverCmd(action, payload){
   const url=DB.settings.scriptURL;
   if(!url){ toast('No server URL configured','e'); return {ok:false}; }
   setSyncState('loading','Saving…');
   try{
-    const res=await fetch(url,{
-      method:'POST',
-      body:JSON.stringify(payload),
-      headers:{'Content-Type':'application/json'}
-    });
-    const data=await res.json();
-    if(data.ok){
-      await syncNow(true); // pull fresh state after every change
+    // Encode payload as base64 to safely pass via URL
+    const data = payload ? btoa(unescape(encodeURIComponent(JSON.stringify(payload)))) : '';
+    const sep = url.includes('?') ? '&' : '?';
+    const fullUrl = url + sep + 'action=' + action + (data ? '&data=' + encodeURIComponent(data) : '');
+    const res=await fetch(fullUrl);
+    const result=await res.json();
+    if(result.ok){
+      await syncNow(true);
     } else {
       setSyncState('err','Failed');
-      if(data.error) toast(data.error,'e');
+      if(result.error) toast(result.error,'e');
     }
-    return data;
+    return result;
   }catch(e){
     setSyncState('err','Failed');
     toast('Server error: '+e.message,'e');
@@ -793,7 +791,7 @@ function setSyncState(state,lbl){
 }
 
 async function saveAndSync(){
-  await serverCmd({action:'saveGroups', groups:DB.groups});
+  await serverCmd('saveGroups', {groups:DB.groups});
   toast('💾 Groups saved!');
 }
 
@@ -996,7 +994,7 @@ async function submitReg(){
   btn.textContent='Submitting…'; btn.disabled=true;
   const ck=catOf(gender,age);
   const nom={cpf,name,age,gender,cat:ck,status:'pending',ts:new Date().toISOString()};
-  const result=await serverCmd({action:'addNom', nom});
+  const result=await serverCmd('addNom', nom);
   btn.textContent='Submit Registration →'; btn.disabled=false;
   if(result.ok){
     document.getElementById('reg-form').style.display='none';
@@ -1159,10 +1157,10 @@ function renderNomTable(){
   updateSBC();
 }
 async function setNomStatus(id,s){
-  await serverCmd({action:'updateNomStatus', id, status:s});
+  await serverCmd('updateNomStatus', {id, status:s});
   updateSBC();
 }
-function delNom(id){ confirm2('Delete this registration?','',async()=>{ await serverCmd({action:'deleteNom', id}); updateSBC(); }); }
+function delNom(id){ confirm2('Delete this registration?','',async()=>{ await serverCmd('deleteNom', {id}); updateSBC(); }); }
 function exportCSV(){
   const h=['ID','CPF','Name','Age','Gender','Category','Status','Registered'];
   const rows=DB.noms.map(n=>[n.id,n.cpf,n.name,n.age,n.gender,(CATS[n.cat]||{label:n.cat}).full,n.status,n.ts||'']);
@@ -1181,7 +1179,7 @@ async function saveAddPlayer(){
   if(!cpf||!name||!age||!gender){toast('All fields required','e');return;}
   if(!validCPF(cpf)){toast('Invalid CPF','e');return;}
   const nom={cpf,name,age,gender,cat:catOf(gender,age),status:document.getElementById('mp-status').value,ts:new Date().toISOString()};
-  const result=await serverCmd({action:'addPlayerDirect', nom});
+  const result=await serverCmd('addPlayerDirect', nom);
   if(result.ok){ closeM('m-addplayer'); updateSBC(); toast('✅ Player added!'); }
 }
 
@@ -1216,7 +1214,7 @@ async function ddr(e,to){
   if(dragFrom!=='Unassigned') DB.groups[gbCat][dragFrom]=(DB.groups[gbCat][dragFrom]||[]).filter(p=>p!==dragP);
   if(to!=='Unassigned'){if(!DB.groups[gbCat][to])DB.groups[gbCat][to]=[];if(!DB.groups[gbCat][to].includes(dragP))DB.groups[gbCat][to].push(dragP);}
   saveLocal(DB);
-  await serverCmd({action:'saveGroups', groups:DB.groups});
+  await serverCmd('saveGroups', {groups:DB.groups});
   dragP=null; dragFrom=null;
 }
 async function autoAssign(){
@@ -1229,14 +1227,14 @@ async function autoAssign(){
     [...players].sort(()=>Math.random()-.5).forEach((p,i)=>DB.groups[ck][`Group ${String.fromCharCode(65+(i%ng))}`].push(p));
   });
   saveLocal(DB);
-  await serverCmd({action:'saveGroups', groups:DB.groups});
+  await serverCmd('saveGroups', {groups:DB.groups});
   toast('⚡ Auto-assigned!');
 }
 async function addGroup(){
   DB=loadDB(); const keys=Object.keys(DB.groups[gbCat]||{});
   DB.groups[gbCat][`Group ${String.fromCharCode(65+keys.length)}`]=[];
   saveLocal(DB);
-  await serverCmd({action:'saveGroups', groups:DB.groups});
+  await serverCmd('saveGroups', {groups:DB.groups});
 }
 async function saveAndSync(){ saveLocal(DB); await pushDB(); toast('💾 Groups saved!'); }
 
@@ -1292,11 +1290,11 @@ async function saveMatch(){
   const m={id:eid||0,cat:document.getElementById('mm-cat').value,grp:document.getElementById('mm-grp').value,
     p1,p2,date:document.getElementById('mm-date').value,time:document.getElementById('mm-time').value,
     tbl:document.getElementById('mm-tbl').value,status:'upcoming'};
-  const result=await serverCmd(eid?{action:'updateMatch',match:m}:{action:'addMatch',match:m});
+  const result=await serverCmd(eid?'updateMatch':'addMatch', m);
   if(result.ok){ closeM('m-match'); toast('✅ Match saved!'); }
 }
 function editMatch(id){openMatchModal(id);}
-function delMatch(id){confirm2('Delete match?','',async()=>{ await serverCmd({action:'deleteMatch',id}); });}
+function delMatch(id){confirm2('Delete match?','',async()=>{ await serverCmd('deleteMatch', {id}); });}
 
 // ═══════════════════════════════════════════
 // RESULTS ADMIN
@@ -1352,11 +1350,11 @@ async function saveResult(){
   const eid=parseInt(document.getElementById('mr-eid').value)||0;
   const r={id:eid||0,cat:document.getElementById('mr-cat').value,grp:document.getElementById('mr-grp').value,
     p1,p2,score,sets:document.getElementById('mr-sets').value.trim(),date:document.getElementById('mr-date').value};
-  const result=await serverCmd(eid?{action:'updateResult',result:r}:{action:'addResult',result:r});
+  const result=await serverCmd(eid?'updateResult':'addResult', r);
   if(result.ok){ closeM('m-result'); toast('✅ Result saved!'); }
 }
 function editResult(id){openResultModal(id);}
-function delResult(id){confirm2('Delete result?','',async()=>{ await serverCmd({action:'deleteResult',id}); });}
+function delResult(id){confirm2('Delete result?','',async()=>{ await serverCmd('deleteResult', {id}); });}
 
 // ═══════════════════════════════════════════
 // SETTINGS
@@ -1382,7 +1380,7 @@ async function saveScriptURL(){
   const el=document.getElementById('url-test-result');
   el.innerHTML='<div class="al al-info">🔄 Testing connection…</div>';
   try{
-    const res=await fetch(url+'?action=ping'); const data=await res.json();
+    const res=await fetch(url+(url.includes('?')?'&':'?')+'action=ping'); const data=await res.json();
     if(data.ok){
       el.innerHTML='<div class="al al-ok">✅ Connected! Server time: '+data.ts+'</div>';
       await syncNow(true); toast('✅ URL saved & connected!');
@@ -1405,7 +1403,7 @@ async function saveSettings(){
     gf:document.getElementById('s-gf').value.trim(),
     scriptURL:DB.settings.scriptURL,
   };
-  await serverCmd({action:'saveSettings', settings});
+  await serverCmd('saveSettings', settings);
   updateHeader(); toast('✅ Settings saved!');
 }
 
@@ -1481,7 +1479,7 @@ async function doClear(what){
   const msgs={matches:'Clear ALL matches and results?',groups:'Clear ALL groups?',all:'DELETE ALL DATA? This cannot be undone.'};
   const actions={matches:'clearMatches',groups:'clearGroups',all:'clearAll'};
   confirm2(msgs[what],'This cannot be undone.',async()=>{
-    await serverCmd({action:actions[what]});
+    await serverCmd(actions[what], {});
     toast('✅ '+what+' cleared');
   });
 }
@@ -1595,7 +1593,7 @@ function toast(msg,t='s'){
 // ═══════════════════════════════════════════
 
 // HARDCODED SCRIPT URL — set this once, works for everyone
-const HARDCODED_URL = 'https://script.google.com/macros/s/AKfycbzTT_eB4BnF6vM98hxHHrhZ-F4O0pzEIJgVh6e6OsC4oEQz8M1t1Sb8fPesn0Vi4Bg/exec'; // Admin: paste your Script URL between these quotes
+const HARDCODED_URL = ''; // Admin: paste your Script URL between these quotes
 
 // On every load: if hardcoded URL exists, use it regardless of localStorage
 if(HARDCODED_URL) {
