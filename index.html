@@ -2,623 +2,573 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title id="page-title">Tournament Portal</title>
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0"/>
+<title>TT Tournament</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 <style>
+/* ── RESET & VARIABLES ── */
 :root{
-  --bg:#07090f;--s1:#0f1420;--s2:#161d2e;--s3:#1e2740;
-  --b1:#243048;--b2:#2e3d5a;--b3:#3a4d70;
-  --lime:#c6ff47;--lime2:#a8e832;--lime3:#deff8a;
-  --pink:#ff3d7f;--blue:#3d9eff;--gold:#ffcc3d;--teal:#2ee8c4;--purple:#a78bfa;
-  --t1:#eef2ff;--t2:#7a90b8;--t3:#3d5070;
-  --r:10px;--rl:16px;--rsm:6px;
-  --tr:all 0.18s cubic-bezier(.4,0,.2,1);
-  --sh:0 4px 32px rgba(0,0,0,.6);
+  --bg:#080c14;--s1:#0f1520;--s2:#161e2f;--s3:#1d2840;
+  --b1:#263045;--b2:#2f3d58;
+  --lime:#b8ff3c;--pink:#ff3d7f;--blue:#4da6ff;--gold:#ffcc3c;--teal:#2de8c4;--purple:#a78bfa;
+  --t1:#ecf0ff;--t2:#7a90b8;--t3:#3d5070;
+  --r:10px;--rl:16px;--rsm:7px;
+  --tr:all .18s ease;
+  --hh:56px; /* header height */
+  --bh:60px; /* bottom nav height */
 }
-*{box-sizing:border-box;margin:0;padding:0}
-html{scroll-behavior:smooth}
-body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t1);min-height:100vh;overflow-x:hidden}
-body::before{content:'';position:fixed;top:0;left:0;right:0;bottom:0;background:radial-gradient(ellipse 80% 60% at 10% 0%,rgba(198,255,71,.035) 0%,transparent 60%),radial-gradient(ellipse 60% 50% at 90% 100%,rgba(61,158,255,.03) 0%,transparent 60%);pointer-events:none;z-index:0}
-::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-track{background:var(--s1)}::-webkit-scrollbar-thumb{background:var(--b2);border-radius:3px}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t1);display:flex;flex-direction:column}
 
-/* HEADER */
-.hdr{position:sticky;top:0;z-index:100;background:rgba(7,9,15,.88);backdrop-filter:blur(24px);border-bottom:1px solid var(--b1);height:60px}
-.hdr-inner{max-width:1300px;margin:0 auto;padding:0 20px;height:100%;display:flex;align-items:center;gap:12px}
-.logo{font-family:'Bebas Neue',sans-serif;font-size:1.5rem;letter-spacing:3px;color:var(--lime);cursor:pointer;display:flex;align-items:center;gap:6px;flex-shrink:0}
-.hdr-name{flex:1;font-size:.88rem;font-weight:600;color:var(--t2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.hnav{display:flex;gap:2px;margin-left:auto}
-.hn{background:none;border:none;color:var(--t3);padding:7px 13px;border-radius:var(--rsm);cursor:pointer;font-size:.82rem;font-weight:600;font-family:'DM Sans',sans-serif;transition:var(--tr);white-space:nowrap}
-.hn:hover{color:var(--t1);background:var(--s2)}
-.hn.active{color:var(--lime);background:rgba(198,255,71,.09)}
-.hn-admin{border:1px solid var(--b2)}
-.hbg{display:none;background:none;border:none;color:var(--t2);font-size:1.3rem;cursor:pointer;padding:4px}
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar{width:3px}::-webkit-scrollbar-thumb{background:var(--b2);border-radius:2px}
 
-/* PAGES */
-.page{display:none;min-height:calc(100vh - 60px);position:relative;z-index:1}
+/* ── TOP HEADER ── */
+.top-bar{height:var(--hh);background:rgba(8,12,20,.95);backdrop-filter:blur(20px);border-bottom:1px solid var(--b1);display:flex;align-items:center;padding:0 16px;gap:10px;flex-shrink:0;position:sticky;top:0;z-index:50}
+.logo{font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:3px;color:var(--lime);white-space:nowrap}
+.top-tour-name{flex:1;font-size:.78rem;font-weight:600;color:var(--t3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.top-sync-btn{background:rgba(184,255,60,.1);border:1px solid rgba(184,255,60,.25);color:var(--lime);border-radius:var(--rsm);padding:6px 10px;font-size:.72rem;font-weight:700;cursor:pointer;white-space:nowrap;font-family:'DM Sans',sans-serif;flex-shrink:0}
+.top-sync-btn:active{transform:scale(.96)}
+.sync-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--lime);margin-right:4px;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.sync-dot.err{background:var(--pink);animation:none}
+.sync-dot.loading{background:var(--gold);animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── MAIN SCROLL AREA ── */
+.main-area{flex:1;overflow-y:auto;overflow-x:hidden;position:relative}
+
+/* ── BOTTOM NAV ── */
+.bot-nav{height:var(--bh);background:rgba(8,12,20,.97);border-top:1px solid var(--b1);display:flex;align-items:stretch;flex-shrink:0;safe-area-inset-bottom:env(safe-area-inset-bottom)}
+.bnav-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;background:none;border:none;color:var(--t3);cursor:pointer;font-family:'DM Sans',sans-serif;font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;transition:var(--tr);padding:8px 4px;position:relative}
+.bnav-btn .ic{font-size:1.3rem;line-height:1}
+.bnav-btn.active{color:var(--lime)}
+.bnav-btn.active::before{content:'';position:absolute;top:0;left:20%;right:20%;height:2px;background:var(--lime);border-radius:0 0 2px 2px}
+.bnav-btn:active{transform:scale(.92)}
+
+/* ── PAGES ── */
+.page{display:none;padding:16px;padding-bottom:8px}
 .page.active{display:block}
-.pc{max-width:1300px;margin:0 auto;padding:28px 20px}
 
-/* HERO */
-.hero{padding:64px 20px 48px;text-align:center;background:linear-gradient(180deg,rgba(198,255,71,.05) 0%,transparent 100%);border-bottom:1px solid var(--b1)}
-.hero-eyebrow{display:inline-flex;align-items:center;gap:8px;background:rgba(198,255,71,.1);border:1px solid rgba(198,255,71,.25);border-radius:999px;padding:5px 14px;font-size:.75rem;font-weight:700;color:var(--lime);letter-spacing:1px;margin-bottom:20px}
-.hero h1{font-family:'Bebas Neue',sans-serif;font-size:clamp(2.8rem,7vw,5.5rem);letter-spacing:3px;line-height:.95;color:var(--t1);margin-bottom:14px}
-.hero h1 b{color:var(--lime)}
-.hero-sub{font-size:1rem;color:var(--t2);max-width:500px;margin:0 auto 28px;line-height:1.7}
-.hero-cats{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-bottom:32px}
-.cat-chip{display:flex;align-items:center;gap:8px;padding:8px 16px;border-radius:var(--r);border:1px solid;font-size:.82rem;font-weight:700}
-.hero-kpis{display:flex;justify-content:center;gap:40px;flex-wrap:wrap;padding:28px 0 0;border-top:1px solid var(--b1)}
-.kpi .kv{font-family:'Bebas Neue',sans-serif;font-size:2.6rem;color:var(--lime);letter-spacing:2px;display:block}
-.kpi .kl{font-size:.7rem;color:var(--t3);text-transform:uppercase;letter-spacing:1.2px;font-weight:700}
-.hbtns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+/* ── SETUP BANNER ── */
+.setup-banner{background:linear-gradient(135deg,rgba(255,204,60,.12),rgba(255,61,127,.08));border:1px solid rgba(255,204,60,.3);border-radius:var(--rl);padding:16px;margin-bottom:18px;text-align:center}
+.setup-banner h3{font-family:'Bebas Neue',sans-serif;font-size:1.2rem;color:var(--gold);letter-spacing:2px;margin-bottom:8px}
+.setup-banner p{font-size:.8rem;color:var(--t2);line-height:1.6}
+.setup-banner code{background:var(--s2);padding:2px 6px;border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:.75rem;color:var(--lime)}
 
-/* BUTTONS */
-.btn{display:inline-flex;align-items:center;gap:7px;padding:10px 20px;border-radius:var(--rsm);font-size:.85rem;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer;border:none;transition:var(--tr);text-decoration:none;white-space:nowrap}
-.btn-lime{background:var(--lime);color:#060a00}
-.btn-lime:hover{background:var(--lime3);transform:translateY(-1px);box-shadow:0 6px 20px rgba(198,255,71,.3)}
-.btn-out{background:transparent;color:var(--t1);border:1.5px solid var(--b2)}
-.btn-out:hover{border-color:var(--lime);color:var(--lime)}
-.btn-red{background:var(--pink);color:#fff}
-.btn-red:hover{background:#ff1f6b}
-.btn-ghost{background:var(--s2);color:var(--t2)}
-.btn-ghost:hover{background:var(--s3);color:var(--t1)}
-.btn-sm{padding:6px 13px;font-size:.78rem}
-.btn-xs{padding:3px 9px;font-size:.72rem}
-.w100{width:100%}
+/* ── HERO ── */
+.hero-mini{background:linear-gradient(135deg,rgba(184,255,60,.06),transparent);border:1px solid var(--b1);border-radius:var(--rl);padding:20px 16px;margin-bottom:16px;text-align:center;position:relative;overflow:hidden}
+.hero-mini::before{content:'';position:absolute;top:-40px;right:-40px;width:120px;height:120px;border-radius:50%;background:radial-gradient(circle,rgba(184,255,60,.1),transparent)}
+.hero-title{font-family:'Bebas Neue',sans-serif;font-size:1.6rem;letter-spacing:3px;color:var(--t1);line-height:1}
+.hero-title b{color:var(--lime)}
+.hero-sub{font-size:.78rem;color:var(--t2);margin-top:6px}
+.cat-chips{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:12px}
+.chip{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:999px;font-size:.7rem;font-weight:700;border:1px solid}
+.chip-m{background:rgba(77,166,255,.1);color:var(--blue);border-color:rgba(77,166,255,.3)}
+.chip-mp{background:rgba(167,139,250,.1);color:var(--purple);border-color:rgba(167,139,250,.3)}
+.chip-f{background:rgba(255,61,127,.1);color:var(--pink);border-color:rgba(255,61,127,.3)}
+.chip-fp{background:rgba(255,204,60,.1);color:var(--gold);border-color:rgba(255,204,60,.3)}
 
-/* CATEGORY TABS */
-.cat-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:24px}
-.ctab{padding:8px 18px;border-radius:999px;border:1.5px solid var(--b2);background:none;color:var(--t2);font-size:.82rem;font-weight:700;cursor:pointer;transition:var(--tr);font-family:'DM Sans',sans-serif;display:flex;align-items:center;gap:6px}
-.ctab.active,.ctab:hover{background:rgba(198,255,71,.1);border-color:var(--lime);color:var(--lime)}
+/* ── STAT ROW ── */
+.stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px}
+.stat-box{background:var(--s1);border:1px solid var(--b1);border-radius:var(--r);padding:12px 8px;text-align:center;position:relative;overflow:hidden}
+.stat-box::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--lime)}
+.stat-v{font-family:'Bebas Neue',sans-serif;font-size:1.8rem;color:var(--lime);display:block;line-height:1}
+.stat-l{font-size:.58rem;color:var(--t3);text-transform:uppercase;letter-spacing:.8px;font-weight:700;margin-top:2px}
 
-/* CARDS */
-.card{background:var(--s1);border:1px solid var(--b1);border-radius:var(--rl);overflow:hidden}
-.ch{padding:14px 18px;border-bottom:1px solid var(--b1);display:flex;align-items:center;justify-content:space-between;gap:10px}
-.ct{font-size:.7rem;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:1.5px}
-.cb{padding:18px}
-
-/* STATS GRID */
-.sgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;margin-bottom:24px}
-.stile{background:var(--s1);border:1px solid var(--b1);border-radius:var(--r);padding:16px 14px;position:relative;overflow:hidden}
-.stile::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--lime)}
-.sv{font-family:'Bebas Neue',sans-serif;font-size:2rem;color:var(--lime);display:block}
-.sl{font-size:.7rem;color:var(--t3);text-transform:uppercase;letter-spacing:1px;font-weight:700}
-.si{position:absolute;right:12px;top:12px;font-size:1.3rem;opacity:.25}
-
-/* GROUPS */
-.ggrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:18px}
-.gcard{background:var(--s1);border:1px solid var(--b1);border-radius:var(--rl);overflow:hidden}
-.gh{padding:12px 18px;display:flex;align-items:center;justify-content:space-between;position:relative;overflow:hidden}
-.gh::before{content:'';position:absolute;inset:0;opacity:.07;background:currentColor}
-.gn{font-family:'Bebas Neue',sans-serif;font-size:1.2rem;letter-spacing:2px;position:relative;z-index:1}
-.gc{font-size:.72rem;font-weight:700;padding:2px 9px;border-radius:999px;background:rgba(255,255,255,.15);position:relative;z-index:1}
-
-/* TABLE */
-.tbl{width:100%;border-collapse:collapse;font-size:.82rem}
-.tbl th{padding:9px 12px;background:var(--s2);color:var(--t3);font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;border-bottom:1px solid var(--b1);text-align:center}
-.tbl th:first-child,.tbl td:first-child{text-align:left}
-.tbl td{padding:9px 12px;text-align:center;border-bottom:1px solid rgba(36,48,72,.5)}
-.tbl tr:last-child td{border-bottom:none}
-.tbl tr:hover td{background:rgba(198,255,71,.03)}
-.tbl tr.q td{background:rgba(198,255,71,.04)}
-.rb{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;font-weight:700;font-size:.75rem;font-family:'JetBrains Mono',monospace}
-.r1{background:rgba(255,204,61,.2);color:var(--gold)}.r2{background:rgba(220,220,220,.1);color:#bbb}.r3{background:rgba(255,100,50,.1);color:#ff9966}.rn{background:var(--s3);color:var(--t3)}
-.tag{display:inline-block;padding:2px 7px;border-radius:3px;font-size:.7rem;font-weight:700;font-family:'JetBrains Mono',monospace}
-.tw{background:rgba(46,232,196,.12);color:var(--teal)}.tl{background:rgba(255,61,127,.1);color:var(--pink)}
-
-/* MATCH ROWS */
-.mlist{display:flex;flex-direction:column;gap:6px;padding:10px 14px 12px}
-.mrow{background:var(--s2);border:1px solid var(--b1);border-radius:var(--rsm);padding:8px 12px;display:flex;align-items:center;gap:8px}
-.mp{flex:1;font-weight:600;font-size:.82rem}.mp.r{text-align:right}
-.msc{display:flex;gap:4px;align-items:center}
-.ms{border-radius:3px;padding:2px 9px;font-weight:700;font-size:.76rem;min-width:32px;text-align:center;font-family:'JetBrains Mono',monospace;background:var(--s3);color:var(--t2)}
-.ms.w{background:rgba(198,255,71,.18);color:var(--lime)}.ms.l{background:rgba(255,61,127,.12);color:var(--pink)}
-.mvs{color:var(--t3);font-size:.72rem;font-weight:700}
-
-/* RESULTS */
-.rcard{background:var(--s1);border:1px solid var(--b1);border-radius:var(--r);overflow:hidden;margin-bottom:10px}
-.rctop{padding:7px 14px;background:var(--s2);display:flex;justify-content:space-between;font-size:.72rem;color:var(--t3);font-weight:600;border-bottom:1px solid var(--b1)}
-.rcbody{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;padding:14px 18px;gap:8px}
-.rp{font-weight:700;font-size:.92rem}.rp.l{text-align:right}
-.rcenter{text-align:center}
-.rscore{font-family:'Bebas Neue',sans-serif;font-size:1.8rem;letter-spacing:3px;color:var(--t1)}
-.rsets{font-size:.7rem;color:var(--t3);font-family:'JetBrains Mono',monospace}
-
-/* SCHEDULE TABLE */
-.sch-tbl{width:100%;border-collapse:collapse;font-size:.82rem}
-.sch-tbl th{background:var(--s2);padding:10px 12px;text-align:left;font-size:.68rem;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:1px;border-bottom:1px solid var(--b1)}
-.sch-tbl td{padding:10px 12px;border-bottom:1px solid rgba(36,48,72,.4)}
-.sch-tbl tr:hover td{background:rgba(198,255,71,.025)}
-.sp{display:inline-block;padding:3px 9px;border-radius:999px;font-size:.7rem;font-weight:700;font-family:'JetBrains Mono',monospace}
-.sp-done{background:rgba(46,232,196,.12);color:var(--teal)}.sp-up{background:rgba(61,158,255,.12);color:var(--blue)}.sp-live{background:rgba(255,61,127,.15);color:var(--pink);animation:blink 1.2s infinite}
-@keyframes blink{0%,100%{opacity:1}50%{opacity:.4}}
-
-/* NOMINATION FORM */
-.nom-wrap{max-width:640px;margin:0 auto}
-.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.fg{display:flex;flex-direction:column;gap:5px}
-.fg.full{grid-column:1/-1}
-.flbl{font-size:.75rem;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.8px}
-.fi,.fsel{width:100%;padding:10px 12px;background:var(--s2);border:1.5px solid var(--b1);border-radius:var(--rsm);color:var(--t1);font-family:'DM Sans',sans-serif;font-size:.88rem;outline:none;transition:var(--tr)}
-.fi:focus,.fsel:focus{border-color:var(--lime);box-shadow:0 0 0 3px rgba(198,255,71,.08)}
-.fsel option{background:var(--s2)}
-.req{color:var(--pink)}
-.cpf-hint{font-size:.72rem;color:var(--t3)}
-.fi.cpf{font-family:'JetBrains Mono',monospace;font-size:.95rem;letter-spacing:1px}
-
-/* CATEGORY BADGE */
-.catbadge{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:999px;font-size:.75rem;font-weight:700}
-.cat-m45{background:rgba(61,158,255,.15);color:var(--blue);border:1px solid rgba(61,158,255,.3)}
-.cat-m45p{background:rgba(167,139,250,.15);color:var(--purple);border:1px solid rgba(167,139,250,.3)}
-.cat-f45{background:rgba(255,61,127,.12);color:var(--pink);border:1px solid rgba(255,61,127,.3)}
-.cat-f45p{background:rgba(255,204,61,.12);color:var(--gold);border:1px solid rgba(255,204,61,.3)}
-
-/* SUCCESS */
-.nom-ok{text-align:center;padding:56px 24px}
-.nom-ok .big{font-size:3.5rem;display:block;margin-bottom:12px}
-.nom-ok h2{font-family:'Bebas Neue',sans-serif;font-size:1.8rem;color:var(--lime);letter-spacing:2px}
-
-/* FILTER PILLS */
-.fprow{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
-.fp{padding:6px 14px;border-radius:999px;border:1.5px solid var(--b1);background:none;color:var(--t3);font-size:.78rem;font-weight:700;cursor:pointer;transition:var(--tr);font-family:'DM Sans',sans-serif}
-.fp.active,.fp:hover{border-color:var(--lime);color:var(--lime);background:rgba(198,255,71,.07)}
-
-/* LOGIN */
-.login-wrap{min-height:calc(100vh - 60px);display:flex;align-items:center;justify-content:center;padding:20px}
-.login-box{background:var(--s1);border:1px solid var(--b1);border-radius:var(--rl);padding:36px;width:min(400px,100%);position:relative;overflow:hidden}
-.login-box::before{content:'';position:absolute;top:-60%;left:-60%;width:220%;height:220%;background:radial-gradient(ellipse at center,rgba(198,255,71,.05) 0%,transparent 55%);pointer-events:none}
-.lerr{background:rgba(255,61,127,.1);border:1px solid rgba(255,61,127,.3);border-radius:var(--rsm);padding:9px 13px;color:var(--pink);font-size:.83rem;margin-bottom:14px;display:none}
-
-/* ADMIN */
-.adm-wrap{display:grid;grid-template-columns:230px 1fr;min-height:calc(100vh - 60px)}
-.adm-side{background:var(--s1);border-right:1px solid var(--b1);padding:18px 12px;display:flex;flex-direction:column;gap:3px;position:sticky;top:60px;height:calc(100vh - 60px);overflow-y:auto}
-.adm-side-ttl{font-size:.65rem;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:1.5px;padding:8px 10px 3px;margin-top:6px}
-.sib{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:var(--rsm);background:none;border:none;color:var(--t2);font-size:.83rem;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;width:100%;transition:var(--tr);text-align:left}
-.sib:hover{background:var(--s2);color:var(--t1)}.sib.active{background:rgba(198,255,71,.09);color:var(--lime)}
-.sib .si-ic{width:18px;text-align:center;font-size:1rem;flex-shrink:0}
-.sbcnt{margin-left:auto;background:var(--s3);border-radius:999px;padding:1px 7px;font-size:.68rem;font-family:'JetBrains Mono',monospace;color:var(--t3)}
-.adm-main{padding:24px 28px;overflow-y:auto}
-.asec{display:none}.asec.active{display:block}
-
-/* ADMIN TABLES */
-.dtbl{width:100%;border-collapse:collapse;font-size:.82rem}
-.dtbl th{padding:9px 12px;text-align:left;font-size:.68rem;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:1px;border-bottom:1px solid var(--b1);background:var(--s2)}
-.dtbl td{padding:9px 12px;border-bottom:1px solid var(--b1)}
-.dtbl tr:hover td{background:rgba(198,255,71,.02)}
-.dtbl tr.rej td{opacity:.4}
-.badge{display:inline-block;padding:2px 9px;border-radius:3px;font-size:.7rem;font-weight:700;font-family:'JetBrains Mono',monospace}
-.b-p{background:rgba(255,204,61,.12);color:var(--gold)}.b-a{background:rgba(46,232,196,.12);color:var(--teal)}.b-r{background:rgba(255,61,127,.1);color:var(--pink)}
-
-/* ADMIN FORMS */
-.afg2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
-.afg3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:14px}
-.afg1{display:grid;grid-template-columns:1fr;gap:12px;margin-bottom:14px}
-.afg{display:flex;flex-direction:column;gap:4px}
-.afg.full{grid-column:1/-1}
-.afl{font-size:.72rem;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.8px}
-.afi,.afs{padding:8px 11px;background:var(--s2);border:1.5px solid var(--b1);border-radius:var(--rsm);color:var(--t1);font-family:'DM Sans',sans-serif;font-size:.86rem;outline:none;width:100%;transition:var(--tr)}
-.afi:focus,.afs:focus{border-color:var(--lime);box-shadow:0 0 0 2px rgba(198,255,71,.08)}
-.afs option{background:var(--s1)}
-
-/* GROUP BUILDER */
-.gb-wrap{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:14px}
-.gb-pool{background:var(--s2);border:2px dashed var(--b2);border-radius:var(--r);padding:10px;min-height:60px}
-.gb-pool.over{border-color:var(--lime);background:rgba(198,255,71,.04)}
-.gbt{font-size:.68rem;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between}
-.gbt .cnt{background:var(--s3);border-radius:999px;padding:1px 7px;font-family:'JetBrains Mono',monospace;font-size:.66rem}
-.dp{background:var(--s1);border:1px solid var(--b1);border-radius:var(--rsm);padding:6px 9px;margin-bottom:5px;cursor:grab;display:flex;align-items:center;gap:7px;font-size:.8rem;font-weight:500;transition:var(--tr);user-select:none}
-.dp:active{cursor:grabbing}
-.dp:hover{border-color:var(--lime);color:var(--lime)}
-
-/* MODAL */
-.moverlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:200;align-items:center;justify-content:center;padding:14px}
-.moverlay.open{display:flex}
-.mbox{background:var(--s1);border:1px solid var(--b1);border-radius:var(--rl);padding:24px;width:min(560px,100%);max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.7)}
-.mtitle{font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:2px;margin-bottom:18px;color:var(--t1)}
-.mfooter{display:flex;justify-content:flex-end;gap:8px;margin-top:18px;padding-top:14px;border-top:1px solid var(--b1)}
-
-/* ALERTS */
-.al{padding:10px 14px;border-radius:var(--rsm);font-size:.83rem;font-weight:500;margin-bottom:14px;display:flex;align-items:center;gap:8px}
-.al-ok{background:rgba(46,232,196,.08);border:1px solid rgba(46,232,196,.25);color:var(--teal)}
-.al-err{background:rgba(255,61,127,.08);border:1px solid rgba(255,61,127,.25);color:var(--pink)}
-.al-info{background:rgba(61,158,255,.08);border:1px solid rgba(61,158,255,.25);color:var(--blue)}
-
-/* UTILS */
-.divider{border:none;border-top:1px solid var(--b1);margin:18px 0}
-.mono{font-family:'JetBrains Mono',monospace}
-.tm{color:var(--t2)}.ts{font-size:.8rem}.t3{color:var(--t3)}
-/* TOURNAMENT ARCHIVE */
-.t-archive-card{background:var(--s2);border:1px solid var(--b1);border-radius:var(--r);padding:14px 16px;display:flex;align-items:center;gap:12px;margin-bottom:10px;transition:var(--tr)}
-.t-archive-card:hover{border-color:var(--b2)}
-.t-archive-card.active-t{border-color:var(--lime);background:rgba(198,255,71,.05)}
-.t-arc-name{font-weight:700;font-size:.92rem;flex:1}
-.t-arc-meta{font-size:.75rem;color:var(--t3);margin-top:2px}
-/* PDF BUTTON PULSE */
-.btn-pdf{background:rgba(255,61,127,.15);color:var(--pink);border:1.5px solid rgba(255,61,127,.35)}
-.btn-pdf:hover{background:rgba(255,61,127,.25);border-color:var(--pink)}
-.flex{display:flex}.gap8{gap:8px}.gap12{gap:12px}.aic{align-items:center}.jcb{justify-content:space-between}
-.mt1{margin-top:8px}.mt2{margin-top:16px}.mt3{margin-top:24px}
-.sec-head{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:20px;flex-wrap:wrap}
-.sec-ttl{font-family:'Bebas Neue',sans-serif;font-size:1.7rem;letter-spacing:2px}
+/* ── SECTION TITLES ── */
+.sec-ttl{font-family:'Bebas Neue',sans-serif;font-size:1.3rem;letter-spacing:2px;margin-bottom:12px}
 .sec-ttl em{color:var(--lime);font-style:normal}
-.empty{text-align:center;padding:44px 20px;color:var(--t3)}
-.empty .ei{font-size:2.2rem;display:block;margin-bottom:10px;opacity:.35}
-.truncate{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:160px}
-.cpf-disp{font-family:'JetBrains Mono',monospace;font-size:.8rem;color:var(--t2)}
+.sec-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;gap:8px}
 
-@media(max-width:900px){
-  .adm-wrap{grid-template-columns:1fr}
-  .adm-side{display:none;position:fixed;inset:0;z-index:150;height:100vh;top:0;padding-top:70px}
-  .adm-side.open{display:flex}
-  .hnav{display:none}.hbg{display:block}
-}
-@media(max-width:600px){
-  .fgrid,.afg2,.afg3{grid-template-columns:1fr}
-  .rcbody{grid-template-columns:1fr;text-align:center}.rp.l{text-align:center}
-  .ggrid{grid-template-columns:1fr}
-  .pc{padding:16px 12px}
-  .hero{padding:40px 14px 32px}
-}
+/* ── CARDS ── */
+.card{background:var(--s1);border:1px solid var(--b1);border-radius:var(--rl);overflow:hidden;margin-bottom:12px}
+.card-head{padding:10px 14px;border-bottom:1px solid var(--b1);display:flex;align-items:center;justify-content:space-between}
+.card-ttl{font-size:.68rem;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:1.2px}
+.card-body{padding:14px}
+
+/* ── GROUP CARDS ── */
+.gcard{background:var(--s1);border:1px solid var(--b1);border-radius:var(--rl);overflow:hidden;margin-bottom:12px}
+.gcard-head{padding:10px 14px;display:flex;align-items:center;justify-content:space-between;position:relative;overflow:hidden}
+.gcard-head::before{content:'';position:absolute;inset:0;opacity:.07;background:currentColor}
+.gcard-name{font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:2px;position:relative;z-index:1}
+.gcard-cnt{font-size:.68rem;font-weight:700;padding:2px 8px;border-radius:999px;background:rgba(255,255,255,.15);position:relative;z-index:1}
+
+/* ── STANDINGS TABLE ── */
+.tbl{width:100%;border-collapse:collapse;font-size:.78rem}
+.tbl th{padding:8px 10px;background:var(--s2);color:var(--t3);font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.8px;border-bottom:1px solid var(--b1);text-align:center;white-space:nowrap}
+.tbl th:first-child,.tbl td:first-child{text-align:left}
+.tbl td{padding:8px 10px;text-align:center;border-bottom:1px solid rgba(38,48,69,.5)}
+.tbl tr:last-child td{border-bottom:none}
+.tbl tr.q td:first-child{border-left:2px solid var(--lime)}
+.rb{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;font-weight:700;font-size:.68rem;font-family:'JetBrains Mono',monospace}
+.r1{background:rgba(255,204,60,.2);color:var(--gold)}.r2{background:rgba(200,200,200,.1);color:#bbb}.rn{background:var(--s3);color:var(--t3)}
+.tag{display:inline-block;padding:1px 6px;border-radius:3px;font-size:.68rem;font-weight:700;font-family:'JetBrains Mono',monospace}
+.tw{background:rgba(45,232,196,.12);color:var(--teal)}.tl{background:rgba(255,61,127,.1);color:var(--pink)}
+
+/* ── MATCH ROWS ── */
+.mrow{background:var(--s2);border:1px solid var(--b1);border-radius:var(--rsm);padding:8px 10px;display:flex;align-items:center;gap:6px;margin-bottom:6px}
+.mp{flex:1;font-weight:600;font-size:.8rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mp.r{text-align:right}
+.ms-wrap{display:flex;gap:4px;align-items:center;flex-shrink:0}
+.ms{border-radius:3px;padding:2px 8px;font-weight:700;font-size:.74rem;min-width:28px;text-align:center;font-family:'JetBrains Mono',monospace;background:var(--s3);color:var(--t2)}
+.ms.w{background:rgba(184,255,60,.18);color:var(--lime)}.ms.l{background:rgba(255,61,127,.12);color:var(--pink)}
+.mvs{color:var(--t3);font-size:.7rem;font-weight:700}
+
+/* ── RESULT CARDS ── */
+.rcard{background:var(--s1);border:1px solid var(--b1);border-radius:var(--r);overflow:hidden;margin-bottom:8px}
+.rcard-top{padding:6px 12px;background:var(--s2);display:flex;justify-content:space-between;align-items:center;font-size:.68rem;color:var(--t3);font-weight:600;border-bottom:1px solid var(--b1)}
+.rcard-body{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;padding:12px 14px;gap:6px}
+.rp{font-weight:700;font-size:.85rem}.rp.l{text-align:right}
+.rcenter{text-align:center}
+.rscore{font-family:'Bebas Neue',sans-serif;font-size:1.6rem;letter-spacing:3px;color:var(--t1)}
+.rsets{font-size:.65rem;color:var(--t3);font-family:'JetBrains Mono',monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* ── SCHEDULE ── */
+.sch-item{background:var(--s1);border:1px solid var(--b1);border-radius:var(--r);padding:10px 12px;margin-bottom:8px;display:flex;align-items:center;gap:10px}
+.sch-vs{flex:1;min-width:0}
+.sch-p{font-weight:700;font-size:.82rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sch-meta{font-size:.7rem;color:var(--t3);margin-top:2px}
+.sch-status{flex-shrink:0}
+.sp{display:inline-block;padding:3px 8px;border-radius:999px;font-size:.66rem;font-weight:700;font-family:'JetBrains Mono',monospace}
+.sp-done{background:rgba(45,232,196,.12);color:var(--teal)}.sp-up{background:rgba(77,166,255,.12);color:var(--blue)}.sp-live{background:rgba(255,61,127,.18);color:var(--pink)}
+
+/* ── REGISTER FORM ── */
+.form-group{margin-bottom:14px}
+.form-label{display:block;font-size:.72rem;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.8px;margin-bottom:5px}
+.req{color:var(--pink)}
+.form-input,.form-select{width:100%;padding:12px 14px;background:var(--s2);border:1.5px solid var(--b1);border-radius:var(--r);color:var(--t1);font-family:'DM Sans',sans-serif;font-size:.92rem;outline:none;-webkit-appearance:none;appearance:none;transition:var(--tr)}
+.form-input:focus,.form-select:focus{border-color:var(--lime);box-shadow:0 0 0 3px rgba(184,255,60,.08)}
+.form-input.cpf{font-family:'JetBrains Mono',monospace;font-size:1rem;letter-spacing:1px}
+.form-hint{font-size:.68rem;color:var(--t3);margin-top:4px}
+.cat-preview{display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--s2);border:1.5px solid rgba(184,255,60,.3);border-radius:var(--r);margin-top:6px}
+.cat-preview-lbl{font-size:.7rem;color:var(--t2);font-weight:600}
+.nom-ok{text-align:center;padding:40px 20px}
+.nom-ok .ok-icon{font-size:3rem;display:block;margin-bottom:12px}
+.nom-ok h2{font-family:'Bebas Neue',sans-serif;font-size:1.6rem;color:var(--lime);letter-spacing:2px}
+.nom-ok p{color:var(--t2);font-size:.85rem;margin-top:8px;line-height:1.6}
+
+/* ── BUTTONS ── */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:11px 18px;border-radius:var(--rsm);font-size:.85rem;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer;border:none;transition:var(--tr);text-decoration:none;white-space:nowrap;justify-content:center}
+.btn:active{transform:scale(.96)}
+.btn-lime{background:var(--lime);color:#060a00}.btn-lime:active{background:#a0e020}
+.btn-out{background:transparent;color:var(--t1);border:1.5px solid var(--b2)}.btn-out:active{border-color:var(--lime);color:var(--lime)}
+.btn-red{background:var(--pink);color:#fff}
+.btn-ghost{background:var(--s2);color:var(--t2)}.btn-ghost:active{background:var(--s3)}
+.btn-pdf{background:rgba(255,61,127,.12);color:var(--pink);border:1.5px solid rgba(255,61,127,.3)}
+.btn-sm{padding:7px 13px;font-size:.78rem}
+.btn-xs{padding:4px 10px;font-size:.72rem}
+.btn-full{width:100%}
+
+/* ── CAT TABS ── */
+.cat-tabs{display:flex;overflow-x:auto;gap:6px;margin-bottom:14px;padding-bottom:4px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.cat-tabs::-webkit-scrollbar{display:none}
+.ctab{padding:7px 14px;border-radius:999px;border:1.5px solid var(--b1);background:none;color:var(--t3);font-size:.75rem;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap;flex-shrink:0;transition:var(--tr)}
+.ctab.active{background:rgba(184,255,60,.1);border-color:var(--lime);color:var(--lime)}
+
+/* ── FILTER PILLS ── */
+.fpills{display:flex;overflow-x:auto;gap:6px;margin-bottom:12px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.fpills::-webkit-scrollbar{display:none}
+.fp{padding:5px 12px;border-radius:999px;border:1.5px solid var(--b1);background:none;color:var(--t3);font-size:.72rem;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap;flex-shrink:0;transition:var(--tr)}
+.fp.active{border-color:var(--lime);color:var(--lime);background:rgba(184,255,60,.07)}
+
+/* ── ADMIN ── */
+.adm-tabs{display:flex;overflow-x:auto;gap:4px;margin-bottom:16px;padding-bottom:2px;-webkit-overflow-scrolling:touch;scrollbar-width:none;background:var(--s1);border:1px solid var(--b1);border-radius:var(--r);padding:4px}
+.adm-tabs::-webkit-scrollbar{display:none}
+.atab{padding:8px 14px;border-radius:var(--rsm);border:none;background:none;color:var(--t3);font-size:.74rem;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap;flex-shrink:0;transition:var(--tr)}
+.atab.active{background:rgba(184,255,60,.15);color:var(--lime)}
+
+/* ── ADMIN TABLES ── */
+.dtbl{width:100%;border-collapse:collapse;font-size:.78rem;min-width:480px}
+.dtbl th{padding:8px 10px;background:var(--s2);color:var(--t3);font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.8px;border-bottom:1px solid var(--b1);text-align:left;white-space:nowrap}
+.dtbl td{padding:8px 10px;border-bottom:1px solid var(--b1);vertical-align:middle}
+.dtbl tr.rej td{opacity:.4}
+.tbl-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:var(--r);border:1px solid var(--b1)}
+
+/* ── BADGES ── */
+.badge{display:inline-block;padding:2px 8px;border-radius:3px;font-size:.66rem;font-weight:700;font-family:'JetBrains Mono',monospace}
+.b-p{background:rgba(255,204,60,.12);color:var(--gold)}.b-a{background:rgba(45,232,196,.12);color:var(--teal)}.b-r{background:rgba(255,61,127,.1);color:var(--pink)}
+
+/* ── ADMIN FORM ── */
+.af-group{margin-bottom:12px}
+.af-label{display:block;font-size:.68rem;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px}
+.af-input,.af-select{width:100%;padding:9px 12px;background:var(--s2);border:1.5px solid var(--b1);border-radius:var(--rsm);color:var(--t1);font-family:'DM Sans',sans-serif;font-size:.86rem;outline:none;-webkit-appearance:none;transition:var(--tr)}
+.af-input:focus,.af-select:focus{border-color:var(--lime)}
+.af-grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.af-full{grid-column:1/-1}
+
+/* ── GROUP BUILDER ── */
+.gb-pool{background:var(--s2);border:2px dashed var(--b2);border-radius:var(--r);padding:10px;min-height:50px;margin-bottom:10px}
+.gb-pool.over{border-color:var(--lime);background:rgba(184,255,60,.04)}
+.gb-pool-title{font-size:.66rem;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between}
+.gb-cnt{background:var(--s3);border-radius:999px;padding:1px 7px;font-family:'JetBrains Mono',monospace;font-size:.62rem}
+.dp{background:var(--s1);border:1px solid var(--b1);border-radius:var(--rsm);padding:7px 10px;margin-bottom:5px;cursor:grab;display:flex;align-items:center;gap:6px;font-size:.8rem;font-weight:500;transition:var(--tr);user-select:none}
+.dp:active{cursor:grabbing;border-color:var(--lime)}
+
+/* ── MODALS ── */
+.mo{display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:200;align-items:flex-end;justify-content:center;padding:0}
+.mo.open{display:flex}
+.mo-box{background:var(--s1);border-top:1px solid var(--b1);border-radius:var(--rl) var(--rl) 0 0;padding:20px 16px 32px;width:100%;max-height:90vh;overflow-y:auto;box-shadow:0 -8px 40px rgba(0,0,0,.6)}
+.mo-handle{width:36px;height:4px;border-radius:2px;background:var(--b2);margin:0 auto 16px}
+.mo-title{font-family:'Bebas Neue',sans-serif;font-size:1.3rem;letter-spacing:2px;margin-bottom:16px;color:var(--t1)}
+.mo-footer{display:flex;gap:8px;margin-top:16px}
+
+/* ── ALERTS ── */
+.al{padding:10px 13px;border-radius:var(--rsm);font-size:.8rem;font-weight:500;margin-bottom:12px;display:flex;align-items:flex-start;gap:8px;line-height:1.5}
+.al-ok{background:rgba(45,232,196,.08);border:1px solid rgba(45,232,196,.2);color:var(--teal)}
+.al-err{background:rgba(255,61,127,.08);border:1px solid rgba(255,61,127,.2);color:var(--pink)}
+.al-info{background:rgba(77,166,255,.08);border:1px solid rgba(77,166,255,.2);color:var(--blue)}
+.al-warn{background:rgba(255,204,60,.08);border:1px solid rgba(255,204,60,.2);color:var(--gold)}
+
+/* ── LOGIN ── */
+.login-wrap{display:flex;align-items:center;justify-content:center;min-height:60vh;padding:20px}
+.login-box{background:var(--s1);border:1px solid var(--b1);border-radius:var(--rl);padding:28px 20px;width:100%;max-width:340px}
+.lerr{display:none}
+
+/* ── UTILS ── */
+.mono{font-family:'JetBrains Mono',monospace}
+.t2{color:var(--t2)}.t3{color:var(--t3)}.ts{font-size:.78rem}
+.flex{display:flex}.gap6{gap:6px}.gap8{gap:8px}.aic{align-items:center}.jcb{justify-content:space-between}
+.mt1{margin-top:6px}.mt2{margin-top:12px}.mt3{margin-top:20px}
+.mb1{margin-bottom:6px}.mb2{margin-bottom:12px}
+.cpf-disp{font-family:'JetBrains Mono',monospace;font-size:.74rem;color:var(--t2)}
+.empty{text-align:center;padding:36px 16px;color:var(--t3)}
+.empty .ei{font-size:2rem;display:block;margin-bottom:8px;opacity:.3}
+.truncate{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* ── TOAST ── */
+#toast{position:fixed;bottom:calc(var(--bh) + 12px);left:50%;transform:translateX(-50%) translateY(10px);background:var(--s1);border:1px solid var(--b2);border-radius:var(--rsm);padding:9px 16px;font-size:.82rem;font-weight:700;z-index:999;box-shadow:0 4px 20px rgba(0,0,0,.5);transition:opacity .25s,transform .25s;pointer-events:none;opacity:0;white-space:nowrap}
+
+/* ── ARCHIVE CARDS ── */
+.arc-card{background:var(--s2);border:1px solid var(--b1);border-radius:var(--r);padding:12px 14px;margin-bottom:8px}
+.arc-name{font-weight:700;font-size:.9rem}
+.arc-meta{font-size:.7rem;color:var(--t3);margin-top:3px}
+
+/* ── NO SCRIPT WARNING for setup ── */
+.not-setup{background:var(--s1);border:1px solid rgba(255,204,60,.3);border-radius:var(--rl);padding:20px;text-align:center}
 </style>
 </head>
 <body>
 
-<!-- HEADER -->
-<header class="hdr">
-  <div class="hdr-inner">
-    <div class="logo" onclick="goPage('home')">🏓 TT PORTAL</div>
-    <span class="hdr-name" id="hdr-name"></span>
-    <nav class="hnav">
-      <button class="hn active" data-pg="home"     onclick="goPage('home',this)">Home</button>
-      <button class="hn"        data-pg="register" onclick="goPage('register',this)">Register</button>
-      <button class="hn"        data-pg="groups"   onclick="goPage('groups',this)">Groups</button>
-      <button class="hn"        data-pg="results"  onclick="goPage('results',this)">Results</button>
-      <button class="hn"        data-pg="schedule" onclick="goPage('schedule',this)">Schedule</button>
-      <button class="hn hn-admin" onclick="gotoAdmin()">⚙ Admin</button>
-    </nav>
-    <button class="hbg" onclick="document.getElementById('adm-side').classList.toggle('open')">☰</button>
-  </div>
-</header>
-
-<!-- HOME -->
-<div class="page active" id="page-home">
-  <div class="hero">
-    <div class="hero-eyebrow">🏓 OPEN REGISTRATION</div>
-    <h1 id="h-title">TABLE TENNIS<br/><b>TOURNAMENT</b></h1>
-    <p class="hero-sub" id="h-sub">Compete in your category. Register now.</p>
-    <div class="hero-cats">
-      <span class="catbadge cat-m45">♂ Men Under 45</span>
-      <span class="catbadge cat-m45p">♂ Men 45+</span>
-      <span class="catbadge cat-f45">♀ Women Under 45</span>
-      <span class="catbadge cat-f45p">♀ Women 45+</span>
-    </div>
-    <div class="hbtns">
-      <button class="btn btn-lime" onclick="goPage('register')">Register Now →</button>
-      <button class="btn btn-out" onclick="goPage('groups')">View Standings</button>
-    </div>
-    <div class="hero-kpis">
-      <div class="kpi"><span class="kv" id="kpi-p">0</span><span class="kl">Registered</span></div>
-      <div class="kpi"><span class="kv" id="kpi-g">0</span><span class="kl">Groups</span></div>
-      <div class="kpi"><span class="kv" id="kpi-m">0</span><span class="kl">Matches</span></div>
-      <div class="kpi"><span class="kv" id="kpi-v">—</span><span class="kl">Venue</span></div>
-    </div>
-  </div>
-  <div class="pc">
-    <div class="sec-head"><h2 class="sec-ttl">LIVE <em>STANDINGS</em></h2></div>
-    <div id="home-standings"></div>
-  </div>
+<!-- TOP BAR -->
+<div class="top-bar">
+  <div class="logo">🏓 TT</div>
+  <div class="top-tour-name" id="hdr-name">Tournament Portal</div>
+  <button class="top-sync-btn" id="sync-btn" onclick="syncNow()">
+    <span class="sync-dot" id="sync-dot"></span><span id="sync-lbl">Sync</span>
+  </button>
 </div>
 
-<!-- REGISTER -->
-<div class="page" id="page-register">
-  <div class="pc">
-    <div class="sec-head">
-      <div>
-        <h2 class="sec-ttl">PLAYER <em>REGISTRATION</em></h2>
-        <p class="tm ts mt1">Fields marked <span class="req">*</span> are required.</p>
+<!-- MAIN SCROLLABLE AREA -->
+<div class="main-area" id="main-area">
+
+  <!-- PAGE: HOME -->
+  <div class="page active" id="page-home">
+    <div id="setup-notice" style="display:none">
+      <div class="setup-banner">
+        <h3>⚙ SETUP REQUIRED</h3>
+        <p>Paste your <strong>Google Apps Script URL</strong> to enable live data sync across all devices.</p>
+        <p style="margin-top:8px">Go to <strong>Admin → Settings</strong> and paste the Script URL.</p>
+        <p style="margin-top:6px;font-size:.72rem;color:var(--t3)">Until then, data is stored locally on this device only.</p>
       </div>
     </div>
-    <div class="nom-wrap">
-      <div id="gform-banner" style="display:none"></div>
-      <div id="nom-form">
-        <div id="nom-al" style="display:none"></div>
-        <div class="fgrid">
-          <!-- CPF -->
-          <div class="fg full">
-            <label class="flbl">CPF Number <span class="req">*</span></label>
-            <input class="fi cpf" id="n-cpf" placeholder="000.000.000-00" maxlength="14" oninput="maskCPF(this)"/>
-            <span class="cpf-hint">Brazilian CPF — format: 000.000.000-00</span>
-          </div>
-          <!-- Name -->
-          <div class="fg full">
-            <label class="flbl">Full Name <span class="req">*</span></label>
-            <input class="fi" id="n-name" placeholder="e.g. Carlos Silva" autocomplete="name"/>
-          </div>
-          <!-- Age -->
-          <div class="fg">
-            <label class="flbl">Age <span class="req">*</span></label>
-            <input class="fi" id="n-age" type="number" placeholder="e.g. 32" min="5" max="100"/>
-          </div>
-          <!-- Gender -->
-          <div class="fg">
-            <label class="flbl">Gender <span class="req">*</span></label>
-            <select class="fsel" id="n-gender">
-              <option value="">— Select —</option>
-              <option value="Male">Male</option>
-              <option value="Female">Female</option>
-            </select>
-          </div>
-          <!-- Auto category display -->
-          <div class="fg full" id="n-cat-display" style="display:none">
-            <label class="flbl">Your Category</label>
-            <div id="n-cat-badge" style="margin-top:4px"></div>
-          </div>
+    <div class="hero-mini">
+      <div class="hero-title" id="h-title">🏓 <b>TOURNAMENT</b></div>
+      <div class="hero-sub" id="h-sub">Compete in your category</div>
+      <div class="cat-chips">
+        <span class="chip chip-m">♂ Men U45</span>
+        <span class="chip chip-mp">♂ Men 45+</span>
+        <span class="chip chip-f">♀ Women U45</span>
+        <span class="chip chip-fp">♀ Women 45+</span>
+      </div>
+    </div>
+    <div class="stat-row">
+      <div class="stat-box"><span class="stat-v" id="kp">0</span><span class="stat-l">Players</span></div>
+      <div class="stat-box"><span class="stat-v" id="kg">0</span><span class="stat-l">Groups</span></div>
+      <div class="stat-box"><span class="stat-v" id="km">0</span><span class="stat-l">Matches</span></div>
+      <div class="stat-box" style="--lime:var(--gold)"><span class="stat-v" id="ks" style="color:var(--gold)">—</span><span class="stat-l">Venue</span></div>
+    </div>
+    <div class="sec-row">
+      <div class="sec-ttl">LIVE <em>STANDINGS</em></div>
+    </div>
+    <div id="home-grps"></div>
+  </div>
+
+  <!-- PAGE: REGISTER -->
+  <div class="page" id="page-register">
+    <div class="sec-ttl">PLAYER <em>REGISTRATION</em></div>
+    <div id="gform-banner" style="display:none;margin-bottom:14px"></div>
+    <div id="reg-form">
+      <div id="reg-al" style="display:none"></div>
+      <div class="form-group">
+        <label class="form-label">CPF Number <span class="req">*</span></label>
+        <input class="form-input cpf" id="n-cpf" placeholder="000.000.000-00" maxlength="14" inputmode="numeric" oninput="maskCPF(this)"/>
+        <div class="form-hint">Brazilian CPF — 11 digits</div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Full Name <span class="req">*</span></label>
+        <input class="form-input" id="n-name" placeholder="e.g. Carlos Silva" autocomplete="name"/>
+      </div>
+      <div class="af-grid2" style="gap:12px;margin-bottom:14px">
+        <div class="form-group" style="margin-bottom:0">
+          <label class="form-label">Age <span class="req">*</span></label>
+          <input class="form-input" id="n-age" type="number" placeholder="32" min="5" max="100" inputmode="numeric" oninput="updateCatPreview()"/>
         </div>
-        <div style="margin-top:20px;display:flex;align-items:center;gap:14px;flex-wrap:wrap">
-          <button class="btn btn-lime" onclick="submitReg()">Submit Registration →</button>
-          <span class="t3 ts" id="reg-count"></span>
+        <div class="form-group" style="margin-bottom:0">
+          <label class="form-label">Gender <span class="req">*</span></label>
+          <select class="form-select" id="n-gender" onchange="updateCatPreview()">
+            <option value="">— Select —</option>
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+          </select>
         </div>
       </div>
-      <div id="nom-ok" style="display:none" class="nom-ok">
-        <span class="big">✅</span>
-        <h2>REGISTRATION RECEIVED!</h2>
-        <p class="tm mt2">Your registration is pending admin approval.<br/>You will be assigned to your category group.</p>
-        <div id="nom-ok-cat" style="margin-top:14px"></div>
-        <button class="btn btn-out mt3" onclick="resetReg()">Register Another</button>
+      <div id="cat-preview" style="display:none" class="form-group">
+        <label class="form-label">Your Category</label>
+        <div class="cat-preview"><span class="cat-preview-lbl">You will compete in:</span><span id="cat-badge"></span></div>
       </div>
+      <button class="btn btn-lime btn-full" onclick="submitReg()" style="margin-top:4px">Submit Registration →</button>
+      <p class="t3 ts" style="text-align:center;margin-top:10px" id="reg-count"></p>
+    </div>
+    <div id="reg-ok" style="display:none" class="nom-ok">
+      <span class="ok-icon">✅</span>
+      <h2>REGISTERED!</h2>
+      <p>Your registration is pending admin approval.<br/>You will be placed in your category group.</p>
+      <div id="reg-ok-cat" style="margin-top:12px"></div>
+      <button class="btn btn-out btn-full mt3" onclick="resetReg()">Register Another</button>
     </div>
   </div>
-</div>
 
-<!-- GROUPS -->
-<div class="page" id="page-groups">
-  <div class="pc">
-    <div class="sec-head"><h2 class="sec-ttl">GROUP <em>STANDINGS</em></h2></div>
-    <div class="cat-tabs" id="grp-cat-tabs"></div>
+  <!-- PAGE: GROUPS -->
+  <div class="page" id="page-groups">
+    <div class="sec-ttl">GROUP <em>STANDINGS</em></div>
+    <div class="cat-tabs" id="grp-tabs"></div>
     <div id="grp-body"></div>
   </div>
-</div>
 
-<!-- RESULTS -->
-<div class="page" id="page-results">
-  <div class="pc">
-    <div class="sec-head">
-      <h2 class="sec-ttl">MATCH <em>RESULTS</em></h2>
-      <button class="btn btn-pdf btn-sm" onclick="downloadResultsPDF()">⬇ Download PDF</button>
+  <!-- PAGE: RESULTS -->
+  <div class="page" id="page-results">
+    <div class="sec-row">
+      <div class="sec-ttl">RESULTS</div>
+      <button class="btn btn-pdf btn-sm" onclick="downloadPDF()">⬇ PDF</button>
     </div>
-    <div class="cat-tabs" id="res-cat-tabs"></div>
-    <div class="fprow" id="res-group-filter"></div>
+    <div class="cat-tabs" id="res-tabs"></div>
+    <div class="fpills" id="res-grp-pills"></div>
     <div id="res-body"></div>
   </div>
-</div>
 
-<!-- SCHEDULE -->
-<div class="page" id="page-schedule">
-  <div class="pc">
-    <div class="sec-head"><h2 class="sec-ttl">MATCH <em>SCHEDULE</em></h2></div>
-    <div class="cat-tabs" id="sch-cat-tabs"></div>
-    <div class="card" style="overflow-x:auto">
-      <table class="sch-tbl">
-        <thead><tr><th>#</th><th>Category</th><th>Group</th><th>Player 1</th><th>Player 2</th><th>Date</th><th>Time</th><th>Table</th><th>Status</th></tr></thead>
-        <tbody id="sch-body"></tbody>
-      </table>
+  <!-- PAGE: SCHEDULE -->
+  <div class="page" id="page-schedule">
+    <div class="sec-ttl">SCHEDULE</div>
+    <div class="cat-tabs" id="sch-tabs"></div>
+    <div id="sch-body"></div>
+  </div>
+
+  <!-- PAGE: ADMIN LOGIN -->
+  <div class="page" id="page-login">
+    <div class="login-wrap">
+      <div class="login-box">
+        <div style="text-align:center;margin-bottom:20px">
+          <div style="font-size:2.5rem">🔐</div>
+          <h2 style="font-family:'Bebas Neue',sans-serif;font-size:1.6rem;letter-spacing:3px;margin-top:4px">ADMIN ACCESS</h2>
+        </div>
+        <div class="al al-err lerr" id="lerr">Invalid credentials</div>
+        <div class="form-group"><label class="form-label">Username</label><input class="form-input" id="lu" autocomplete="username"/></div>
+        <div class="form-group"><label class="form-label">Password</label><input class="form-input" id="lp" type="password" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()"/></div>
+        <button class="btn btn-lime btn-full" onclick="doLogin()">Sign In →</button>
+      </div>
     </div>
   </div>
-</div>
 
-<!-- ADMIN LOGIN -->
-<div class="page" id="page-adminlogin">
-  <div class="login-wrap">
-    <div class="login-box">
-      <div style="text-align:center;margin-bottom:20px">
-        <div style="font-size:2.5rem">🔐</div>
-        <h2 style="font-family:'Bebas Neue',sans-serif;font-size:1.8rem;letter-spacing:3px;margin-top:4px">ADMIN ACCESS</h2>
-        <p class="t3 ts">Tournament management portal</p>
+  <!-- PAGE: ADMIN -->
+  <div class="page" id="page-admin">
+    <div class="adm-tabs" id="adm-tabs">
+      <button class="atab active" data-sec="dash"    onclick="showAdmSec('dash',this)">📊 Dash</button>
+      <button class="atab" data-sec="noms"    onclick="showAdmSec('noms',this)">📋 Players <span id="sb-pend" style="background:var(--pink);color:#fff;border-radius:999px;padding:1px 6px;font-size:.62rem;margin-left:3px">0</span></button>
+      <button class="atab" data-sec="groups"  onclick="showAdmSec('groups',this)">👥 Groups</button>
+      <button class="atab" data-sec="sched"   onclick="showAdmSec('sched',this)">📅 Schedule</button>
+      <button class="atab" data-sec="results" onclick="showAdmSec('results',this)">✅ Results</button>
+      <button class="atab" data-sec="history" onclick="showAdmSec('history',this)">🗂 History</button>
+      <button class="atab" data-sec="settings" onclick="showAdmSec('settings',this)">⚙ Settings</button>
+      <button class="atab" onclick="doLogout()" style="color:var(--pink);margin-left:auto">Logout</button>
+    </div>
+
+    <!-- DASH -->
+    <div class="adm-sec active" id="asec-dash">
+      <div class="stat-row" id="adm-stats"></div>
+      <div class="card mb2">
+        <div class="card-head"><span class="card-ttl">Recent Registrations</span><button class="btn btn-ghost btn-xs" onclick="syncNow()">🔄 Sync</button></div>
+        <div id="dash-noms" style="overflow-x:auto"></div>
       </div>
-      <div class="lerr" id="lerr">Invalid username or password</div>
-      <div class="fg" style="margin-bottom:10px">
-        <label class="flbl">Username</label>
-        <input class="fi" id="lu" placeholder="Enter username" autocomplete="username"/>
+      <div class="card">
+        <div class="card-head"><span class="card-ttl">Upcoming Matches</span></div>
+        <div id="dash-matches" style="overflow-x:auto"></div>
       </div>
-      <div class="fg" style="margin-bottom:18px">
-        <label class="flbl">Password</label>
-        <input class="fi" id="lp" type="password" placeholder="Enter password" onkeydown="if(event.key==='Enter')doLogin()"/>
+    </div>
+
+    <!-- PLAYERS -->
+    <div class="adm-sec" id="asec-noms" style="display:none">
+      <div class="sec-row" style="margin-bottom:10px">
+        <div class="flex gap6 aic" style="flex-wrap:wrap;gap:6px">
+          <button class="btn btn-ghost btn-sm" onclick="exportCSV()">⬇ CSV</button>
+          <button class="btn btn-lime btn-sm" onclick="openAddModal()">+ Add</button>
+          <button class="btn btn-ghost btn-sm" onclick="syncFormData()">🔄 Sync Form</button>
+        </div>
       </div>
-      <button class="btn btn-lime w100" onclick="doLogin()">Sign In →</button>
-      <p class="t3 ts" style="text-align:center;margin-top:14px">← <a href="#" onclick="goPage('home')" style="color:var(--blue)">Back to site</a></p>
+      <div class="fpills">
+        <button class="fp active" onclick="fNoms('all',this)">All</button>
+        <button class="fp" onclick="fNoms('pending',this)">Pending</button>
+        <button class="fp" onclick="fNoms('approved',this)">Approved</button>
+        <button class="fp" onclick="fNoms('rejected',this)">Rejected</button>
+      </div>
+      <div class="tbl-scroll">
+        <table class="dtbl">
+          <thead><tr><th>#</th><th>CPF</th><th>Name</th><th>Age</th><th>Cat</th><th>Status</th><th>Actions</th></tr></thead>
+          <tbody id="nom-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- GROUPS -->
+    <div class="adm-sec" id="asec-groups" style="display:none">
+      <div class="sec-row" style="margin-bottom:10px">
+        <div class="flex gap6" style="flex-wrap:wrap">
+          <button class="btn btn-ghost btn-sm" onclick="autoAssign()">⚡ Auto</button>
+          <button class="btn btn-ghost btn-sm" onclick="addGroup()">+ Group</button>
+          <button class="btn btn-lime btn-sm" onclick="saveAndSync()">💾 Save</button>
+        </div>
+      </div>
+      <div class="cat-tabs" id="gb-tabs"></div>
+      <div id="gb-body"></div>
+    </div>
+
+    <!-- SCHEDULE -->
+    <div class="adm-sec" id="asec-sched" style="display:none">
+      <div class="sec-row" style="margin-bottom:10px">
+        <button class="btn btn-lime btn-sm" onclick="openMatchModal()">+ Match</button>
+      </div>
+      <div class="tbl-scroll">
+        <table class="dtbl">
+          <thead><tr><th>Cat</th><th>Group</th><th>P1</th><th>P2</th><th>Date</th><th>Time</th><th>Tbl</th><th></th></tr></thead>
+          <tbody id="sched-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- RESULTS -->
+    <div class="adm-sec" id="asec-results" style="display:none">
+      <div class="sec-row" style="margin-bottom:10px">
+        <button class="btn btn-pdf btn-sm" onclick="downloadPDF()">⬇ PDF</button>
+        <button class="btn btn-lime btn-sm" onclick="openResultModal()">+ Result</button>
+      </div>
+      <div class="tbl-scroll">
+        <table class="dtbl">
+          <thead><tr><th>Cat</th><th>Group</th><th>P1</th><th>Score</th><th>P2</th><th>Date</th><th></th></tr></thead>
+          <tbody id="res-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- HISTORY -->
+    <div class="adm-sec" id="asec-history" style="display:none">
+      <div class="al al-info mb2">Archive the current tournament to save it forever, then start a new one fresh.</div>
+      <div class="card mb2">
+        <div class="card-head"><span class="card-ttl">🟢 Active Tournament</span></div>
+        <div class="card-body" id="hist-active"></div>
+      </div>
+      <div class="card">
+        <div class="card-head"><span class="card-ttl">📦 Archived</span></div>
+        <div class="card-body" id="hist-list"></div>
+      </div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div class="adm-sec" id="asec-settings" style="display:none">
+      <!-- Script URL (most important) -->
+      <div class="card mb2">
+        <div class="card-head"><span class="card-ttl" style="color:var(--lime)">🔗 Google Apps Script URL</span></div>
+        <div class="card-body">
+          <div class="al al-warn">This is required for live sync across all devices. See setup guide below.</div>
+          <div class="af-group">
+            <label class="af-label">Script Web App URL</label>
+            <input class="af-input" id="s-url" placeholder="https://script.google.com/macros/s/.../exec"/>
+          </div>
+          <button class="btn btn-lime btn-sm" onclick="saveScriptURL()">💾 Save & Test Connection</button>
+          <div id="url-test-result" style="margin-top:8px"></div>
+        </div>
+      </div>
+      <!-- Tournament info -->
+      <div class="card mb2">
+        <div class="card-head"><span class="card-ttl">Tournament Info</span></div>
+        <div class="card-body">
+          <div class="af-group"><label class="af-label">Tournament Name</label><input class="af-input" id="s-name"/></div>
+          <div class="af-grid2">
+            <div class="af-group"><label class="af-label">Start Date</label><input class="af-input" id="s-start" type="date"/></div>
+            <div class="af-group"><label class="af-label">End Date</label><input class="af-input" id="s-end" type="date"/></div>
+          </div>
+          <div class="af-grid2">
+            <div class="af-group"><label class="af-label">Venue</label><input class="af-input" id="s-venue"/></div>
+            <div class="af-group"><label class="af-label">City</label><input class="af-input" id="s-city"/></div>
+          </div>
+          <div class="af-grid2">
+            <div class="af-group"><label class="af-label">Max / Group</label><input class="af-input" id="s-mpg" type="number" value="4"/></div>
+            <div class="af-group"><label class="af-label">Format</label>
+              <select class="af-select" id="s-fmt"><option>Best of 5</option><option>Best of 3</option><option>Best of 7</option></select>
+            </div>
+          </div>
+          <div class="af-group"><label class="af-label">Welcome Message</label><input class="af-input" id="s-msg"/></div>
+          <div class="af-group"><label class="af-label">Google Form URL (optional)</label><input class="af-input" id="s-gf" placeholder="https://forms.gle/..."/></div>
+          <button class="btn btn-lime btn-sm" onclick="saveSettings()">💾 Save Settings</button>
+        </div>
+      </div>
+      <!-- Danger -->
+      <div class="card">
+        <div class="card-head"><span class="card-ttl" style="color:var(--pink)">⚠ Danger Zone</span></div>
+        <div class="card-body">
+          <div class="flex gap6" style="flex-wrap:wrap">
+            <button class="btn btn-red btn-sm" onclick="doClear('matches')">🗑 Clear Matches</button>
+            <button class="btn btn-red btn-sm" onclick="doClear('groups')">🗑 Clear Groups</button>
+            <button class="btn btn-red btn-sm" onclick="archiveTournament()">📦 Archive & New</button>
+            <button class="btn btn-red btn-sm" onclick="doClear('all')">☠ Delete All</button>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
-</div>
 
-<!-- ADMIN PANEL -->
-<div class="page" id="page-admin">
-  <div class="adm-wrap">
-    <aside class="adm-side" id="adm-side">
-      <div class="flex aic jcb" style="margin-bottom:6px;padding:0 4px">
-        <span style="font-size:.75rem;color:var(--lime);font-weight:700">⚙ ADMIN</span>
-        <button class="btn btn-xs btn-ghost" onclick="doLogout()">Logout</button>
-      </div>
-      <div class="adm-side-ttl">Tournament</div>
-      <button class="sib active" data-sec="dash"     onclick="showSec('dash',this)"><span class="si-ic">📊</span>Dashboard</button>
-      <button class="sib"        data-sec="settings" onclick="showSec('settings',this)"><span class="si-ic">⚙️</span>Settings</button>
-      <button class="sib"        data-sec="tournaments" onclick="showSec('tournaments',this)"><span class="si-ic">🗂</span>All Tournaments</button>
-      <div class="adm-side-ttl">Players</div>
-      <button class="sib" data-sec="noms"   onclick="showSec('noms',this)"><span class="si-ic">📋</span>Registrations <span class="sbcnt" id="sb-pend">0</span></button>
-      <button class="sib" data-sec="groups" onclick="showSec('groups',this)"><span class="si-ic">👥</span>Groups & Draw</button>
-      <div class="adm-side-ttl">Matches</div>
-      <button class="sib" data-sec="sched"   onclick="showSec('sched',this)"><span class="si-ic">📅</span>Schedule</button>
-      <button class="sib" data-sec="results" onclick="showSec('results',this)"><span class="si-ic">✅</span>Enter Results</button>
-      <div style="margin-top:auto;padding-top:14px;border-top:1px solid var(--b1)">
-        <button class="sib" onclick="goPage('home')"><span class="si-ic">🌐</span>Public Site</button>
-      </div>
-    </aside>
-    <main class="adm-main">
+</div><!-- end main-area -->
 
-      <!-- DASH -->
-      <div class="asec active" id="asec-dash">
-        <h2 class="sec-ttl" style="margin-bottom:18px">DASHBOARD</h2>
-        <div class="sgrid" id="adm-stats"></div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:4px" id="adm-dash-grid">
-          <div class="card"><div class="ch"><span class="ct">Recent Registrations</span></div><div id="dash-regnoms" style="padding:0"></div></div>
-          <div class="card"><div class="ch"><span class="ct">Upcoming Matches</span></div><div id="dash-upcoming" style="padding:0"></div></div>
-        </div>
-      </div>
+<!-- BOTTOM NAV -->
+<nav class="bot-nav">
+  <button class="bnav-btn active" data-pg="home"     onclick="goPage('home',this)"><span class="ic">🏠</span>Home</button>
+  <button class="bnav-btn"        data-pg="register" onclick="goPage('register',this)"><span class="ic">📝</span>Register</button>
+  <button class="bnav-btn"        data-pg="groups"   onclick="goPage('groups',this)"><span class="ic">📊</span>Groups</button>
+  <button class="bnav-btn"        data-pg="results"  onclick="goPage('results',this)"><span class="ic">✅</span>Results</button>
+  <button class="bnav-btn"        data-pg="schedule" onclick="goPage('schedule',this)"><span class="ic">📅</span>Schedule</button>
+  <button class="bnav-btn"        data-pg="admin"    onclick="goAdmin()"><span class="ic">⚙️</span>Admin</button>
+</nav>
 
-      <!-- SETTINGS -->
-      <div class="asec" id="asec-settings">
-        <h2 class="sec-ttl" style="margin-bottom:18px">SETTINGS</h2>
-        <div class="card">
-          <div class="ch"><span class="ct">Tournament Info</span></div>
-          <div class="cb">
-            <div class="afg2">
-              <div class="afg full"><label class="afl">Tournament Name</label><input class="afi" id="s-name"/></div>
-              <div class="afg"><label class="afl">Start Date</label><input class="afi" id="s-start" type="date"/></div>
-              <div class="afg"><label class="afl">End Date</label><input class="afi" id="s-end" type="date"/></div>
-              <div class="afg"><label class="afl">Venue</label><input class="afi" id="s-venue" placeholder="Sports Hall"/></div>
-              <div class="afg"><label class="afl">City</label><input class="afi" id="s-city"/></div>
-              <div class="afg"><label class="afl">Organizer</label><input class="afi" id="s-org"/></div>
-              <div class="afg"><label class="afl">Contact Email</label><input class="afi" id="s-email" type="email"/></div>
-              <div class="afg"><label class="afl">Max Players / Group</label><input class="afi" id="s-mpg" type="number" value="4" min="2" max="10"/></div>
-              <div class="afg"><label class="afl">Format</label>
-                <select class="afs" id="s-fmt"><option>Best of 5</option><option>Best of 3</option><option>Best of 7</option></select>
-              </div>
-              <div class="afg full"><label class="afl">Homepage Welcome Message</label><input class="afi" id="s-msg"/></div>
-            </div>
-            <button class="btn btn-lime btn-sm" onclick="saveSettings()">💾 Save Settings</button>
-          </div>
-        </div>
-        <div class="card mt2">
-          <div class="ch"><span class="ct">Google Form Link (optional)</span></div>
-          <div class="cb">
-            <p class="t3 ts" style="margin-bottom:10px">If using a Google Form, paste the URL here — it appears as a link on the Registration page.</p>
-            <div class="afg1"><div class="afg"><label class="afl">Google Form URL</label><input class="afi" id="s-gf" placeholder="https://forms.gle/..."/></div></div>
-            <button class="btn btn-lime btn-sm" onclick="saveGF()">Save Link</button>
-          </div>
-        </div>
-        <div class="card mt2">
-          <div class="ch"><span class="ct" style="color:var(--pink)">⚠ Danger Zone</span></div>
-          <div class="cb">
-            <p class="t3 ts" style="margin-bottom:12px">Archive the current tournament to history and start fresh, or wipe selected data.</p>
-            <div class="flex gap8" style="flex-wrap:wrap">
-              <button class="btn btn-red btn-sm" onclick="doClear('matches')">🗑 Clear Matches</button>
-              <button class="btn btn-red btn-sm" onclick="doClear('groups')">🗑 Clear Groups</button>
-              <button class="btn btn-red btn-sm" onclick="archiveTournament()">📦 Archive & Start New</button>
-              <button class="btn btn-red btn-sm" onclick="doClear('all')">☠ Delete All Data</button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- TOURNAMENTS HISTORY -->
-      <div class="asec" id="asec-tournaments">
-        <div class="sec-head">
-          <h2 class="sec-ttl">ALL <em>TOURNAMENTS</em></h2>
-          <button class="btn btn-lime btn-sm" onclick="archiveTournament()">📦 Archive Current & New</button>
-        </div>
-        <div class="al al-info" style="margin-bottom:18px">📌 Archive the active tournament to save it permanently, then start fresh. You can view past tournaments and download their results as PDF at any time.</div>
-        <div class="card" style="margin-bottom:16px">
-          <div class="ch"><span class="ct">🟢 Active Tournament</span></div>
-          <div class="cb" id="t-active-card"></div>
-        </div>
-        <div class="card" id="t-archive-wrap">
-          <div class="ch">
-            <span class="ct">📦 Archived Tournaments</span>
-          </div>
-          <div class="cb" id="t-archive-list"></div>
-        </div>
-      </div>
-
-      <!-- NOMINATIONS -->
-      <div class="asec" id="asec-noms">
-        <div class="sec-head">
-          <h2 class="sec-ttl">REGISTRATIONS</h2>
-          <div class="flex gap8">
-            <button class="btn btn-ghost btn-sm" onclick="exportCSV()">⬇ Export CSV</button>
-            <button class="btn btn-lime btn-sm" onclick="openAddModal()">+ Add Player</button>
-          </div>
-        </div>
-        <div class="fprow">
-          <button class="fp active" onclick="filterNoms('all',this)">All</button>
-          <button class="fp" onclick="filterNoms('pending',this)">Pending</button>
-          <button class="fp" onclick="filterNoms('approved',this)">Approved</button>
-          <button class="fp" onclick="filterNoms('rejected',this)">Rejected</button>
-        </div>
-        <div class="card" style="overflow-x:auto">
-          <table class="dtbl">
-            <thead><tr><th>#</th><th>CPF</th><th>Name</th><th>Age</th><th>Gender</th><th>Category</th><th>Status</th><th>Actions</th></tr></thead>
-            <tbody id="nom-tbody"></tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- GROUPS -->
-      <div class="asec" id="asec-groups">
-        <div class="sec-head">
-          <h2 class="sec-ttl">GROUPS & <em>DRAW</em></h2>
-          <div class="flex gap8">
-            <button class="btn btn-ghost btn-sm" onclick="autoAssign()">⚡ Auto-Assign</button>
-            <button class="btn btn-lime btn-sm" onclick="saveGroups()">💾 Save</button>
-          </div>
-        </div>
-        <div class="al al-info">Drag players between groups. <strong>Auto-Assign</strong> distributes approved players by category automatically.</div>
-        <div class="cat-tabs" id="gb-cat-tabs" style="margin-bottom:16px"></div>
-        <div id="gb-body"></div>
-      </div>
-
-      <!-- SCHEDULE -->
-      <div class="asec" id="asec-sched">
-        <div class="sec-head">
-          <h2 class="sec-ttl">SCHEDULE</h2>
-          <button class="btn btn-lime btn-sm" onclick="openMatchModal()">+ Add Match</button>
-        </div>
-        <div class="card" style="overflow-x:auto">
-          <table class="dtbl">
-            <thead><tr><th>#</th><th>Category</th><th>Group</th><th>Player 1</th><th>Player 2</th><th>Date</th><th>Time</th><th>Table</th><th>Actions</th></tr></thead>
-            <tbody id="sched-tbody"></tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- RESULTS ADMIN -->
-      <div class="asec" id="asec-results">
-        <div class="sec-head">
-          <h2 class="sec-ttl">ENTER <em>RESULTS</em></h2>
-          <div class="flex gap8">
-            <button class="btn btn-pdf btn-sm" onclick="downloadResultsPDF()">⬇ PDF Report</button>
-            <button class="btn btn-lime btn-sm" onclick="openResultModal()">+ Add Result</button>
-          </div>
-        </div>
-        <div class="card" style="overflow-x:auto">
-          <table class="dtbl">
-            <thead><tr><th>#</th><th>Category</th><th>Group</th><th>Player 1</th><th>Score</th><th>Player 2</th><th>Sets</th><th>Date</th><th>Actions</th></tr></thead>
-            <tbody id="res-tbody"></tbody>
-          </table>
-        </div>
-      </div>
-
-    </main>
-  </div>
-</div>
-
-<!-- ══ MODALS ══ -->
+<!-- MODALS -->
 <!-- Add Player -->
-<div class="moverlay" id="m-addplayer">
-  <div class="mbox">
-    <h3 class="mtitle">➕ ADD PLAYER</h3>
-    <div class="afg2">
-      <div class="afg full"><label class="afl">CPF *</label><input class="afi mono" id="mp-cpf" maxlength="14" oninput="maskCPF(this)" placeholder="000.000.000-00"/></div>
-      <div class="afg full"><label class="afl">Full Name *</label><input class="afi" id="mp-name"/></div>
-      <div class="afg"><label class="afl">Age *</label><input class="afi" id="mp-age" type="number" min="5" max="100"/></div>
-      <div class="afg"><label class="afl">Gender *</label>
-        <select class="afs" id="mp-gender"><option value="">—</option><option>Male</option><option>Female</option></select>
-      </div>
-      <div class="afg"><label class="afl">Status</label>
-        <select class="afs" id="mp-status"><option value="approved">Approved</option><option value="pending">Pending</option></select>
+<div class="mo" id="m-addplayer">
+  <div class="mo-box">
+    <div class="mo-handle"></div>
+    <div class="mo-title">➕ ADD PLAYER</div>
+    <div class="af-group"><label class="af-label">CPF *</label><input class="af-input mono" id="mp-cpf" maxlength="14" inputmode="numeric" oninput="maskCPF(this)" placeholder="000.000.000-00"/></div>
+    <div class="af-group"><label class="af-label">Full Name *</label><input class="af-input" id="mp-name"/></div>
+    <div class="af-grid2">
+      <div class="af-group"><label class="af-label">Age *</label><input class="af-input" id="mp-age" type="number" inputmode="numeric"/></div>
+      <div class="af-group"><label class="af-label">Gender *</label>
+        <select class="af-select" id="mp-gender"><option value="">—</option><option>Male</option><option>Female</option></select>
       </div>
     </div>
-    <div class="mfooter">
+    <div class="af-group"><label class="af-label">Status</label>
+      <select class="af-select" id="mp-status"><option value="approved">Approved</option><option value="pending">Pending</option></select>
+    </div>
+    <div class="mo-footer">
       <button class="btn btn-ghost btn-sm" onclick="closeM('m-addplayer')">Cancel</button>
       <button class="btn btn-lime btn-sm" onclick="saveAddPlayer()">Add Player</button>
     </div>
@@ -626,267 +576,308 @@ body::before{content:'';position:fixed;top:0;left:0;right:0;bottom:0;background:
 </div>
 
 <!-- Match Modal -->
-<div class="moverlay" id="m-match">
-  <div class="mbox">
-    <h3 class="mtitle" id="mm-ttl">📅 ADD MATCH</h3>
+<div class="mo" id="m-match">
+  <div class="mo-box">
+    <div class="mo-handle"></div>
+    <div class="mo-title" id="mm-ttl">📅 ADD MATCH</div>
     <input type="hidden" id="mm-eid"/>
-    <div class="afg2">
-      <div class="afg"><label class="afl">Category *</label>
-        <select class="afs" id="mm-cat" onchange="populateMMGroups()">
-          <option value="M45">♂ Men Under 45</option>
-          <option value="M45P">♂ Men 45+</option>
-          <option value="F45">♀ Women Under 45</option>
-          <option value="F45P">♀ Women 45+</option>
-        </select>
-      </div>
-      <div class="afg"><label class="afl">Group *</label><select class="afs" id="mm-grp" onchange="populateMMP()"></select></div>
-      <div class="afg"><label class="afl">Player 1 *</label><select class="afs" id="mm-p1"></select></div>
-      <div class="afg"><label class="afl">Player 2 *</label><select class="afs" id="mm-p2"></select></div>
-      <div class="afg"><label class="afl">Date</label><input class="afi" id="mm-date" type="date"/></div>
-      <div class="afg"><label class="afl">Time</label><input class="afi" id="mm-time" type="time"/></div>
-      <div class="afg full"><label class="afl">Table No.</label><input class="afi" id="mm-tbl" placeholder="e.g. T1"/></div>
+    <div class="af-group"><label class="af-label">Category</label>
+      <select class="af-select" id="mm-cat" onchange="populateMM()">
+        <option value="M45">♂ Men Under 45</option><option value="M45P">♂ Men 45+</option>
+        <option value="F45">♀ Women Under 45</option><option value="F45P">♀ Women 45+</option>
+      </select>
     </div>
-    <div class="mfooter">
+    <div class="af-group"><label class="af-label">Group</label><select class="af-select" id="mm-grp" onchange="populateMMP()"></select></div>
+    <div class="af-grid2">
+      <div class="af-group"><label class="af-label">Player 1</label><select class="af-select" id="mm-p1"></select></div>
+      <div class="af-group"><label class="af-label">Player 2</label><select class="af-select" id="mm-p2"></select></div>
+    </div>
+    <div class="af-grid2">
+      <div class="af-group"><label class="af-label">Date</label><input class="af-input" id="mm-date" type="date"/></div>
+      <div class="af-group"><label class="af-label">Time</label><input class="af-input" id="mm-time" type="time"/></div>
+    </div>
+    <div class="af-group"><label class="af-label">Table</label><input class="af-input" id="mm-tbl" placeholder="T1"/></div>
+    <div class="mo-footer">
       <button class="btn btn-ghost btn-sm" onclick="closeM('m-match')">Cancel</button>
-      <button class="btn btn-lime btn-sm" onclick="saveMatch()">Save Match</button>
+      <button class="btn btn-lime btn-sm" onclick="saveMatch()">Save</button>
     </div>
   </div>
 </div>
 
 <!-- Result Modal -->
-<div class="moverlay" id="m-result">
-  <div class="mbox">
-    <h3 class="mtitle" id="mr-ttl">✅ ENTER RESULT</h3>
+<div class="mo" id="m-result">
+  <div class="mo-box">
+    <div class="mo-handle"></div>
+    <div class="mo-title" id="mr-ttl">✅ ENTER RESULT</div>
     <input type="hidden" id="mr-eid"/>
-    <div class="afg2">
-      <div class="afg"><label class="afl">Category *</label>
-        <select class="afs" id="mr-cat" onchange="populateMRGroups()">
-          <option value="M45">♂ Men Under 45</option>
-          <option value="M45P">♂ Men 45+</option>
-          <option value="F45">♀ Women Under 45</option>
-          <option value="F45P">♀ Women 45+</option>
-        </select>
-      </div>
-      <div class="afg"><label class="afl">Group *</label><select class="afs" id="mr-grp" onchange="populateMRP()"></select></div>
-      <div class="afg"><label class="afl">Player 1 (Winner) *</label><select class="afs" id="mr-p1"></select></div>
-      <div class="afg"><label class="afl">Player 2 *</label><select class="afs" id="mr-p2"></select></div>
-      <div class="afg"><label class="afl">Score (e.g. 3-1) *</label><input class="afi mono" id="mr-score" placeholder="3-1"/></div>
-      <div class="afg"><label class="afl">Sets (e.g. 11-8,9-11,11-6,11-9)</label><input class="afi mono" id="mr-sets" placeholder="11-8,9-11,11-6,11-9"/></div>
-      <div class="afg"><label class="afl">Date</label><input class="afi" id="mr-date" type="date"/></div>
+    <div class="af-group"><label class="af-label">Category</label>
+      <select class="af-select" id="mr-cat" onchange="populateMRG()">
+        <option value="M45">♂ Men Under 45</option><option value="M45P">♂ Men 45+</option>
+        <option value="F45">♀ Women Under 45</option><option value="F45P">♀ Women 45+</option>
+      </select>
     </div>
-    <div class="mfooter">
+    <div class="af-group"><label class="af-label">Group</label><select class="af-select" id="mr-grp" onchange="populateMRP()"></select></div>
+    <div class="af-grid2">
+      <div class="af-group"><label class="af-label">Winner (P1)</label><select class="af-select" id="mr-p1"></select></div>
+      <div class="af-group"><label class="af-label">Player 2</label><select class="af-select" id="mr-p2"></select></div>
+    </div>
+    <div class="af-grid2">
+      <div class="af-group"><label class="af-label">Score (e.g. 3-1)</label><input class="af-input mono" id="mr-score" placeholder="3-1"/></div>
+      <div class="af-group"><label class="af-label">Date</label><input class="af-input" id="mr-date" type="date"/></div>
+    </div>
+    <div class="af-group"><label class="af-label">Sets (e.g. 11-8,9-11,11-6)</label><input class="af-input mono" id="mr-sets" placeholder="11-8,9-11,11-6,11-9"/></div>
+    <div class="mo-footer">
       <button class="btn btn-ghost btn-sm" onclick="closeM('m-result')">Cancel</button>
-      <button class="btn btn-lime btn-sm" onclick="saveResult()">Save Result</button>
+      <button class="btn btn-lime btn-sm" onclick="saveResult()">Save</button>
     </div>
   </div>
 </div>
 
 <!-- Confirm -->
-<div class="moverlay" id="m-confirm">
-  <div class="mbox" style="max-width:380px">
-    <h3 class="mtitle" id="mc-ttl">Confirm</h3>
-    <p id="mc-msg" style="color:var(--t2);margin-bottom:8px"></p>
-    <div class="mfooter">
+<div class="mo" id="m-confirm">
+  <div class="mo-box">
+    <div class="mo-handle"></div>
+    <div class="mo-title" id="mc-ttl">Confirm</div>
+    <p id="mc-msg" style="color:var(--t2);font-size:.88rem;line-height:1.6"></p>
+    <div class="mo-footer">
       <button class="btn btn-ghost btn-sm" onclick="closeM('m-confirm')">Cancel</button>
       <button class="btn btn-red btn-sm" id="mc-ok">Confirm</button>
     </div>
   </div>
 </div>
 
+<div id="toast"></div>
+
 <script>
-// ════════════════════════════════════════
-// CONSTANTS
-// ════════════════════════════════════════
-const AU='alok', AP='alok', SK='tt_v3_portal';
+// ═══════════════════════════════════════════
+// CONSTANTS & CONFIG
+// ═══════════════════════════════════════════
+const AU='alok', AP='alok';
+const SK='tt_v5';
+const ARCH_KEY='tt_v5_arch';
 
-const CATS = {
-  M45:  { label:'♂ Men Under 45',  css:'cat-m45',  color:'#3d9eff' },
-  M45P: { label:'♂ Men 45+',       css:'cat-m45p', color:'#a78bfa' },
-  F45:  { label:'♀ Women Under 45', css:'cat-f45',  color:'#ff3d7f' },
-  F45P: { label:'♀ Women 45+',     css:'cat-f45p', color:'#ffcc3d' },
+const CATS={
+  M45: {label:'♂ Men U45',   full:'Men Under 45',   css:'chip-m',  color:[77,166,255]},
+  M45P:{label:'♂ Men 45+',   full:'Men 45+',         css:'chip-mp', color:[167,139,250]},
+  F45: {label:'♀ Women U45', full:'Women Under 45',  css:'chip-f',  color:[255,61,127]},
+  F45P:{label:'♀ Women 45+', full:'Women 45+',        css:'chip-fp', color:[255,204,60]},
 };
+const GCOLS=['#4da6ff','#2de8c4','#b8ff3c','#ff3d7f','#a78bfa','#ffcc3c','#fb923c','#34d399'];
+const gc=i=>GCOLS[i%GCOLS.length];
 
-const GCOLS = ['#3d9eff','#2ee8c4','#c6ff47','#ff3d7f','#a78bfa','#ffcc3d','#fb923c','#34d399'];
-function gcol(i){ return GCOLS[i%GCOLS.length]; }
+function catOf(gender,age){
+  const m=(gender||'').toLowerCase().startsWith('m');
+  return m?(age>=45?'M45P':'M45'):(age>=45?'F45P':'F45');
+}
 
-function catOf(gender, age){
-  const g = (gender||'').toLowerCase();
-  const a = parseInt(age)||0;
-  if(g==='male'||g==='m'){
-    return a>=45 ? 'M45P' : 'M45';
-  } else {
-    return a>=45 ? 'F45P' : 'F45';
+// ═══════════════════════════════════════════
+// DATA
+// ═══════════════════════════════════════════
+function freshDB(){
+  return {
+    settings:{name:'Table Tennis Tournament 2025',startDate:'',endDate:'',venue:'',city:'',mpg:4,fmt:'Best of 5',msg:'',gf:'',scriptURL:''},
+    noms:[],groups:{M45:{},M45P:{},F45:{},F45P:{}},
+    schedule:[],results:[],nid:1
+  };
+}
+function loadDB(){try{return JSON.parse(localStorage.getItem(SK))||freshDB();}catch(e){return freshDB();}}
+function saveLocal(d){localStorage.setItem(SK,JSON.stringify(d));}
+function loadArch(){try{return JSON.parse(localStorage.getItem(ARCH_KEY))||[];}catch(e){return [];}}
+function saveArch(a){localStorage.setItem(ARCH_KEY,JSON.stringify(a));}
+
+let DB=loadDB();
+
+// ═══════════════════════════════════════════
+// SYNC WITH GOOGLE SHEETS
+// ═══════════════════════════════════════════
+let syncing=false;
+
+async function syncNow(silent){
+  if(syncing) return;
+  const url=DB.settings.scriptURL;
+  if(!url){
+    if(!silent) toast('⚠ Set Script URL in Admin → Settings first','w');
+    document.getElementById('setup-notice').style.display='block';
+    return;
+  }
+  syncing=true;
+  setSyncState('loading','Syncing…');
+  try{
+    // Pull latest from server
+    const res=await fetch(url+'?action=get',{method:'GET'});
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    const remote=await res.json();
+    if(remote.error) throw new Error(remote.error);
+
+    // Merge: server is source of truth, preserve local scriptURL
+    remote.settings.scriptURL=url;
+    DB=remote;
+    saveLocal(DB);
+    setSyncState('ok','Live');
+    document.getElementById('setup-notice').style.display='none';
+    if(!silent) toast('✅ Synced!');
+    refreshCurrentPage();
+    updateHeader();
+  }catch(err){
+    setSyncState('err','Offline');
+    if(!silent) toast('Sync failed: '+err.message,'e');
+  }
+  syncing=false;
+}
+
+async function pushDB(){
+  const url=DB.settings.scriptURL;
+  if(!url) return;
+  try{
+    await fetch(url,{method:'POST',body:JSON.stringify(DB),headers:{'Content-Type':'application/json'}});
+    setSyncState('ok','Saved');
+  }catch(e){
+    setSyncState('err','Save failed');
+    toast('Could not save to server','e');
   }
 }
 
-// ════════════════════════════════════════
-// DATA
-// ════════════════════════════════════════
-function loadDB(){ try{ return JSON.parse(localStorage.getItem(SK))||freshDB(); }catch(e){ return freshDB(); } }
-function saveDB(d){ localStorage.setItem(SK,JSON.stringify(d)); }
-function freshDB(){
-  return {
-    settings:{ name:'Table Tennis Championship 2025', startDate:'', endDate:'', venue:'', city:'', org:'', email:'', mpg:4, fmt:'Best of 5', msg:'', gf:'' },
-    noms:[], // {id,cpf,name,age,gender,cat,status,ts}
-    groups:{ M45:{}, M45P:{}, F45:{}, F45P:{} }, // {cat:{GroupA:[names...]}}
-    schedule:[], results:[], nid:1
-  };
+async function syncFormData(){
+  const url=DB.settings.scriptURL;
+  if(!url){toast('Set Script URL first','e');return;}
+  setSyncState('loading','Syncing form…');
+  try{
+    const res=await fetch(url+'?action=syncForm');
+    const data=await res.json();
+    if(!data.ok) throw new Error(data.msg||'Sync failed');
+    toast(`✅ Synced ${data.synced} new players from form`);
+    await syncNow(true);
+  }catch(e){
+    setSyncState('err','Failed');
+    toast('Form sync failed: '+e.message,'e');
+  }
 }
-function uid(){ const d=loadDB(); const id=d.nid||1; d.nid=id+1; saveDB(d); return id; }
-let DB = loadDB();
 
-// ════════════════════════════════════════
+function setSyncState(state,lbl){
+  const dot=document.getElementById('sync-dot');
+  const l=document.getElementById('sync-lbl');
+  dot.className='sync-dot'+(state==='err'?' err':state==='loading'?' loading':'');
+  l.textContent=lbl;
+}
+
+async function saveAndSync(){
+  saveLocal(DB);
+  await pushDB();
+  toast('💾 Saved!');
+}
+
+// ═══════════════════════════════════════════
 // NAVIGATION
-// ════════════════════════════════════════
-let curAdmSec = 'dash';
+// ═══════════════════════════════════════════
+let curPage='home', curAdmSec='dash';
+let pubGrpCat='M45', pubResCat='M45', pubResGrp='All', pubSchCat='ALL', gbCat='M45';
 
-function goPage(pg, btn){
+function goPage(pg,btn){
   DB=loadDB();
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  document.querySelectorAll('.hn[data-pg]').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.bnav-btn').forEach(b=>b.classList.remove('active'));
+  curPage=pg;
+  // scroll top
+  document.getElementById('main-area').scrollTop=0;
+
+  if(pg==='admin'){
+    if(sessionStorage.getItem('adm')==='1'){
+      document.getElementById('page-admin').classList.add('active');
+      if(btn){ btn.classList.add('active'); document.querySelector('.bnav-btn[data-pg="admin"]').classList.add('active'); }
+      renderAdmSec(curAdmSec); updateSBC();
+    } else {
+      document.getElementById('page-login').classList.add('active');
+    }
+    return;
+  }
   document.getElementById('page-'+pg).classList.add('active');
   if(btn) btn.classList.add('active');
-  else { const b=document.querySelector(`.hn[data-pg="${pg}"]`); if(b) b.classList.add('active'); }
+  else { const b=document.querySelector(`.bnav-btn[data-pg="${pg}"]`); if(b) b.classList.add('active'); }
   updateHeader();
-  if(pg==='home')     renderHome();
+  if(pg==='home') renderHome();
   if(pg==='register') renderRegPage();
-  if(pg==='groups')   renderPubGroups();
-  if(pg==='results')  renderPubResults();
+  if(pg==='groups') renderPubGroups();
+  if(pg==='results'){pubResGrp='All';renderPubResults();}
   if(pg==='schedule') renderPubSchedule();
-  document.getElementById('adm-side').classList.remove('open');
 }
 
-function gotoAdmin(){
-  DB=loadDB();
-  if(sessionStorage.getItem('adm')==='1'){ showAdmin(); }
-  else { showLoginPage(); }
-}
-function showLoginPage(){
-  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  document.getElementById('page-adminlogin').classList.add('active');
-}
-function showAdmin(){
-  DB=loadDB();
-  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  document.getElementById('page-admin').classList.add('active');
-  updateHeader(); renderAdmSec(curAdmSec); updateSBC();
-}
-function showSec(s,btn){
+function goAdmin(){ goPage('admin', document.querySelector('.bnav-btn[data-pg="admin"]')); }
+
+function showAdmSec(s,btn){
   curAdmSec=s;
-  document.querySelectorAll('.asec').forEach(x=>x.classList.remove('active'));
-  document.querySelectorAll('.sib').forEach(b=>b.classList.remove('active'));
-  document.getElementById('asec-'+s).classList.add('active');
+  DB=loadDB();
+  document.querySelectorAll('.adm-sec').forEach(x=>x.style.display='none');
+  document.querySelectorAll('.atab[data-sec]').forEach(b=>b.classList.remove('active'));
+  document.getElementById('asec-'+s).style.display='block';
   if(btn) btn.classList.add('active');
   renderAdmSec(s);
 }
+
 function renderAdmSec(s){
   DB=loadDB();
   if(s==='dash')    renderDash();
-  if(s==='settings') loadSettingsForm();
-  if(s==='noms')    renderNomTable('all');
+  if(s==='noms')    renderNomTable();
   if(s==='groups')  renderGroupBuilder();
   if(s==='sched')   renderAdmSched();
   if(s==='results') renderAdmResults();
-  if(s==='tournaments') renderTournamentsSection();
+  if(s==='history') renderHistory();
+  if(s==='settings') loadSettings();
 }
 
-// ════════════════════════════════════════
+function refreshCurrentPage(){
+  if(curPage==='home') renderHome();
+  if(curPage==='groups') renderPubGroups();
+  if(curPage==='results') renderPubResults();
+  if(curPage==='schedule') renderPubSchedule();
+  if(curPage==='admin') renderAdmSec(curAdmSec);
+}
+
+// ═══════════════════════════════════════════
 // AUTH
-// ════════════════════════════════════════
+// ═══════════════════════════════════════════
 function doLogin(){
   const u=document.getElementById('lu').value.trim();
   const p=document.getElementById('lp').value;
-  if(u===AU&&p===AP){ sessionStorage.setItem('adm','1'); document.getElementById('lerr').style.display='none'; document.getElementById('lu').value=''; document.getElementById('lp').value=''; showAdmin(); }
-  else { document.getElementById('lerr').style.display='flex'; }
+  if(u===AU&&p===AP){
+    sessionStorage.setItem('adm','1');
+    document.getElementById('lerr').style.display='none';
+    document.getElementById('lu').value=''; document.getElementById('lp').value='';
+    goAdmin();
+  } else {
+    document.getElementById('lerr').style.display='flex';
+  }
 }
-function doLogout(){ sessionStorage.removeItem('adm'); goPage('home'); }
+function doLogout(){ sessionStorage.removeItem('adm'); goPage('home',document.querySelector('.bnav-btn[data-pg="home"]')); }
 
-// ════════════════════════════════════════
+// ═══════════════════════════════════════════
 // HEADER
-// ════════════════════════════════════════
+// ═══════════════════════════════════════════
 function updateHeader(){
-  const n=DB.settings.name||'TT Tournament Portal';
-  const el=document.getElementById('hdr-name'); if(el) el.textContent=n;
-  document.title=n+' | Portal';
+  document.getElementById('hdr-name').textContent=DB.settings.name||'Tournament Portal';
+  document.title=(DB.settings.name||'TT Tournament');
 }
 
-// ════════════════════════════════════════
-// CPF MASK
-// ════════════════════════════════════════
+// ═══════════════════════════════════════════
+// CPF
+// ═══════════════════════════════════════════
 function maskCPF(el){
   let v=el.value.replace(/\D/g,'').substring(0,11);
-  if(v.length>9) v=v.replace(/(\d{3})(\d{3})(\d{3})(\d{0,2})/,'$1.$2.$3-$4');
+  if(v.length>9)      v=v.replace(/(\d{3})(\d{3})(\d{3})(\d{0,2})/,'$1.$2.$3-$4');
   else if(v.length>6) v=v.replace(/(\d{3})(\d{3})(\d{0,3})/,'$1.$2.$3');
   else if(v.length>3) v=v.replace(/(\d{3})(\d{0,3})/,'$1.$2');
   el.value=v;
 }
-function validateCPF(cpf){
-  const c=cpf.replace(/\D/g,'');
-  return c.length===11;
-}
-function cleanCPF(cpf){ return cpf.replace(/\D/g,''); }
+function cleanCPF(c){ return c.replace(/\D/g,''); }
+function validCPF(c){ return cleanCPF(c).length===11; }
 
-// ════════════════════════════════════════
-// HOME
-// ════════════════════════════════════════
-function renderHome(){
-  const s=DB.settings;
-  document.getElementById('h-title').innerHTML=(s.name?`<b>${s.name.toUpperCase()}</b>`:'TABLE TENNIS<br/><b>TOURNAMENT</b>');
-  document.getElementById('h-sub').textContent=s.msg||'Compete in your category. Register now to join.';
-  const approved=DB.noms.filter(n=>n.status==='approved');
-  const allGrpKeys=Object.values(DB.groups).flatMap(cg=>Object.keys(cg));
-  document.getElementById('kpi-p').textContent=approved.length;
-  document.getElementById('kpi-g').textContent=allGrpKeys.length;
-  document.getElementById('kpi-m').textContent=DB.results.length;
-  document.getElementById('kpi-v').textContent=(s.venue||'—').substring(0,8);
-  const hs=document.getElementById('home-standings');
-  const hasCats=Object.values(DB.groups).some(cg=>Object.keys(cg).length>0);
-  if(!hasCats){ hs.innerHTML='<div class="empty"><span class="ei">🏓</span><p>Standings will appear once groups are published.</p></div>'; return; }
-  hs.innerHTML=Object.entries(CATS).map(([catKey,catInfo])=>{
-    const cg=DB.groups[catKey]||{};
-    if(!Object.keys(cg).length) return '';
-    return `<div style="margin-bottom:28px">
-      <div class="flex aic gap8 mb2" style="margin-bottom:12px">
-        <span class="catbadge ${catInfo.css}">${catInfo.label}</span>
-      </div>
-      <div class="ggrid">${Object.keys(cg).map((g,i)=>renderGCard(catKey,g,i)).join('')}</div>
-    </div>`;
-  }).join('');
-}
-
-function renderGCard(catKey, grpName, idx){
-  const color=gcol(idx);
-  const rows=computeStandings(catKey,grpName);
-  const recentMatches=DB.results.filter(r=>r.cat===catKey&&r.grp===grpName).slice(-3).reverse();
-  return `<div class="gcard">
-    <div class="gh" style="color:${color}">
-      <span class="gn">🏓 ${grpName}</span>
-      <span class="gc">${(DB.groups[catKey][grpName]||[]).length} Players</span>
-    </div>
-    <table class="tbl">
-      <thead><tr><th>#</th><th>Player</th><th>MP</th><th>W</th><th>L</th><th>SW</th><th>SL</th><th>Pts</th></tr></thead>
-      <tbody>${rows.map((p,i)=>`<tr class="${i<2?'q':''}">
-        <td>${rb(i)}</td>
-        <td><strong>${p.name}</strong>${i<2?` <span style="color:${color};font-size:.68rem;font-weight:700">✓Q</span>`:''}</td>
-        <td class="mono">${p.mp}</td>
-        <td><span class="tag tw">${p.w}</span></td>
-        <td><span class="tag tl">${p.l}</span></td>
-        <td class="mono">${p.sw}</td><td class="mono">${p.sl}</td>
-        <td><strong style="color:${color}">${p.pts}</strong></td>
-      </tr>`).join('')}</tbody>
-    </table>
-    ${recentMatches.length?`<div class="mlist">${recentMatches.map(r=>{const[w,l]=(r.score||'0-0').split('-').map(Number);const p1w=w>l;return`<div class="mrow"><span class="mp">${r.p1}</span><div class="msc"><span class="ms ${p1w?'w':'l'}">${w}</span><span class="mvs">–</span><span class="ms ${p1w?'l':'w'}">${l}</span></div><span class="mp r">${r.p2}</span></div>`}).join('')}</div>`:''}
-  </div>`;
-}
-
-// ════════════════════════════════════════
+// ═══════════════════════════════════════════
 // STANDINGS ENGINE
-// ════════════════════════════════════════
-function computeStandings(catKey, grpName){
-  const players=(DB.groups[catKey]||{})[grpName]||[];
+// ═══════════════════════════════════════════
+function standings(catKey,grp){
+  const players=((DB.groups[catKey]||{})[grp]||[]);
   const s={};
   players.forEach(p=>{s[p]={name:p,mp:0,w:0,l:0,sw:0,sl:0,pts:0};});
-  DB.results.filter(r=>r.cat===catKey&&r.grp===grpName).forEach(r=>{
+  DB.results.filter(r=>r.cat===catKey&&r.grp===grp).forEach(r=>{
     const[w,l]=(r.score||'0-0').split('-').map(Number);
     if(isNaN(w)||isNaN(l)) return;
     const wn=w>l?r.p1:r.p2, ln=w>l?r.p2:r.p1;
@@ -895,247 +886,242 @@ function computeStandings(catKey, grpName){
   });
   return Object.values(s).sort((a,b)=>b.pts-a.pts||(b.sw-b.sl)-(a.sw-a.sl));
 }
-function rb(i){ const c=['r1','r2','r3'][i]||'rn'; return `<span class="rb ${c}">${i+1}</span>`; }
+function rb(i){ const c=i===0?'r1':i===1?'r2':'rn'; return `<span class="rb ${c}">${i+1}</span>`; }
 
-// ════════════════════════════════════════
-// REGISTER PAGE
-// ════════════════════════════════════════
+// ═══════════════════════════════════════════
+// HOME
+// ═══════════════════════════════════════════
+function renderHome(){
+  const s=DB.settings;
+  document.getElementById('h-title').innerHTML=`🏓 <b>${(s.name||'TOURNAMENT').toUpperCase()}</b>`;
+  document.getElementById('h-sub').textContent=s.msg||'Compete in your category';
+  const ap=DB.noms.filter(n=>n.status==='approved').length;
+  const gg=Object.values(DB.groups).flatMap(cg=>Object.keys(cg)).length;
+  document.getElementById('kp').textContent=ap;
+  document.getElementById('kg').textContent=gg;
+  document.getElementById('km').textContent=DB.results.length;
+  document.getElementById('ks').textContent=(s.venue||'—').substring(0,6);
+  const hasCats=Object.values(DB.groups).some(cg=>Object.keys(cg).length>0);
+  const el=document.getElementById('home-grps');
+  if(!hasCats){el.innerHTML='<div class="empty"><span class="ei">🏓</span><p>Groups will appear once the draw is published.</p></div>';return;}
+  el.innerHTML=Object.entries(CATS).map(([ck,ci])=>{
+    const cg=DB.groups[ck]||{};
+    if(!Object.keys(cg).length) return '';
+    return Object.keys(cg).map((g,i)=>renderGCard(ck,g,i)).join('');
+  }).join('');
+}
+
+function renderGCard(ck,grp,idx){
+  const color=gc(idx);
+  const rows=standings(ck,grp);
+  const recentM=DB.results.filter(r=>r.cat===ck&&r.grp===grp).slice(-2).reverse();
+  return `<div class="gcard">
+    <div class="gcard-head" style="color:${color}">
+      <span class="gcard-name">🏓 ${grp}</span>
+      <span class="gcard-cnt">${(DB.groups[ck][grp]||[]).length}p · ${CATS[ck].label}</span>
+    </div>
+    <div style="overflow-x:auto">
+    <table class="tbl">
+      <thead><tr><th>#</th><th>Player</th><th>MP</th><th>W</th><th>L</th><th>Pts</th></tr></thead>
+      <tbody>${rows.map((p,i)=>`<tr class="${i<2?'q':''}">
+        <td>${rb(i)}</td>
+        <td><strong class="truncate" style="max-width:120px;display:block">${p.name}</strong></td>
+        <td class="mono">${p.mp}</td>
+        <td><span class="tag tw">${p.w}</span></td>
+        <td><span class="tag tl">${p.l}</span></td>
+        <td><strong style="color:${color}">${p.pts}</strong></td>
+      </tr>`).join('')}</tbody>
+    </table>
+    </div>
+    ${recentM.length?`<div style="padding:8px 10px 10px;border-top:1px solid var(--b1)">${recentM.map(r=>{const[w,l]=(r.score||'0-0').split('-').map(Number);const pw=w>l;return`<div class="mrow" style="margin-bottom:4px"><span class="mp truncate" style="max-width:90px">${r.p1}</span><div class="ms-wrap"><span class="ms ${pw?'w':'l'}">${w}</span><span class="mvs">–</span><span class="ms ${pw?'l':'w'}">${l}</span></div><span class="mp r truncate" style="max-width:90px">${r.p2}</span></div>`}).join('')}</div>`:''}
+  </div>`;
+}
+
+// ═══════════════════════════════════════════
+// REGISTER
+// ═══════════════════════════════════════════
 function renderRegPage(){
   const gf=DB.settings.gf;
   const b=document.getElementById('gform-banner');
-  b.style.display=gf?'block':'none';
-  if(gf) b.innerHTML=`<div class="al al-info">📋 You can also register via our <a href="${gf}" target="_blank" style="color:var(--lime);font-weight:700">Google Form</a>, or fill in below.</div>`;
-  document.getElementById('nom-form').style.display='block';
-  document.getElementById('nom-ok').style.display='none';
-  document.getElementById('reg-count').textContent=`${DB.noms.filter(n=>n.status==='approved').length} players registered`;
-  // Live category detection
-  ['n-age','n-gender'].forEach(id=>{
-    document.getElementById(id).oninput=updateCatPreview;
-    document.getElementById(id).onchange=updateCatPreview;
-  });
+  if(gf){ b.style.display='block'; b.innerHTML=`<div class="al al-info">📋 Also register via <a href="${gf}" target="_blank" style="color:var(--lime);font-weight:700">Google Form</a></div>`; }
+  else b.style.display='none';
+  document.getElementById('reg-form').style.display='block';
+  document.getElementById('reg-ok').style.display='none';
+  document.getElementById('reg-count').textContent=`${DB.noms.filter(n=>n.status==='approved').length} players approved`;
 }
 function updateCatPreview(){
-  const age=document.getElementById('n-age').value;
+  const age=parseInt(document.getElementById('n-age').value)||0;
   const gender=document.getElementById('n-gender').value;
-  const disp=document.getElementById('n-cat-display');
-  const badge=document.getElementById('n-cat-badge');
-  if(age&&gender){
-    const ck=catOf(gender,age);
-    const ci=CATS[ck];
-    badge.innerHTML=`<span class="catbadge ${ci.css}">${ci.label}</span>`;
-    disp.style.display='block';
-  } else { disp.style.display='none'; }
+  const el=document.getElementById('cat-preview');
+  if(age&&gender){ const ck=catOf(gender,age); const ci=CATS[ck]; document.getElementById('cat-badge').innerHTML=`<span class="chip ${ci.css}">${ci.label}</span>`; el.style.display='block'; }
+  else el.style.display='none';
 }
-
-function submitReg(){
+async function submitReg(){
+  DB=loadDB();
   const cpf=document.getElementById('n-cpf').value.trim();
   const name=document.getElementById('n-name').value.trim();
-  const age=document.getElementById('n-age').value.trim();
+  const age=parseInt(document.getElementById('n-age').value)||0;
   const gender=document.getElementById('n-gender').value;
-  const al=document.getElementById('nom-al');
-  const showErr=(m)=>{ al.className='al al-err'; al.textContent=m; al.style.display='flex'; };
-  if(!cpf||!name||!age||!gender){ showErr('Please fill all required fields: CPF, Name, Age, Gender.'); return; }
-  if(!validateCPF(cpf)){ showErr('CPF must be 11 digits (format: 000.000.000-00).'); return; }
-  const cleanC=cleanCPF(cpf);
-  if(DB.noms.find(n=>cleanCPF(n.cpf)===cleanC)){ showErr('A player with this CPF is already registered.'); return; }
-  const ageN=parseInt(age);
-  if(ageN<5||ageN>100){ showErr('Please enter a valid age.'); return; }
+  const al=document.getElementById('reg-al');
+  const err=m=>{ al.className='al al-err'; al.innerHTML=m; al.style.display='flex'; };
+  if(!cpf||!name||!age||!gender){err('Please fill all required fields.');return;}
+  if(!validCPF(cpf)){err('CPF must be 11 digits.');return;}
+  const cc=cleanCPF(cpf);
+  if(DB.noms.find(n=>cleanCPF(n.cpf)===cc)){err('This CPF is already registered.');return;}
   al.style.display='none';
-  const ck=catOf(gender,ageN);
-  DB.noms.push({ id:uid(), cpf, name, age:ageN, gender, cat:ck, status:'pending', ts:new Date().toISOString() });
-  saveDB(DB);
-  document.getElementById('nom-form').style.display='none';
-  document.getElementById('nom-ok').style.display='block';
-  const ci=CATS[ck];
-  document.getElementById('nom-ok-cat').innerHTML=`<p class="t3 ts">Your category: <span class="catbadge ${ci.css}">${ci.label}</span></p>`;
+  const ck=catOf(gender,age);
+  DB.noms.push({id:DB.nid++,cpf,name,age,gender,cat:ck,status:'pending',ts:new Date().toISOString()});
+  saveLocal(DB);
+  await pushDB();
+  document.getElementById('reg-form').style.display='none';
+  document.getElementById('reg-ok').style.display='block';
+  document.getElementById('reg-ok-cat').innerHTML=`<span class="chip ${CATS[ck].css}">${CATS[ck].label}</span>`;
 }
-
 function resetReg(){
   ['n-cpf','n-name','n-age'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('n-gender').selectedIndex=0;
-  document.getElementById('n-cat-display').style.display='none';
-  document.getElementById('nom-al').style.display='none';
-  document.getElementById('nom-form').style.display='block';
-  document.getElementById('nom-ok').style.display='none';
+  document.getElementById('cat-preview').style.display='none';
+  document.getElementById('reg-al').style.display='none';
+  document.getElementById('reg-form').style.display='block';
+  document.getElementById('reg-ok').style.display='none';
 }
 
-// ════════════════════════════════════════
-// PUBLIC: GROUPS
-// ════════════════════════════════════════
-let pubGrpCat='M45';
+// ═══════════════════════════════════════════
+// PUBLIC GROUPS
+// ═══════════════════════════════════════════
 function renderPubGroups(){
-  renderCatTabs('grp-cat-tabs', pubGrpCat, (ck)=>{ pubGrpCat=ck; renderPubGroupContent(); });
+  renderCatTabs('grp-tabs',pubGrpCat,ck=>{pubGrpCat=ck;renderPubGroupContent();});
   renderPubGroupContent();
 }
 function renderPubGroupContent(){
   const cg=DB.groups[pubGrpCat]||{};
   const el=document.getElementById('grp-body');
-  if(!Object.keys(cg).length){ el.innerHTML='<div class="empty"><span class="ei">🏓</span><p>Groups for this category not yet published.</p></div>'; return; }
-  el.innerHTML=`<div class="ggrid">${Object.keys(cg).map((g,i)=>renderGCard(pubGrpCat,g,i)).join('')}</div>`;
+  if(!Object.keys(cg).length){el.innerHTML='<div class="empty"><span class="ei">🏓</span><p>Groups not yet published.</p></div>';return;}
+  el.innerHTML=Object.keys(cg).map((g,i)=>renderGCard(pubGrpCat,g,i)).join('');
 }
 
-// ════════════════════════════════════════
-// PUBLIC: RESULTS
-// ════════════════════════════════════════
-let pubResCat='M45', pubResGrp='All';
+// ═══════════════════════════════════════════
+// PUBLIC RESULTS
+// ═══════════════════════════════════════════
 function renderPubResults(){
-  renderCatTabs('res-cat-tabs', pubResCat, (ck)=>{ pubResCat=ck; pubResGrp='All'; renderResGroupFilter(); renderResCards(); });
-  renderResGroupFilter(); renderResCards();
+  renderCatTabs('res-tabs',pubResCat,ck=>{pubResCat=ck;pubResGrp='All';renderResGrpPills();renderResCards();});
+  renderResGrpPills(); renderResCards();
 }
-function renderResGroupFilter(){
-  const cg=DB.groups[pubResCat]||{};
-  const groups=['All',...Object.keys(cg)];
-  document.getElementById('res-group-filter').innerHTML=groups.map((g,i)=>
-    `<button class="fp ${(g===pubResGrp)?'active':''}" onclick="filterResGrp('${g}',this)">${g}</button>`
+function renderResGrpPills(){
+  const groups=['All',...Object.keys(DB.groups[pubResCat]||{})];
+  document.getElementById('res-grp-pills').innerHTML=groups.map((g,i)=>
+    `<button class="fp ${g===pubResGrp?'active':''}" onclick="filterResGrp('${g}',this)">${g}</button>`
   ).join('');
 }
-function filterResGrp(g,btn){ pubResGrp=g; document.querySelectorAll('#res-group-filter .fp').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); renderResCards(); }
+function filterResGrp(g,btn){pubResGrp=g;document.querySelectorAll('#res-grp-pills .fp').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderResCards();}
 function renderResCards(){
   let list=DB.results.filter(r=>r.cat===pubResCat);
   if(pubResGrp!=='All') list=list.filter(r=>r.grp===pubResGrp);
   const el=document.getElementById('res-body');
-  if(!list.length){ el.innerHTML='<div class="empty"><span class="ei">🏓</span><p>No results yet.</p></div>'; return; }
-  const cg=DB.groups[pubResCat]||{};
-  const gkeys=Object.keys(cg);
+  if(!list.length){el.innerHTML='<div class="empty"><span class="ei">🏓</span><p>No results yet.</p></div>';return;}
+  const gkeys=Object.keys(DB.groups[pubResCat]||{});
   el.innerHTML=[...list].reverse().map(r=>{
-    const[w,l]=(r.score||'0-0').split('-').map(Number);
-    const p1w=w>l; const gi=gkeys.indexOf(r.grp); const color=gcol(gi>=0?gi:0);
-    const sets=r.sets?r.sets.split(','):[];
+    const[w,l]=(r.score||'0-0').split('-').map(Number);const pw=w>l;
+    const color=gc(gkeys.indexOf(r.grp));const sets=r.sets?r.sets.split(','):[];
     return `<div class="rcard">
-      <div class="rctop"><span style="color:${color};font-weight:700">🏓 ${r.grp}</span><span>${r.date||''}</span></div>
-      <div class="rcbody">
-        <div class="rp l" style="color:${p1w?'var(--lime)':'var(--t1)'}">${r.p1}${p1w?' 🥇':''}</div>
-        <div class="rcenter">
-          <div class="rscore">${(r.score||'').replace('-',' – ')}</div>
-          <div class="rsets">${sets.map((s,i)=>`G${i+1}:${s}`).join(' ')}</div>
-        </div>
-        <div class="rp" style="color:${!p1w?'var(--lime)':'var(--t1)'}">${!p1w?'🥇 ':''}${r.p2}</div>
+      <div class="rcard-top"><span style="color:${color};font-weight:700">🏓 ${r.grp}</span><span>${r.date||''}</span></div>
+      <div class="rcard-body">
+        <div class="rp l" style="color:${pw?'var(--lime)':'var(--t1)'}">${r.p1}${pw?' 🥇':''}</div>
+        <div class="rcenter"><div class="rscore">${(r.score||'').replace('-',' – ')}</div><div class="rsets">${sets.map((s,i)=>`G${i+1}:${s}`).join(' ')}</div></div>
+        <div class="rp" style="color:${!pw?'var(--lime)':'var(--t1)'}">${!pw?'🥇 ':''}${r.p2}</div>
       </div>
     </div>`;
   }).join('');
 }
 
-// ════════════════════════════════════════
-// PUBLIC: SCHEDULE
-// ════════════════════════════════════════
-let pubSchCat='ALL';
+// ═══════════════════════════════════════════
+// PUBLIC SCHEDULE
+// ═══════════════════════════════════════════
 function renderPubSchedule(){
-  const tabs=document.getElementById('sch-cat-tabs');
-  tabs.innerHTML=`<button class="ctab ${pubSchCat==='ALL'?'active':''}" onclick="filterSchCat('ALL',this)">All Categories</button>`
-    +Object.entries(CATS).map(([k,v])=>`<button class="ctab ${pubSchCat===k?'active':''}" onclick="filterSchCat('${k}',this)">${v.label}</button>`).join('');
+  const tabs=document.getElementById('sch-tabs');
+  tabs.innerHTML=[{k:'ALL',label:'All'},...Object.entries(CATS).map(([k,v])=>({k,label:v.label}))].map(({k,label})=>
+    `<button class="ctab ${pubSchCat===k?'active':''}" onclick="filterSch('${k}',this)">${label}</button>`
+  ).join('');
   renderSchBody();
 }
-function filterSchCat(c,btn){ pubSchCat=c; document.querySelectorAll('#sch-cat-tabs .ctab').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); renderSchBody(); }
+function filterSch(c,btn){pubSchCat=c;document.querySelectorAll('#sch-tabs .ctab').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderSchBody();}
 function renderSchBody(){
   let all=[...DB.results.map(r=>({...r,status:'done'})),...DB.schedule];
   if(pubSchCat!=='ALL') all=all.filter(m=>m.cat===pubSchCat);
-  const tbody=document.getElementById('sch-body');
-  if(!all.length){ tbody.innerHTML=`<tr><td colspan="9" class="empty" style="padding:40px;text-align:center">No matches yet.</td></tr>`; return; }
-  tbody.innerHTML=all.map((m,i)=>{
-    const ci=CATS[m.cat]||{label:m.cat||'—',css:'cat-m45',color:'#3d9eff'};
+  const el=document.getElementById('sch-body');
+  if(!all.length){el.innerHTML='<div class="empty"><span class="ei">📅</span><p>No matches yet.</p></div>';return;}
+  el.innerHTML=all.map(m=>{
+    const ci=CATS[m.cat]||{label:'—',css:'chip-m'};
     const cls=m.status==='done'?'sp-done':m.status==='live'?'sp-live':'sp-up';
     const lbl=m.status==='done'?'Done':m.status==='live'?'🔴 LIVE':'Upcoming';
-    return `<tr>
-      <td class="mono t3">${i+1}</td>
-      <td><span class="catbadge ${ci.css}" style="font-size:.68rem;padding:2px 8px">${ci.label}</span></td>
-      <td><strong>${m.grp||'—'}</strong></td>
-      <td>${m.p1}</td><td>${m.p2}</td>
-      <td class="mono">${m.date||'TBD'}</td><td class="mono">${m.time||'—'}</td><td class="mono">${m.table||m.tbl||'—'}</td>
-      <td><span class="sp ${cls}">${lbl}</span></td>
-    </tr>`;
+    return `<div class="sch-item">
+      <div class="sch-vs">
+        <div class="sch-p">${m.p1} <span class="t3">vs</span> ${m.p2}</div>
+        <div class="sch-meta"><span class="chip ${ci.css}" style="font-size:.62rem;padding:2px 7px">${ci.label}</span> · ${m.grp||'—'} · ${m.date||'TBD'} ${m.time||''} ${m.tbl?'· '+m.tbl:''}</div>
+      </div>
+      <div class="sch-status"><span class="sp ${cls}">${lbl}</span></div>
+    </div>`;
   }).join('');
 }
 
-// ════════════════════════════════════════
+// ═══════════════════════════════════════════
 // CAT TABS HELPER
-// ════════════════════════════════════════
-function renderCatTabs(elId, activeCat, onChange){
-  const el=document.getElementById(elId);
-  el.innerHTML=Object.entries(CATS).map(([k,v])=>
-    `<button class="ctab ${k===activeCat?'active':''}" onclick="(function(btn){ ${elId}_handler('${k}',btn); })(this)">${v.label}</button>`
+// ═══════════════════════════════════════════
+function renderCatTabs(elId,active,onChange){
+  document.getElementById(elId).innerHTML=Object.entries(CATS).map(([k,v])=>
+    `<button class="ctab ${k===active?'active':''}" onclick="catTabClick('${elId}','${k}',this)">${v.label}</button>`
   ).join('');
-  window[`${elId}_handler`]=(k,btn)=>{ document.querySelectorAll(`#${elId} .ctab`).forEach(b=>b.classList.remove('active')); btn.classList.add('active'); onChange(k); };
+  window['__catCb_'+elId]=onChange;
+}
+function catTabClick(elId,k,btn){
+  document.querySelectorAll(`#${elId} .ctab`).forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  if(window['__catCb_'+elId]) window['__catCb_'+elId](k);
 }
 
-// ════════════════════════════════════════
+// ═══════════════════════════════════════════
 // ADMIN DASHBOARD
-// ════════════════════════════════════════
+// ═══════════════════════════════════════════
 function renderDash(){
-  const n=DB.noms, ap=n.filter(x=>x.status==='approved').length, pd=n.filter(x=>x.status==='pending').length;
+  const n=DB.noms,ap=n.filter(x=>x.status==='approved').length,pd=n.filter(x=>x.status==='pending').length;
   const gg=Object.values(DB.groups).flatMap(cg=>Object.keys(cg)).length;
   document.getElementById('adm-stats').innerHTML=[
-    ['🏓',n.length,'Total','#3d9eff'],['✅',ap,'Approved','#2ee8c4'],
-    ['⏳',pd,'Pending','#ffcc3d'],['📊',gg,'Groups','#c6ff47'],
-    ['✔️',DB.results.length,'Results','#a78bfa'],['📅',DB.schedule.length,'Scheduled','#fb923c']
-  ].map(([i,v,l,c])=>`<div class="stile"><span class="si">${i}</span><span class="sv" style="color:${c}">${v}</span><span class="sl">${l}</span></div>`).join('');
-  const rec=[...n].reverse().slice(0,6);
-  document.getElementById('dash-regnoms').innerHTML=rec.length
-    ?`<table class="dtbl"><tbody>${rec.map(x=>`<tr><td class="cpf-disp">${x.cpf}</td><td><strong>${x.name}</strong></td><td class="ts">${x.age}y ${x.gender}</td><td><span class="badge b-${x.status[0]}">${x.status}</span></td></tr>`).join('')}</tbody></table>`
-    :'<div class="empty" style="padding:24px"><span class="ei">📋</span><p>No registrations yet</p></div>';
-  const up=DB.schedule.slice(0,5);
-  document.getElementById('dash-upcoming').innerHTML=up.length
-    ?`<table class="dtbl"><tbody>${up.map(m=>`<tr><td><strong>${m.p1}</strong> <span class="t3">vs</span> <strong>${m.p2}</strong></td><td class="ts mono t3">${m.date||'TBD'}</td></tr>`).join('')}</tbody></table>`
-    :'<div class="empty" style="padding:24px"><span class="ei">📅</span><p>No matches scheduled</p></div>';
+    ['🏓',n.length,'Total','var(--blue)'],['✅',ap,'Approved','var(--teal)'],
+    ['⏳',pd,'Pending','var(--gold)'],['📊',gg,'Groups','var(--lime)'],
+  ].map(([i,v,l,c])=>`<div class="stat-box" style="--lime:${c}"><span class="stat-v" style="color:${c}">${v}</span><span class="stat-l">${l}</span></div>`).join('');
+  const rec=[...n].reverse().slice(0,5);
+  document.getElementById('dash-noms').innerHTML=rec.length
+    ?`<table class="dtbl"><tbody>${rec.map(x=>`<tr><td class="cpf-disp">${x.cpf}</td><td><strong>${x.name}</strong></td><td>${x.age}y</td><td><span class="badge b-${x.status[0]}">${x.status}</span></td></tr>`).join('')}</tbody></table>`
+    :'<div class="empty" style="padding:20px"><span class="ei">📋</span><p>No registrations</p></div>';
+  const up=DB.schedule.slice(0,4);
+  document.getElementById('dash-matches').innerHTML=up.length
+    ?`<table class="dtbl"><tbody>${up.map(m=>`<tr><td><strong>${m.p1}</strong> vs <strong>${m.p2}</strong></td><td class="ts mono t3">${m.date||'TBD'}</td></tr>`).join('')}</tbody></table>`
+    :'<div class="empty" style="padding:20px"><span class="ei">📅</span><p>No matches</p></div>';
 }
 function updateSBC(){ const el=document.getElementById('sb-pend'); if(el) el.textContent=DB.noms.filter(n=>n.status==='pending').length; }
 
-// ════════════════════════════════════════
-// SETTINGS
-// ════════════════════════════════════════
-function loadSettingsForm(){
-  const s=DB.settings;
-  document.getElementById('s-name').value=s.name||'';
-  document.getElementById('s-start').value=s.startDate||'';
-  document.getElementById('s-end').value=s.endDate||'';
-  document.getElementById('s-venue').value=s.venue||'';
-  document.getElementById('s-city').value=s.city||'';
-  document.getElementById('s-org').value=s.org||'';
-  document.getElementById('s-email').value=s.email||'';
-  document.getElementById('s-mpg').value=s.mpg||4;
-  document.getElementById('s-msg').value=s.msg||'';
-  document.getElementById('s-gf').value=s.gf||'';
-  const f=document.getElementById('s-fmt'); if(f){[...f.options].forEach(o=>o.selected=o.value===s.fmt);}
-}
-function saveSettings(){
-  DB.settings={...DB.settings,
-    name:document.getElementById('s-name').value.trim(),
-    startDate:document.getElementById('s-start').value,
-    endDate:document.getElementById('s-end').value,
-    venue:document.getElementById('s-venue').value.trim(),
-    city:document.getElementById('s-city').value.trim(),
-    org:document.getElementById('s-org').value.trim(),
-    email:document.getElementById('s-email').value.trim(),
-    mpg:parseInt(document.getElementById('s-mpg').value)||4,
-    fmt:document.getElementById('s-fmt').value,
-    msg:document.getElementById('s-msg').value.trim(),
-  };
-  saveDB(DB); updateHeader(); toast('✅ Settings saved!');
-}
-function saveGF(){ DB.settings.gf=document.getElementById('s-gf').value.trim(); saveDB(DB); toast('✅ Google Form link saved!'); }
-
-// ════════════════════════════════════════
+// ═══════════════════════════════════════════
 // NOMINATIONS ADMIN
-// ════════════════════════════════════════
+// ═══════════════════════════════════════════
 let nomFlt='all';
-function filterNoms(f,btn){ nomFlt=f; document.querySelectorAll('#asec-noms .fp').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); renderNomTable(); }
+function fNoms(f,btn){ nomFlt=f; document.querySelectorAll('#asec-noms .fp').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); renderNomTable(); }
 function renderNomTable(){
   let list=DB.noms; if(nomFlt!=='all') list=list.filter(n=>n.status===nomFlt);
   const tb=document.getElementById('nom-tbody');
-  if(!list.length){ tb.innerHTML=`<tr><td colspan="8" class="empty" style="padding:40px;text-align:center">No records.</td></tr>`; return; }
+  if(!list.length){tb.innerHTML=`<tr><td colspan="7" class="empty" style="padding:30px;text-align:center">No records.</td></tr>`;return;}
   tb.innerHTML=list.map((n,i)=>{
-    const ci=CATS[n.cat]||{label:n.cat,css:'cat-m45'};
+    const ci=CATS[n.cat]||{label:n.cat,css:'chip-m'};
     return `<tr class="${n.status==='rejected'?'rej':''}">
-      <td class="mono t3">${i+1}</td>
+      <td class="t3 mono" style="font-size:.65rem">${i+1}</td>
       <td class="cpf-disp">${n.cpf}</td>
       <td><strong>${n.name}</strong></td>
       <td class="mono">${n.age}</td>
-      <td>${n.gender}</td>
-      <td><span class="catbadge ${ci.css}" style="font-size:.68rem;padding:2px 8px">${ci.label}</span></td>
+      <td><span class="chip ${ci.css}" style="font-size:.62rem;padding:2px 7px">${ci.label}</span></td>
       <td><span class="badge b-${n.status[0]}">${n.status}</span></td>
       <td>
-        <div class="flex gap8" style="gap:4px;flex-wrap:wrap">
-          ${n.status!=='approved'?`<button class="btn btn-xs" style="background:rgba(46,232,196,.12);color:var(--teal)" onclick="setStatus(${n.id},'approved')">✓</button>`:''}
-          ${n.status!=='rejected'?`<button class="btn btn-xs btn-ghost" onclick="setStatus(${n.id},'rejected')">✗</button>`:''}
+        <div style="display:flex;gap:4px">
+          ${n.status!=='approved'?`<button class="btn btn-xs" style="background:rgba(45,232,196,.12);color:var(--teal)" onclick="setNomStatus(${n.id},'approved')">✓</button>`:''}
+          ${n.status!=='rejected'?`<button class="btn btn-xs btn-ghost" onclick="setNomStatus(${n.id},'rejected')">✗</button>`:''}
           <button class="btn btn-xs btn-red" onclick="delNom(${n.id})">🗑</button>
         </div>
       </td>
@@ -1143,13 +1129,16 @@ function renderNomTable(){
   }).join('');
   updateSBC();
 }
-function setStatus(id,s){ DB=loadDB(); const n=DB.noms.find(x=>x.id===id); if(n){n.status=s;saveDB(DB);renderNomTable();updateSBC();toast(`${n.name}: ${s}`);} }
-function delNom(id){ confirm2('Delete this registration?','',()=>{ DB=loadDB(); DB.noms=DB.noms.filter(x=>x.id!==id); saveDB(DB); renderNomTable(); updateSBC(); toast('Deleted'); }); }
+async function setNomStatus(id,s){
+  DB=loadDB(); const n=DB.noms.find(x=>x.id===id); if(!n) return;
+  n.status=s; saveLocal(DB); await pushDB(); renderNomTable(); updateSBC(); toast(`${n.name}: ${s}`);
+}
+function delNom(id){ confirm2('Delete this registration?','',async()=>{ DB=loadDB(); DB.noms=DB.noms.filter(x=>x.id!==id); saveLocal(DB); await pushDB(); renderNomTable(); updateSBC(); toast('Deleted'); }); }
 function exportCSV(){
-  const hd=['ID','CPF','Name','Age','Gender','Category','Status','Registered'];
-  const rows=DB.noms.map(n=>[n.id,n.cpf,n.name,n.age,n.gender,(CATS[n.cat]||{label:n.cat}).label,n.status,n.ts||'']);
-  const csv=[hd,...rows].map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
-  const a=document.createElement('a'); a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv); a.download='registrations.csv'; a.click();
+  const h=['ID','CPF','Name','Age','Gender','Category','Status','Registered'];
+  const rows=DB.noms.map(n=>[n.id,n.cpf,n.name,n.age,n.gender,(CATS[n.cat]||{label:n.cat}).full,n.status,n.ts||'']);
+  const csv=[h,...rows].map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);a.download='registrations.csv';a.click();
 }
 function openAddModal(){
   ['mp-cpf','mp-name','mp-age'].forEach(id=>document.getElementById(id).value='');
@@ -1157,580 +1146,428 @@ function openAddModal(){
   document.getElementById('mp-status').selectedIndex=0;
   openM('m-addplayer');
 }
-function saveAddPlayer(){
-  const cpf=document.getElementById('mp-cpf').value.trim();
-  const name=document.getElementById('mp-name').value.trim();
-  const age=document.getElementById('mp-age').value;
-  const gender=document.getElementById('mp-gender').value;
-  if(!cpf||!name||!age||!gender){ toast('All fields required','e'); return; }
-  if(!validateCPF(cpf)){ toast('Invalid CPF','e'); return; }
-  const cc=cleanCPF(cpf);
-  if(DB.noms.find(n=>cleanCPF(n.cpf)===cc)){ toast('CPF already registered','e'); return; }
+async function saveAddPlayer(){
+  const cpf=document.getElementById('mp-cpf').value.trim(), name=document.getElementById('mp-name').value.trim();
+  const age=parseInt(document.getElementById('mp-age').value)||0, gender=document.getElementById('mp-gender').value;
+  if(!cpf||!name||!age||!gender){toast('All fields required','e');return;}
+  if(!validCPF(cpf)){toast('Invalid CPF','e');return;}
   DB=loadDB();
-  DB.noms.push({id:uid(),cpf,name,age:parseInt(age),gender,cat:catOf(gender,parseInt(age)),status:document.getElementById('mp-status').value,ts:new Date().toISOString()});
-  saveDB(DB); closeM('m-addplayer'); renderNomTable(); updateSBC(); toast('✅ Player added!');
+  const cc=cleanCPF(cpf);
+  if(DB.noms.find(n=>cleanCPF(n.cpf)===cc)){toast('CPF already registered','e');return;}
+  DB.noms.push({id:DB.nid++,cpf,name,age,gender,cat:catOf(gender,age),status:document.getElementById('mp-status').value,ts:new Date().toISOString()});
+  saveLocal(DB); await pushDB(); closeM('m-addplayer'); renderNomTable(); updateSBC(); toast('✅ Player added!');
 }
 
-// ════════════════════════════════════════
-// GROUPS BUILDER
-// ════════════════════════════════════════
-let gbCat='M45';
-let dragP=null, dragFrom=null;
-
+// ═══════════════════════════════════════════
+// GROUP BUILDER
+// ═══════════════════════════════════════════
+let dragP=null,dragFrom=null;
 function renderGroupBuilder(){
-  renderCatTabs('gb-cat-tabs', gbCat, (ck)=>{ gbCat=ck; renderGBContent(); });
+  renderCatTabs('gb-tabs',gbCat,ck=>{gbCat=ck;renderGBContent();});
   renderGBContent();
 }
 function renderGBContent(){
-  const approved=DB.noms.filter(n=>n.status==='approved'&&n.cat===gbCat).map(n=>n.name);
   const cg=DB.groups[gbCat]||{};
-  const assigned=new Set(Object.values(cg).flat());
+  if(!Object.keys(cg).length){ DB.groups[gbCat]={'Group A':[],'Group B':[],'Group C':[],'Group D':[]}; saveLocal(DB); }
+  const approved=DB.noms.filter(n=>n.status==='approved'&&n.cat===gbCat).map(n=>n.name);
+  const assigned=new Set(Object.values(DB.groups[gbCat]).flat());
   const unassigned=approved.filter(p=>!assigned.has(p));
-  if(!Object.keys(cg).length){ DB.groups[gbCat]={}; ['Group A','Group B','Group C','Group D'].forEach(g=>{DB.groups[gbCat][g]=[];}); saveDB(DB); }
-  const pools={Unassigned:unassigned, ...DB.groups[gbCat]};
-  document.getElementById('gb-body').innerHTML=`
-    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
-      <button class="btn btn-ghost btn-sm" onclick="addGroup()">+ Add Group</button>
-      <button class="btn btn-ghost btn-sm" onclick="removeGroup()">- Remove Last</button>
-    </div>
-    <div class="gb-wrap">${Object.entries(pools).map(([pn,players])=>`
-      <div class="gb-pool" id="pool-${pn.replace(/ /g,'_')}"
-        ondragover="dov(event,this)" ondrop="ddr(event,'${pn}')" ondragleave="this.classList.remove('over')">
-        <div class="gbt">${pn==='Unassigned'?'📦':'🏓'} ${pn} <span class="cnt">${players.length}</span></div>
-        ${players.map(p=>`<div class="dp" draggable="true" ondragstart="dds(event,'${p.replace(/'/g,"\\'")}','${pn.replace(/'/g,"\\'")}')">
-          <span style="opacity:.5;font-size:.85rem">👤</span>${p}</div>`).join('')}
-      </div>`).join('')}
-    </div>`;
+  const pools={Unassigned:unassigned,...DB.groups[gbCat]};
+  document.getElementById('gb-body').innerHTML=Object.entries(pools).map(([pn,players])=>`
+    <div class="gb-pool" id="pool-${pn.replace(/ /g,'_')}"
+      ondragover="dov(event,this)" ondrop="ddr(event,'${pn}')" ondragleave="this.classList.remove('over')">
+      <div class="gb-pool-title">${pn==='Unassigned'?'📦':'🏓'} ${pn} <span class="gb-cnt">${players.length}</span></div>
+      ${players.map(p=>`<div class="dp" draggable="true" ondragstart="dds(event,'${p.replace(/'/g,"\\'")}','${pn.replace(/'/g,"\\'")}')">👤 ${p}</div>`).join('')}
+    </div>`).join('');
 }
-function dds(e,p,from){ dragP=p; dragFrom=from; e.dataTransfer.effectAllowed='move'; }
-function dov(e,el){ e.preventDefault(); el.classList.add('over'); }
-function ddr(e,to){ e.preventDefault(); e.currentTarget.classList.remove('over');
+function dds(e,p,from){dragP=p;dragFrom=from;e.dataTransfer.effectAllowed='move';}
+function dov(e,el){e.preventDefault();el.classList.add('over');}
+async function ddr(e,to){
+  e.preventDefault();e.currentTarget.classList.remove('over');
   if(!dragP||dragFrom===to) return;
   DB=loadDB();
   if(dragFrom!=='Unassigned') DB.groups[gbCat][dragFrom]=(DB.groups[gbCat][dragFrom]||[]).filter(p=>p!==dragP);
-  if(to!=='Unassigned'){ if(!DB.groups[gbCat][to]) DB.groups[gbCat][to]=[]; if(!DB.groups[gbCat][to].includes(dragP)) DB.groups[gbCat][to].push(dragP); }
-  saveDB(DB); renderGBContent(); dragP=null; dragFrom=null;
+  if(to!=='Unassigned'){if(!DB.groups[gbCat][to])DB.groups[gbCat][to]=[];if(!DB.groups[gbCat][to].includes(dragP))DB.groups[gbCat][to].push(dragP);}
+  saveLocal(DB); await pushDB(); renderGBContent(); dragP=null; dragFrom=null;
 }
-function addGroup(){
-  DB=loadDB(); const keys=Object.keys(DB.groups[gbCat]||{});
-  const nm=`Group ${String.fromCharCode(65+keys.length)}`;
-  if(!DB.groups[gbCat]) DB.groups[gbCat]={};
-  if(!DB.groups[gbCat][nm]) DB.groups[gbCat][nm]=[];
-  saveDB(DB); renderGBContent();
-}
-function removeGroup(){
-  DB=loadDB(); const keys=Object.keys(DB.groups[gbCat]||{});
-  if(!keys.length) return;
-  confirm2(`Remove ${keys[keys.length-1]}?`,'Players become unassigned.',()=>{
-    DB=loadDB(); delete DB.groups[gbCat][keys[keys.length-1]]; saveDB(DB); renderGBContent();
-  });
-}
-function autoAssign(){
-  DB=loadDB();
-  const mpg=DB.settings.mpg||4;
+async function autoAssign(){
+  DB=loadDB(); const mpg=DB.settings.mpg||4;
   Object.keys(CATS).forEach(ck=>{
     const players=DB.noms.filter(n=>n.status==='approved'&&n.cat===ck).map(n=>n.name);
     const ng=Math.max(1,Math.ceil(players.length/mpg));
     DB.groups[ck]={};
     for(let i=0;i<ng;i++) DB.groups[ck][`Group ${String.fromCharCode(65+i)}`]=[];
-    [...players].sort(()=>Math.random()-.5).forEach((p,i)=>{
-      const gn=`Group ${String.fromCharCode(65+(i%ng))}`; DB.groups[ck][gn].push(p);
-    });
+    [...players].sort(()=>Math.random()-.5).forEach((p,i)=>DB.groups[ck][`Group ${String.fromCharCode(65+(i%ng))}`].push(p));
   });
-  saveDB(DB); renderGBContent();
-  toast(`⚡ Auto-assigned all categories!`);
+  saveLocal(DB); await pushDB(); renderGBContent(); toast('⚡ Auto-assigned!');
 }
-function saveGroups(){ saveDB(DB); toast('💾 Groups saved!'); }
+async function addGroup(){
+  DB=loadDB(); const keys=Object.keys(DB.groups[gbCat]||{});
+  DB.groups[gbCat][`Group ${String.fromCharCode(65+keys.length)}`]=[];
+  saveLocal(DB); await pushDB(); renderGBContent();
+}
+async function saveAndSync(){ saveLocal(DB); await pushDB(); toast('💾 Groups saved!'); }
 
-// ════════════════════════════════════════
+// ═══════════════════════════════════════════
 // SCHEDULE ADMIN
-// ════════════════════════════════════════
+// ═══════════════════════════════════════════
 function renderAdmSched(){
   const tb=document.getElementById('sched-tbody');
-  if(!DB.schedule.length){ tb.innerHTML=`<tr><td colspan="9" class="empty" style="padding:40px;text-align:center">No matches.</td></tr>`; return; }
+  if(!DB.schedule.length){tb.innerHTML=`<tr><td colspan="8" class="empty" style="padding:30px;text-align:center">No matches.</td></tr>`;return;}
   tb.innerHTML=DB.schedule.map((m,i)=>{
-    const ci=CATS[m.cat]||{label:m.cat,css:'cat-m45'};
-    return `<tr>
-      <td class="mono t3">${i+1}</td>
-      <td><span class="catbadge ${ci.css}" style="font-size:.65rem;padding:2px 8px">${ci.label}</span></td>
+    const ci=CATS[m.cat]||{label:'—',css:'chip-m'};
+    return `<tr><td><span class="chip ${ci.css}" style="font-size:.6rem;padding:2px 6px">${ci.label}</span></td>
       <td>${m.grp||'—'}</td><td>${m.p1}</td><td>${m.p2}</td>
       <td class="mono">${m.date||'—'}</td><td class="mono">${m.time||'—'}</td><td class="mono">${m.tbl||'—'}</td>
-      <td><div class="flex gap8" style="gap:4px">
+      <td><div style="display:flex;gap:3px">
         <button class="btn btn-xs btn-ghost" onclick="editMatch(${m.id})">✏️</button>
         <button class="btn btn-xs btn-red" onclick="delMatch(${m.id})">🗑</button>
-      </div></td>
-    </tr>`;
+      </div></td></tr>`;
   }).join('');
 }
-function openMatchModal(eid){
-  populateMMGroups();
-  document.getElementById('mm-eid').value=eid||'';
-  if(eid){
-    const m=DB.schedule.find(x=>x.id===eid); if(!m) return;
-    document.getElementById('mm-ttl').textContent='✏️ EDIT MATCH';
-    document.getElementById('mm-cat').value=m.cat||'M45';
-    populateMMGroups(m.grp);
-    document.getElementById('mm-date').value=m.date||'';
-    document.getElementById('mm-time').value=m.time||'';
-    document.getElementById('mm-tbl').value=m.tbl||'';
-    populateMMP(m.p1,m.p2);
-  } else {
-    document.getElementById('mm-ttl').textContent='📅 ADD MATCH';
-    ['mm-date','mm-time','mm-tbl'].forEach(id=>document.getElementById(id).value='');
-    populateMMP();
-  }
-  openM('m-match');
-}
-function populateMMGroups(selGrp){
+function populateMM(){
   const ck=document.getElementById('mm-cat').value;
   const gs=Object.keys(DB.groups[ck]||{});
-  const sel=document.getElementById('mm-grp');
-  sel.innerHTML=gs.map(g=>`<option>${g}</option>`).join('');
-  if(selGrp) sel.value=selGrp;
+  document.getElementById('mm-grp').innerHTML=gs.map(g=>`<option>${g}</option>`).join('');
   populateMMP();
 }
 function populateMMP(s1,s2){
-  const ck=document.getElementById('mm-cat').value;
-  const grp=document.getElementById('mm-grp').value;
-  const players=(DB.groups[ck]||{})[grp]||[];
-  const opts=players.map(p=>`<option>${p}</option>`).join('');
-  ['mm-p1','mm-p2'].forEach(id=>{ document.getElementById(id).innerHTML=opts; });
+  const ck=document.getElementById('mm-cat').value, grp=document.getElementById('mm-grp').value;
+  const pl=(DB.groups[ck]||{})[grp]||[];
+  const opts=pl.map(p=>`<option>${p}</option>`).join('');
+  ['mm-p1','mm-p2'].forEach(id=>{document.getElementById(id).innerHTML=opts;});
   if(s1) document.getElementById('mm-p1').value=s1;
   if(s2) document.getElementById('mm-p2').value=s2;
 }
-function saveMatch(){
+function openMatchModal(eid){
+  populateMM();
+  document.getElementById('mm-eid').value=eid||'';
+  document.getElementById('mm-ttl').textContent=eid?'✏️ EDIT MATCH':'📅 ADD MATCH';
+  if(eid){
+    const m=DB.schedule.find(x=>x.id===eid); if(!m) return;
+    document.getElementById('mm-cat').value=m.cat||'M45'; populateMM();
+    document.getElementById('mm-grp').value=m.grp; populateMMP(m.p1,m.p2);
+    document.getElementById('mm-date').value=m.date||'';
+    document.getElementById('mm-time').value=m.time||'';
+    document.getElementById('mm-tbl').value=m.tbl||'';
+  } else ['mm-date','mm-time','mm-tbl'].forEach(id=>document.getElementById(id).value='');
+  openM('m-match');
+}
+async function saveMatch(){
   const p1=document.getElementById('mm-p1').value, p2=document.getElementById('mm-p2').value;
-  if(!p1||!p2||p1===p2){ toast('Select 2 different players','e'); return; }
+  if(!p1||!p2||p1===p2){toast('Pick 2 different players','e');return;}
   DB=loadDB();
   const eid=parseInt(document.getElementById('mm-eid').value)||0;
-  const m={id:eid||uid(),cat:document.getElementById('mm-cat').value,grp:document.getElementById('mm-grp').value,
+  const m={id:eid||DB.nid++,cat:document.getElementById('mm-cat').value,grp:document.getElementById('mm-grp').value,
     p1,p2,date:document.getElementById('mm-date').value,time:document.getElementById('mm-time').value,
     tbl:document.getElementById('mm-tbl').value,status:'upcoming'};
   if(eid) DB.schedule=DB.schedule.map(x=>x.id===eid?m:x); else DB.schedule.push(m);
-  saveDB(DB); closeM('m-match'); renderAdmSched(); toast('✅ Match saved!');
+  saveLocal(DB); await pushDB(); closeM('m-match'); renderAdmSched(); toast('✅ Match saved!');
 }
-function editMatch(id){ openMatchModal(id); }
-function delMatch(id){ confirm2('Delete match?','',()=>{ DB=loadDB(); DB.schedule=DB.schedule.filter(x=>x.id!==id); saveDB(DB); renderAdmSched(); toast('Deleted'); }); }
+function editMatch(id){openMatchModal(id);}
+function delMatch(id){confirm2('Delete match?','',async()=>{ DB=loadDB(); DB.schedule=DB.schedule.filter(x=>x.id!==id); saveLocal(DB); await pushDB(); renderAdmSched(); toast('Deleted'); });}
 
-// ════════════════════════════════════════
+// ═══════════════════════════════════════════
 // RESULTS ADMIN
-// ════════════════════════════════════════
+// ═══════════════════════════════════════════
 function renderAdmResults(){
   const tb=document.getElementById('res-tbody');
-  if(!DB.results.length){ tb.innerHTML=`<tr><td colspan="9" class="empty" style="padding:40px;text-align:center">No results.</td></tr>`; return; }
-  tb.innerHTML=[...DB.results].reverse().map((r,i)=>{
-    const ci=CATS[r.cat]||{label:r.cat,css:'cat-m45'};
-    return `<tr>
-      <td class="mono t3">${DB.results.length-i}</td>
-      <td><span class="catbadge ${ci.css}" style="font-size:.65rem;padding:2px 8px">${ci.label}</span></td>
+  if(!DB.results.length){tb.innerHTML=`<tr><td colspan="7" class="empty" style="padding:30px;text-align:center">No results.</td></tr>`;return;}
+  tb.innerHTML=[...DB.results].reverse().map(r=>{
+    const ci=CATS[r.cat]||{label:'—',css:'chip-m'};
+    return `<tr><td><span class="chip ${ci.css}" style="font-size:.6rem;padding:2px 6px">${ci.label}</span></td>
       <td>${r.grp||'—'}</td><td>${r.p1}</td>
-      <td><strong class="mono" style="color:var(--lime);font-size:.95rem">${r.score}</strong></td>
-      <td>${r.p2}</td><td class="mono t3 ts">${r.sets||'—'}</td><td class="mono">${r.date||'—'}</td>
-      <td><div class="flex gap8" style="gap:4px">
+      <td><strong class="mono" style="color:var(--lime)">${r.score}</strong></td>
+      <td>${r.p2}</td><td class="mono">${r.date||'—'}</td>
+      <td><div style="display:flex;gap:3px">
         <button class="btn btn-xs btn-ghost" onclick="editResult(${r.id})">✏️</button>
         <button class="btn btn-xs btn-red" onclick="delResult(${r.id})">🗑</button>
-      </div></td>
-    </tr>`;
+      </div></td></tr>`;
   }).join('');
 }
-function openResultModal(eid){
-  populateMRGroups();
-  document.getElementById('mr-eid').value=eid||'';
-  if(eid){
-    const r=DB.results.find(x=>x.id===eid); if(!r) return;
-    document.getElementById('mr-ttl').textContent='✏️ EDIT RESULT';
-    document.getElementById('mr-cat').value=r.cat||'M45';
-    populateMRGroups(r.grp);
-    document.getElementById('mr-score').value=r.score||'';
-    document.getElementById('mr-sets').value=r.sets||'';
-    document.getElementById('mr-date').value=r.date||'';
-    populateMRP(r.p1,r.p2);
-  } else {
-    document.getElementById('mr-ttl').textContent='✅ ENTER RESULT';
-    ['mr-score','mr-sets','mr-date'].forEach(id=>document.getElementById(id).value='');
-    populateMRP();
-  }
-  openM('m-result');
-}
-function populateMRGroups(selGrp){
+function populateMRG(selGrp){
   const ck=document.getElementById('mr-cat').value;
   const gs=Object.keys(DB.groups[ck]||{});
-  const sel=document.getElementById('mr-grp');
-  sel.innerHTML=gs.map(g=>`<option>${g}</option>`).join('');
-  if(selGrp) sel.value=selGrp;
+  document.getElementById('mr-grp').innerHTML=gs.map(g=>`<option>${g}</option>`).join('');
+  if(selGrp) document.getElementById('mr-grp').value=selGrp;
   populateMRP();
 }
 function populateMRP(s1,s2){
-  const ck=document.getElementById('mr-cat').value;
-  const grp=document.getElementById('mr-grp').value;
-  const players=(DB.groups[ck]||{})[grp]||[];
-  const opts=players.map(p=>`<option>${p}</option>`).join('');
-  ['mr-p1','mr-p2'].forEach(id=>{ document.getElementById(id).innerHTML=opts; });
+  const ck=document.getElementById('mr-cat').value, grp=document.getElementById('mr-grp').value;
+  const pl=(DB.groups[ck]||{})[grp]||[];
+  const opts=pl.map(p=>`<option>${p}</option>`).join('');
+  ['mr-p1','mr-p2'].forEach(id=>{document.getElementById(id).innerHTML=opts;});
   if(s1) document.getElementById('mr-p1').value=s1;
   if(s2) document.getElementById('mr-p2').value=s2;
 }
-function saveResult(){
+function openResultModal(eid){
+  populateMRG();
+  document.getElementById('mr-eid').value=eid||'';
+  document.getElementById('mr-ttl').textContent=eid?'✏️ EDIT RESULT':'✅ ENTER RESULT';
+  if(eid){
+    const r=DB.results.find(x=>x.id===eid); if(!r) return;
+    document.getElementById('mr-cat').value=r.cat||'M45'; populateMRG(r.grp); populateMRP(r.p1,r.p2);
+    document.getElementById('mr-score').value=r.score||'';
+    document.getElementById('mr-sets').value=r.sets||'';
+    document.getElementById('mr-date').value=r.date||'';
+  } else ['mr-score','mr-sets','mr-date'].forEach(id=>document.getElementById(id).value='');
+  openM('m-result');
+}
+async function saveResult(){
   const p1=document.getElementById('mr-p1').value, p2=document.getElementById('mr-p2').value;
   const score=document.getElementById('mr-score').value.trim();
-  if(!p1||!p2||p1===p2||!score){ toast('Fill all required fields','e'); return; }
-  if(!/^\d+-\d+$/.test(score)){ toast('Score format: 3-1','e'); return; }
+  if(!p1||!p2||p1===p2||!score){toast('Fill required fields','e');return;}
+  if(!/^\d+-\d+$/.test(score)){toast('Score format: 3-1','e');return;}
   DB=loadDB();
   const eid=parseInt(document.getElementById('mr-eid').value)||0;
-  const r={id:eid||uid(),cat:document.getElementById('mr-cat').value,grp:document.getElementById('mr-grp').value,
+  const r={id:eid||DB.nid++,cat:document.getElementById('mr-cat').value,grp:document.getElementById('mr-grp').value,
     p1,p2,score,sets:document.getElementById('mr-sets').value.trim(),date:document.getElementById('mr-date').value};
   if(eid) DB.results=DB.results.map(x=>x.id===eid?r:x); else DB.results.push(r);
-  saveDB(DB); closeM('m-result'); renderAdmResults(); toast('✅ Result saved!');
+  saveLocal(DB); await pushDB(); closeM('m-result'); renderAdmResults(); toast('✅ Result saved!');
 }
-function editResult(id){ openResultModal(id); }
-function delResult(id){ confirm2('Delete result?','',()=>{ DB=loadDB(); DB.results=DB.results.filter(x=>x.id!==id); saveDB(DB); renderAdmResults(); toast('Deleted'); }); }
+function editResult(id){openResultModal(id);}
+function delResult(id){confirm2('Delete result?','',async()=>{ DB=loadDB(); DB.results=DB.results.filter(x=>x.id!==id); saveLocal(DB); await pushDB(); renderAdmResults(); toast('Deleted'); });}
 
-// ════════════════════════════════════════
-// DANGER ZONE
-// ════════════════════════════════════════
-function doClear(what){
-  const msgs={matches:'Clear ALL matches and results?',groups:'Clear ALL groups?',all:'RESET EVERYTHING? All data will be lost.'};
-  confirm2(msgs[what],'This cannot be undone.',()=>{
-    DB=loadDB();
-    if(what==='matches'||what==='all'){ DB.schedule=[]; DB.results=[]; }
-    if(what==='groups'||what==='all'){ DB.groups={M45:{},M45P:{},F45:{},F45P:{}}; }
-    if(what==='all'){ DB.noms=[]; DB.nid=1; }
-    saveDB(DB); toast(`✅ ${what==='all'?'Everything reset':what+' cleared'}`);
-  });
+// ═══════════════════════════════════════════
+// SETTINGS
+// ═══════════════════════════════════════════
+function loadSettings(){
+  const s=DB.settings;
+  document.getElementById('s-url').value=s.scriptURL||'';
+  document.getElementById('s-name').value=s.name||'';
+  document.getElementById('s-start').value=s.startDate||'';
+  document.getElementById('s-end').value=s.endDate||'';
+  document.getElementById('s-venue').value=s.venue||'';
+  document.getElementById('s-city').value=s.city||'';
+  document.getElementById('s-mpg').value=s.mpg||4;
+  document.getElementById('s-msg').value=s.msg||'';
+  document.getElementById('s-gf').value=s.gf||'';
+  const f=document.getElementById('s-fmt');
+  if(f)[...f.options].forEach(o=>o.selected=o.value===s.fmt);
 }
-
-// ════════════════════════════════════════
-// MODAL HELPERS
-// ════════════════════════════════════════
-function openM(id){ document.getElementById(id).classList.add('open'); }
-function closeM(id){ document.getElementById(id).classList.remove('open'); }
-document.querySelectorAll('.moverlay').forEach(m=>m.addEventListener('click',e=>{ if(e.target===m) m.classList.remove('open'); }));
-
-let _cbCb=null;
-function confirm2(ttl,msg,cb){
-  _cbCb=cb;
-  document.getElementById('mc-ttl').textContent=ttl;
-  document.getElementById('mc-msg').textContent=msg;
-  openM('m-confirm');
-}
-document.getElementById('mc-ok').onclick=()=>{ closeM('m-confirm'); if(_cbCb){_cbCb();_cbCb=null;} };
-
-function toast(msg,t='s'){
-  let el=document.getElementById('_toast');
-  if(!el){
-    el=document.createElement('div'); el.id='_toast';
-    el.style.cssText='position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(10px);background:var(--s1);border:1px solid var(--b2);border-radius:var(--rsm);padding:10px 18px;font-size:.85rem;font-weight:600;z-index:9999;box-shadow:var(--sh);transition:opacity .3s,transform .3s;pointer-events:none;opacity:0';
-    document.body.appendChild(el);
+async function saveScriptURL(){
+  const url=document.getElementById('s-url').value.trim();
+  if(!url){toast('Enter a URL first','e');return;}
+  DB.settings.scriptURL=url; saveLocal(DB);
+  const el=document.getElementById('url-test-result');
+  el.innerHTML='<div class="al al-info">🔄 Testing connection…</div>';
+  try{
+    const res=await fetch(url+'?action=ping'); const data=await res.json();
+    if(data.ok){
+      el.innerHTML='<div class="al al-ok">✅ Connected! Server time: '+data.ts+'</div>';
+      await syncNow(true); toast('✅ URL saved & connected!');
+    } else throw new Error(data.error||'Unknown error');
+  }catch(e){
+    el.innerHTML=`<div class="al al-err">❌ Connection failed: ${e.message}</div>`;
+    toast('Connection failed','e');
   }
-  el.textContent=msg;
-  el.style.color=t==='e'?'var(--pink)':'var(--lime)';
-  el.style.opacity='1'; el.style.transform='translateX(-50%) translateY(0)';
-  clearTimeout(el._t);
-  el._t=setTimeout(()=>{ el.style.opacity='0'; el.style.transform='translateX(-50%) translateY(10px)'; },3000);
 }
-
-// ════════════════════════════════════════
-// PDF EXPORT
-// ════════════════════════════════════════
-function downloadResultsPDF(archiveSnap){
-  const snap = archiveSnap || DB;
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
-  const tourName = snap.settings?.name || 'Tournament';
-  const pageW = doc.internal.pageSize.getWidth();
-  let y = 0;
-
-  // ── Cover header ──
-  doc.setFillColor(7,9,15);
-  doc.rect(0,0,pageW,40,'F');
-  doc.setFillColor(198,255,71);
-  doc.rect(0,38,pageW,2,'F');
-  doc.setTextColor(198,255,71);
-  doc.setFont('helvetica','bold');
-  doc.setFontSize(22);
-  doc.text('🏓 ' + tourName.toUpperCase(), pageW/2, 16, {align:'center'});
-  doc.setTextColor(180,200,230);
-  doc.setFontSize(9);
-  doc.text('TOURNAMENT RESULTS REPORT  |  Generated ' + new Date().toLocaleDateString(), pageW/2, 26, {align:'center'});
-  const s = snap.settings||{};
-  if(s.venue||s.city) doc.text((s.venue||'')+(s.city?' · '+s.city:''), pageW/2, 32, {align:'center'});
-  y = 50;
-
-  // ── Summary boxes ──
-  const approved = (snap.noms||[]).filter(n=>n.status==='approved').length;
-  const totalGrps = Object.values(snap.groups||{}).flatMap(cg=>Object.keys(cg)).length;
-  const summary = [
-    ['Registered', approved],
-    ['Groups', totalGrps],
-    ['Matches Played', (snap.results||[]).length],
-    ['Format', s.fmt||'Best of 5'],
-  ];
-  const bw = (pageW-28) / summary.length;
-  summary.forEach(([lbl,val],i)=>{
-    const bx = 14 + i*bw;
-    doc.setFillColor(22,29,46);
-    doc.roundedRect(bx, y, bw-3, 16, 2, 2, 'F');
-    doc.setTextColor(198,255,71);
-    doc.setFontSize(14);
-    doc.setFont('helvetica','bold');
-    doc.text(String(val), bx + (bw-3)/2, y+8, {align:'center'});
-    doc.setTextColor(100,130,160);
-    doc.setFontSize(7);
-    doc.setFont('helvetica','normal');
-    doc.text(lbl.toUpperCase(), bx + (bw-3)/2, y+13, {align:'center'});
-  });
-  y += 24;
-
-  // ── Per-category sections ──
-  const catDefs = {
-    M45: { label:'Men Under 45', color:[61,158,255] },
-    M45P:{ label:'Men 45+',       color:[167,139,250] },
-    F45: { label:'Women Under 45',color:[255,61,127] },
-    F45P:{ label:'Women 45+',     color:[255,204,61] },
+async function saveSettings(){
+  DB.settings={...DB.settings,
+    name:document.getElementById('s-name').value.trim(),
+    startDate:document.getElementById('s-start').value,
+    endDate:document.getElementById('s-end').value,
+    venue:document.getElementById('s-venue').value.trim(),
+    city:document.getElementById('s-city').value.trim(),
+    mpg:parseInt(document.getElementById('s-mpg').value)||4,
+    fmt:document.getElementById('s-fmt').value,
+    msg:document.getElementById('s-msg').value.trim(),
+    gf:document.getElementById('s-gf').value.trim(),
   };
-
-  Object.entries(catDefs).forEach(([ck,ci])=>{
-    const cg = (snap.groups||{})[ck]||{};
-    const catResults = (snap.results||[]).filter(r=>r.cat===ck);
-    if(!Object.keys(cg).length && !catResults.length) return;
-
-    // Category heading
-    if(y > 250){ doc.addPage(); y=14; }
-    doc.setFillColor(...ci.color.map(c=>Math.round(c*0.15+7*0.85)));
-    doc.rect(14, y, pageW-28, 8, 'F');
-    doc.setFillColor(...ci.color);
-    doc.rect(14, y, 3, 8, 'F');
-    doc.setTextColor(...ci.color);
-    doc.setFontSize(11);
-    doc.setFont('helvetica','bold');
-    doc.text(ci.label.toUpperCase(), 20, y+5.5);
-    y += 12;
-
-    // Standings per group
-    Object.entries(cg).forEach(([grpName, players])=>{
-      if(!players.length) return;
-      if(y > 240){ doc.addPage(); y=14; }
-
-      // compute standings inline
-      const st={};
-      players.forEach(p=>{st[p]={name:p,mp:0,w:0,l:0,sw:0,sl:0,pts:0};});
-      catResults.filter(r=>r.grp===grpName).forEach(r=>{
-        const[w,l]=(r.score||'0-0').split('-').map(Number);
-        if(isNaN(w)||isNaN(l)) return;
-        const wn=w>l?r.p1:r.p2, ln=w>l?r.p2:r.p1;
-        if(st[wn]){st[wn].mp++;st[wn].w++;st[wn].pts+=2;st[wn].sw+=Math.max(w,l);st[wn].sl+=Math.min(w,l);}
-        if(st[ln]){st[ln].mp++;st[ln].l++;st[ln].pts+=(l>0?1:0);st[ln].sw+=Math.min(w,l);st[ln].sl+=Math.max(w,l);}
-      });
-      const rows = Object.values(st).sort((a,b)=>b.pts-a.pts||(b.sw-b.sl)-(a.sw-a.sl));
-
-      doc.setFontSize(9);
-      doc.setFont('helvetica','bold');
-      doc.setTextColor(180,200,230);
-      doc.text('📊 ' + grpName + ' — Standings', 16, y);
-      y += 4;
-
-      doc.autoTable({
-        startY: y,
-        margin: {left:14, right:14},
-        headStyles: { fillColor:[22,29,46], textColor:[120,150,190], fontStyle:'bold', fontSize:7 },
-        bodyStyles: { fillColor:[15,20,32], textColor:[220,230,245], fontSize:8 },
-        alternateRowStyles: { fillColor:[18,24,38] },
-        head: [['#','Player','MP','W','L','Sets W','Sets L','Pts']],
-        body: rows.map((p,i)=>[i+1, p.name, p.mp, p.w, p.l, p.sw, p.sl, p.pts]),
-        didParseCell: (d)=>{
-          if(d.section==='body' && d.row.index < 2){
-            d.cell.styles.textColor = ci.color;
-          }
-        },
-        theme:'plain',
-      });
-      y = doc.lastAutoTable.finalY + 6;
-    });
-
-    // Match results for this category
-    if(catResults.length){
-      if(y > 240){ doc.addPage(); y=14; }
-      doc.setFontSize(9);
-      doc.setFont('helvetica','bold');
-      doc.setTextColor(180,200,230);
-      doc.text('✅ Match Results', 16, y);
-      y += 4;
-      doc.autoTable({
-        startY: y,
-        margin: {left:14, right:14},
-        headStyles: { fillColor:[22,29,46], textColor:[120,150,190], fontStyle:'bold', fontSize:7 },
-        bodyStyles: { fillColor:[15,20,32], textColor:[220,230,245], fontSize:7.5 },
-        alternateRowStyles: { fillColor:[18,24,38] },
-        head: [['Group','Player 1','Score','Player 2','Sets','Date']],
-        body: catResults.map(r=>[r.grp||'—', r.p1, r.score||'—', r.p2, r.sets||'—', r.date||'—']),
-        didParseCell: (d)=>{
-          if(d.section==='body' && d.column.index===2){
-            d.cell.styles.textColor = ci.color;
-            d.cell.styles.fontStyle = 'bold';
-          }
-        },
-        theme:'plain',
-      });
-      y = doc.lastAutoTable.finalY + 10;
-    }
-  });
-
-  // ── Footer ──
-  const pages = doc.internal.getNumberOfPages();
-  for(let i=1;i<=pages;i++){
-    doc.setPage(i);
-    doc.setFontSize(7);
-    doc.setTextColor(60,80,110);
-    doc.text(`${tourName} — Page ${i} of ${pages}`, pageW/2, doc.internal.pageSize.getHeight()-6, {align:'center'});
-  }
-
-  const safeName = tourName.replace(/[^a-z0-9]/gi,'_').toLowerCase();
-  doc.save(`${safeName}_results.pdf`);
-  toast('✅ PDF downloaded!');
+  saveLocal(DB); await pushDB(); updateHeader(); toast('✅ Settings saved!');
 }
 
-// ════════════════════════════════════════
-// TOURNAMENT ARCHIVE MANAGEMENT
-// ════════════════════════════════════════
-const ARCH_KEY = 'tt_v3_archive';
-
-function loadArchive(){ try{ return JSON.parse(localStorage.getItem(ARCH_KEY))||[]; }catch(e){ return []; } }
-function saveArchive(a){ localStorage.setItem(ARCH_KEY, JSON.stringify(a)); }
-
-function archiveTournament(){
-  const totalMatches = DB.results.length;
-  const totalPlayers = DB.noms.filter(n=>n.status==='approved').length;
-  if(totalPlayers === 0){ toast('Nothing to archive — no approved players.','e'); return; }
-
-  confirm2(
-    'Archive Current Tournament?',
-    `This will save "${DB.settings.name}" (${totalPlayers} players, ${totalMatches} results) to history and start a completely fresh tournament. All current data will be preserved in the archive.`,
-    ()=>{
-      // snapshot current tournament
-      const snap = {
-        id: Date.now(),
-        archivedAt: new Date().toISOString(),
-        data: JSON.parse(JSON.stringify(DB)) // deep clone
-      };
-      const arch = loadArchive();
-      arch.unshift(snap);
-      saveArchive(arch);
-
-      // reset current tournament
-      const fresh = freshDB();
-      fresh.settings.venue = DB.settings.venue;
-      fresh.settings.city  = DB.settings.city;
-      fresh.settings.org   = DB.settings.org;
-      fresh.settings.email = DB.settings.email;
-      fresh.nid = DB.nid || 1;
-      DB = fresh;
-      saveDB(DB);
-      updateHeader();
-      renderAdmSec('dash');
-      toast(`📦 Archived! Fresh tournament ready.`);
-    }
-  );
-}
-
-function renderTournamentsSection(){
-  // Active card
-  const n = DB.noms.filter(x=>x.status==='approved').length;
-  const m = DB.results.length;
-  document.getElementById('t-active-card').innerHTML = `
-    <div class="flex aic gap8" style="flex-wrap:wrap">
-      <div style="flex:1">
-        <div style="font-weight:700;font-size:1rem">${DB.settings.name||'Untitled Tournament'}</div>
-        <div class="t3 ts mt1">${DB.settings.startDate||''}${DB.settings.endDate?' → '+DB.settings.endDate:''} ${DB.settings.venue?'· '+DB.settings.venue:''}</div>
-        <div style="display:flex;gap:16px;margin-top:10px;flex-wrap:wrap">
-          <span class="stile" style="padding:8px 14px;flex:none"><span class="sv" style="font-size:1.4rem">${n}</span><span class="sl">Players</span></span>
-          <span class="stile" style="padding:8px 14px;flex:none"><span class="sv" style="font-size:1.4rem">${m}</span><span class="sl">Results</span></span>
-          <span class="stile" style="padding:8px 14px;flex:none"><span class="sv" style="font-size:1.4rem">${DB.schedule.length}</span><span class="sl">Scheduled</span></span>
-        </div>
-      </div>
-      <div class="flex gap8" style="flex-direction:column;align-items:flex-end">
-        <button class="btn btn-pdf btn-sm" onclick="downloadResultsPDF()">⬇ Download PDF</button>
-        <button class="btn btn-red btn-sm" onclick="archiveTournament()">📦 Archive & New</button>
-      </div>
+// ═══════════════════════════════════════════
+// HISTORY / ARCHIVE
+// ═══════════════════════════════════════════
+function renderHistory(){
+  const ap=DB.noms.filter(n=>n.status==='approved').length;
+  document.getElementById('hist-active').innerHTML=`
+    <div class="arc-name">${DB.settings.name||'Untitled Tournament'}</div>
+    <div class="arc-meta">${DB.settings.venue||''} ${DB.settings.startDate?'· '+DB.settings.startDate:''}</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
+      <span class="chip chip-m" style="font-size:.72rem">${ap} Players</span>
+      <span class="chip chip-f" style="font-size:.72rem">${DB.results.length} Results</span>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
+      <button class="btn btn-pdf btn-sm" onclick="downloadPDF()">⬇ Download PDF</button>
+      <button class="btn btn-red btn-sm" onclick="archiveTournament()">📦 Archive & New</button>
     </div>`;
-
-  // Archive list
-  const arch = loadArchive();
-  const wrap = document.getElementById('t-archive-wrap');
-  const list = document.getElementById('t-archive-list');
-  if(!arch.length){
-    wrap.querySelector('.cb')||wrap.appendChild(document.createElement('div'));
-    list.innerHTML='<div class="empty"><span class="ei">📦</span><p>No archived tournaments yet.<br/>Archive the current one to save it here.</p></div>';
-    return;
-  }
-  list.innerHTML = arch.map((a,i)=>{
-    const d = a.data||{};
-    const np = (d.noms||[]).filter(n=>n.status==='approved').length;
-    const nr = (d.results||[]).length;
-    const ng = Object.values(d.groups||{}).flatMap(cg=>Object.keys(cg)).length;
-    const dt = new Date(a.archivedAt).toLocaleDateString();
-    return `<div class="t-archive-card">
-      <div style="font-size:1.8rem">🏆</div>
-      <div style="flex:1">
-        <div class="t-arc-name">${d.settings?.name||'Tournament '+(arch.length-i)}</div>
-        <div class="t-arc-meta">${d.settings?.startDate||''}${d.settings?.endDate?' → '+d.settings.endDate:''} ${d.settings?.venue?'· '+d.settings.venue:''}</div>
-        <div class="t-arc-meta" style="margin-top:3px">📦 Archived ${dt} &nbsp;·&nbsp; 🏓 ${np} players &nbsp;·&nbsp; 📊 ${ng} groups &nbsp;·&nbsp; ✅ ${nr} results</div>
-      </div>
-      <div class="flex gap8" style="flex-direction:column;align-items:flex-end;gap:4px">
-        <button class="btn btn-pdf btn-xs" onclick="downloadArchivePDF(${i})">⬇ PDF</button>
-        <button class="btn btn-ghost btn-xs" onclick="restoreArchive(${i})">↩ Restore</button>
-        <button class="btn btn-red btn-xs" onclick="deleteArchive(${i})">🗑</button>
+  const arch=loadArch();
+  const hl=document.getElementById('hist-list');
+  if(!arch.length){hl.innerHTML='<div class="empty"><span class="ei">📦</span><p>No archived tournaments yet.</p></div>';return;}
+  hl.innerHTML=arch.map((a,i)=>{
+    const d=a.data||{}; const np=(d.noms||[]).filter(n=>n.status==='approved').length;
+    const dt=new Date(a.archivedAt).toLocaleDateString();
+    return `<div class="arc-card">
+      <div class="arc-name">🏆 ${d.settings?.name||'Tournament '+(arch.length-i)}</div>
+      <div class="arc-meta">${d.settings?.venue||''} ${d.settings?.startDate||''}</div>
+      <div class="arc-meta" style="margin-top:4px">📦 ${dt} · ${np} players · ${(d.results||[]).length} results</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">
+        <button class="btn btn-pdf btn-xs" onclick="downloadPDF(${i})">⬇ PDF</button>
+        <button class="btn btn-ghost btn-xs" onclick="restoreArch(${i})">↩ Restore</button>
+        <button class="btn btn-red btn-xs" onclick="delArch(${i})">🗑</button>
       </div>
     </div>`;
   }).join('');
 }
-
-function downloadArchivePDF(idx){
-  const arch = loadArchive();
-  if(idx===undefined){
-    // export all — just current for simplicity
-    downloadResultsPDF(); return;
-  }
-  const snap = arch[idx];
-  if(!snap){ toast('Archive not found','e'); return; }
-  downloadResultsPDF(snap.data);
+async function archiveTournament(){
+  const ap=DB.noms.filter(n=>n.status==='approved').length;
+  if(!ap){toast('No approved players to archive','e');return;}
+  confirm2('Archive & Start New?',`Save "${DB.settings.name}" (${ap} players, ${DB.results.length} results) and begin a fresh tournament.`,async()=>{
+    const snap={id:Date.now(),archivedAt:new Date().toISOString(),data:JSON.parse(JSON.stringify(DB))};
+    const arch=loadArch(); arch.unshift(snap); saveArch(arch);
+    const fresh=freshDB();
+    fresh.settings.venue=DB.settings.venue;fresh.settings.city=DB.settings.city;
+    fresh.settings.scriptURL=DB.settings.scriptURL; fresh.nid=DB.nid;
+    DB=fresh; saveLocal(DB); await pushDB();
+    updateHeader(); renderAdmSec('dash'); toast('📦 Archived! Fresh tournament started.');
+  });
 }
-
-function restoreArchive(idx){
-  const arch = loadArchive();
-  const snap = arch[idx];
-  if(!snap){ toast('Not found','e'); return; }
-  confirm2(
-    'Restore this tournament?',
-    `"${snap.data?.settings?.name}" will become the active tournament. The current tournament will be pushed to the archive.`,
-    ()=>{
-      // archive current first
-      const cur = {id:Date.now(), archivedAt:new Date().toISOString(), data:JSON.parse(JSON.stringify(DB))};
-      arch.splice(idx,1); // remove the one being restored
-      arch.unshift(cur);  // archive current
-      saveArchive(arch);
-      DB = snap.data;
-      saveDB(DB);
-      updateHeader();
-      renderAdmSec('dash');
-      toast('↩ Tournament restored!');
-    }
-  );
+function downloadPDF(archIdx){
+  const snap=archIdx!==undefined?loadArch()[archIdx]?.data:null;
+  generatePDF(snap||DB);
 }
-
-function deleteArchive(idx){
-  confirm2('Delete this archived tournament?','This permanently deletes all its data. Cannot be undone.',()=>{
-    const arch = loadArchive();
-    arch.splice(idx,1);
-    saveArchive(arch);
-    renderTournamentsSection();
-    toast('Deleted from archive');
+async function restoreArch(idx){
+  const arch=loadArch(); const snap=arch[idx]; if(!snap) return;
+  confirm2('Restore this tournament?',`"${snap.data?.settings?.name}" will become active. Current tournament will be archived.`,async()=>{
+    const cur={id:Date.now(),archivedAt:new Date().toISOString(),data:JSON.parse(JSON.stringify(DB))};
+    arch.splice(idx,1); arch.unshift(cur); saveArch(arch);
+    DB=snap.data; saveLocal(DB); await pushDB(); updateHeader(); renderAdmSec('dash'); toast('↩ Restored!');
+  });
+}
+function delArch(idx){
+  confirm2('Delete archived tournament?','This cannot be undone.',()=>{
+    const arch=loadArch(); arch.splice(idx,1); saveArch(arch); renderHistory(); toast('Deleted');
   });
 }
 
-// ════════════════════════════════════════
+// ═══════════════════════════════════════════
+// DANGER ZONE
+// ═══════════════════════════════════════════
+async function doClear(what){
+  const msgs={matches:'Clear ALL matches and results?',groups:'Clear ALL groups?',all:'DELETE ALL DATA? This cannot be undone.'};
+  confirm2(msgs[what],'This cannot be undone.',async()=>{
+    DB=loadDB();
+    if(what==='matches'||what==='all'){DB.schedule=[];DB.results=[];}
+    if(what==='groups'||what==='all'){DB.groups={M45:{},M45P:{},F45:{},F45P:{}};}
+    if(what==='all'){DB.noms=[];DB.nid=1;}
+    saveLocal(DB); await pushDB(); toast(`✅ ${what} cleared`);
+  });
+}
+
+// ═══════════════════════════════════════════
+// PDF EXPORT
+// ═══════════════════════════════════════════
+function generatePDF(snap){
+  const {jsPDF}=window.jspdf;
+  const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+  const tourName=snap.settings?.name||'Tournament';
+  const pw=doc.internal.pageSize.getWidth();
+  let y=0;
+  // Header
+  doc.setFillColor(8,12,20);doc.rect(0,0,pw,36,'F');
+  doc.setFillColor(184,255,60);doc.rect(0,34,pw,2,'F');
+  doc.setTextColor(184,255,60);doc.setFont('helvetica','bold');doc.setFontSize(18);
+  doc.text('🏓 '+tourName.toUpperCase(),pw/2,14,{align:'center'});
+  doc.setTextColor(160,180,220);doc.setFontSize(8);
+  const s=snap.settings||{};
+  doc.text('RESULTS REPORT · Generated '+new Date().toLocaleDateString(),pw/2,22,{align:'center'});
+  if(s.venue||s.city) doc.text((s.venue||'')+(s.city?' · '+s.city:''),pw/2,28,{align:'center'});
+  y=44;
+  // Summary
+  const ap=(snap.noms||[]).filter(n=>n.status==='approved').length;
+  const summ=[['Players',ap],['Results',(snap.results||[]).length],['Groups',Object.values(snap.groups||{}).flatMap(cg=>Object.keys(cg)).length],['Format',s.fmt||'Best of 5']];
+  const bw=(pw-28)/summ.length;
+  summ.forEach(([l,v],i)=>{
+    const bx=14+i*bw;
+    doc.setFillColor(22,30,46);doc.roundedRect(bx,y,bw-3,14,2,2,'F');
+    doc.setTextColor(184,255,60);doc.setFontSize(12);doc.setFont('helvetica','bold');
+    doc.text(String(v),bx+(bw-3)/2,y+7,{align:'center'});
+    doc.setTextColor(80,110,150);doc.setFontSize(6);doc.setFont('helvetica','normal');
+    doc.text(l.toUpperCase(),bx+(bw-3)/2,y+11.5,{align:'center'});
+  });
+  y+=22;
+  const catDefs={M45:{label:'Men Under 45',color:[77,166,255]},M45P:{label:'Men 45+',color:[167,139,250]},F45:{label:'Women Under 45',color:[255,61,127]},F45P:{label:'Women 45+',color:[255,204,60]}};
+  Object.entries(catDefs).forEach(([ck,ci])=>{
+    const cg=(snap.groups||{})[ck]||{};
+    const catR=(snap.results||[]).filter(r=>r.cat===ck);
+    if(!Object.keys(cg).length&&!catR.length) return;
+    if(y>250){doc.addPage();y=14;}
+    doc.setFillColor(20,26,42);doc.rect(14,y,pw-28,7,'F');
+    doc.setFillColor(...ci.color);doc.rect(14,y,3,7,'F');
+    doc.setTextColor(...ci.color);doc.setFontSize(10);doc.setFont('helvetica','bold');
+    doc.text(ci.label.toUpperCase(),20,y+5);y+=11;
+    Object.entries(cg).forEach(([grp,players])=>{
+      if(!players.length) return;
+      if(y>240){doc.addPage();y=14;}
+      const st={};
+      players.forEach(p=>{st[p]={name:p,mp:0,w:0,l:0,sw:0,sl:0,pts:0};});
+      catR.filter(r=>r.grp===grp).forEach(r=>{
+        const[w,l]=(r.score||'0-0').split('-').map(Number);if(isNaN(w)||isNaN(l)) return;
+        const wn=w>l?r.p1:r.p2,ln=w>l?r.p2:r.p1;
+        if(st[wn]){st[wn].mp++;st[wn].w++;st[wn].pts+=2;st[wn].sw+=Math.max(w,l);st[wn].sl+=Math.min(w,l);}
+        if(st[ln]){st[ln].mp++;st[ln].l++;st[ln].pts+=(l>0?1:0);st[ln].sw+=Math.min(w,l);st[ln].sl+=Math.max(w,l);}
+      });
+      const rows=Object.values(st).sort((a,b)=>b.pts-a.pts||(b.sw-b.sl)-(a.sw-a.sl));
+      doc.setFontSize(8);doc.setFont('helvetica','bold');doc.setTextColor(160,185,220);
+      doc.text('📊 '+grp+' — Standings',16,y);y+=3;
+      doc.autoTable({startY:y,margin:{left:14,right:14},
+        headStyles:{fillColor:[20,28,44],textColor:[100,140,180],fontStyle:'bold',fontSize:6},
+        bodyStyles:{fillColor:[12,18,30],textColor:[210,225,245],fontSize:7},
+        alternateRowStyles:{fillColor:[16,22,36]},
+        head:[['#','Player','MP','W','L','SW','SL','Pts']],
+        body:rows.map((p,i)=>[i+1,p.name,p.mp,p.w,p.l,p.sw,p.sl,p.pts]),
+        didParseCell:d=>{if(d.section==='body'&&d.row.index<2)d.cell.styles.textColor=ci.color;},theme:'plain'});
+      y=doc.lastAutoTable.finalY+5;
+    });
+    if(catR.length){
+      if(y>240){doc.addPage();y=14;}
+      doc.setFontSize(8);doc.setFont('helvetica','bold');doc.setTextColor(160,185,220);
+      doc.text('✅ Match Results',16,y);y+=3;
+      doc.autoTable({startY:y,margin:{left:14,right:14},
+        headStyles:{fillColor:[20,28,44],textColor:[100,140,180],fontStyle:'bold',fontSize:6},
+        bodyStyles:{fillColor:[12,18,30],textColor:[210,225,245],fontSize:7},
+        alternateRowStyles:{fillColor:[16,22,36]},
+        head:[['Group','P1','Score','P2','Sets','Date']],
+        body:catR.map(r=>[r.grp||'—',r.p1,r.score||'—',r.p2,r.sets||'—',r.date||'—']),
+        didParseCell:d=>{if(d.section==='body'&&d.column.index===2){d.cell.styles.textColor=ci.color;d.cell.styles.fontStyle='bold';}},theme:'plain'});
+      y=doc.lastAutoTable.finalY+10;
+    }
+  });
+  const pages=doc.internal.getNumberOfPages();
+  for(let i=1;i<=pages;i++){doc.setPage(i);doc.setFontSize(6);doc.setTextColor(50,70,100);doc.text(`${tourName} · Page ${i}/${pages}`,pw/2,doc.internal.pageSize.getHeight()-5,{align:'center'});}
+  doc.save(tourName.replace(/[^a-z0-9]/gi,'_').toLowerCase()+'_results.pdf');
+  toast('✅ PDF downloaded!');
+}
+
+// ═══════════════════════════════════════════
+// MODAL HELPERS
+// ═══════════════════════════════════════════
+function openM(id){document.getElementById(id).classList.add('open');}
+function closeM(id){document.getElementById(id).classList.remove('open');}
+document.querySelectorAll('.mo').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open');}));
+let _cb=null;
+function confirm2(ttl,msg,cb){
+  _cb=cb;document.getElementById('mc-ttl').textContent=ttl;document.getElementById('mc-msg').textContent=msg;openM('m-confirm');
+}
+document.getElementById('mc-ok').onclick=()=>{closeM('m-confirm');if(_cb){_cb();_cb=null;}};
+
+function toast(msg,t='s'){
+  const el=document.getElementById('toast');
+  el.textContent=msg;el.style.color=t==='e'?'var(--pink)':t==='w'?'var(--gold)':'var(--lime)';
+  el.style.opacity='1';el.style.transform='translateX(-50%) translateY(0)';
+  clearTimeout(el._t);el._t=setTimeout(()=>{el.style.opacity='0';el.style.transform='translateX(-50%) translateY(10px)';},3000);
+}
+
+// ═══════════════════════════════════════════
 // INIT
-// ════════════════════════════════════════
+// ═══════════════════════════════════════════
 updateHeader();
 renderHome();
+// Auto-sync on load if URL is set
+if(DB.settings.scriptURL){ syncNow(true); }
+else { setSyncState('err','No URL'); document.getElementById('setup-notice').style.display='block'; }
 </script>
 </body>
 </html>
