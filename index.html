@@ -692,6 +692,7 @@ let DB=loadDB();
 // ═══════════════════════════════════════════
 let syncing=false;
 
+// Pull full DB from server — server is always source of truth
 async function syncNow(silent){
   if(syncing) return;
   const url=DB.settings.scriptURL;
@@ -703,21 +704,16 @@ async function syncNow(silent){
   syncing=true;
   setSyncState('loading','Syncing…');
   try{
-    // Pull latest from server
-    const res=await fetch(url+'?action=get',{method:'GET'});
+    const res=await fetch(url+'?action=get');
     if(!res.ok) throw new Error('HTTP '+res.status);
     const remote=await res.json();
     if(remote.error) throw new Error(remote.error);
-
-    // Merge: server is source of truth, preserve local scriptURL
     remote.settings.scriptURL=url;
-    DB=remote;
-    saveLocal(DB);
+    DB=remote; saveLocal(DB);
     setSyncState('ok','Live');
     document.getElementById('setup-notice').style.display='none';
     if(!silent) toast('✅ Synced!');
-    refreshCurrentPage();
-    updateHeader();
+    refreshCurrentPage(); updateHeader();
   }catch(err){
     setSyncState('err','Offline');
     if(!silent) toast('Sync failed: '+err.message,'e');
@@ -725,29 +721,29 @@ async function syncNow(silent){
   syncing=false;
 }
 
-async function pushDB(){
+// Send ONE atomic command to server — never push full DB
+async function serverCmd(payload){
   const url=DB.settings.scriptURL;
-  if(!url) return;
+  if(!url){ toast('No server URL configured','e'); return {ok:false}; }
+  setSyncState('loading','Saving…');
   try{
-    // Always fetch latest first, then merge our changes on top
-    const res=await fetch(url+'?action=get');
-    const remote=await res.json();
-    if(!remote.error){
-      // Merge: keep remote as base, overlay our local changes
-      const merged={...remote};
-      merged.settings={...remote.settings,...DB.settings};
-      merged.noms=DB.noms;
-      merged.groups=DB.groups;
-      merged.schedule=DB.schedule;
-      merged.results=DB.results;
-      merged.nid=Math.max(remote.nid||1, DB.nid||1);
-      DB=merged; saveLocal(DB);
+    const res=await fetch(url,{
+      method:'POST',
+      body:JSON.stringify(payload),
+      headers:{'Content-Type':'application/json'}
+    });
+    const data=await res.json();
+    if(data.ok){
+      await syncNow(true); // pull fresh state after every change
+    } else {
+      setSyncState('err','Failed');
+      if(data.error) toast(data.error,'e');
     }
-    await fetch(url,{method:'POST',body:JSON.stringify(DB),headers:{'Content-Type':'application/json'}});
-    setSyncState('ok','Saved');
+    return data;
   }catch(e){
-    setSyncState('err','Save failed');
-    toast('Could not save to server','e');
+    setSyncState('err','Failed');
+    toast('Server error: '+e.message,'e');
+    return {ok:false};
   }
 }
 
@@ -759,7 +755,7 @@ async function syncFormData(){
     const res=await fetch(url+'?action=syncForm');
     const data=await res.json();
     if(!data.ok) throw new Error(data.msg||'Sync failed');
-    toast(`✅ Synced ${data.synced} new players from form`);
+    toast('✅ Synced '+data.synced+' new players from form');
     await syncNow(true);
   }catch(e){
     setSyncState('err','Failed');
@@ -775,9 +771,8 @@ function setSyncState(state,lbl){
 }
 
 async function saveAndSync(){
-  saveLocal(DB);
-  await pushDB();
-  toast('💾 Saved!');
+  await serverCmd({action:'saveGroups', groups:DB.groups});
+  toast('💾 Groups saved!');
 }
 
 // ═══════════════════════════════════════════
@@ -971,42 +966,23 @@ async function submitReg(){
   const age=parseInt(document.getElementById('n-age').value)||0;
   const gender=document.getElementById('n-gender').value;
   const al=document.getElementById('reg-al');
-  const err=m=>{ al.className='al al-err'; al.innerHTML=m; al.style.display='flex'; };
-  if(!cpf||!name||!age||!gender){err('Please fill all required fields.');return;}
-  if(!validCPF(cpf)){err('CPF must be 5 or 6 digits.');return;}
-
-  // Show loading
+  const showErr=m=>{ al.className='al al-err'; al.innerHTML=m; al.style.display='flex'; };
+  if(!cpf||!name||!age||!gender){showErr('Please fill all required fields.');return;}
+  if(!validCPF(cpf)){showErr('CPF must be 5 or 6 digits.');return;}
+  al.style.display='none';
   const btn=document.querySelector('#reg-form .btn-lime');
   btn.textContent='Submitting…'; btn.disabled=true;
-
-  // Always pull latest from server first before adding
-  const url=DB.settings.scriptURL;
-  if(url){
-    try{
-      const res=await fetch(url+'?action=get');
-      const remote=await res.json();
-      if(!remote.error){
-        remote.settings.scriptURL=url;
-        DB=remote; saveLocal(DB);
-      }
-    }catch(e){ /* use local if offline */ }
-  }
-
-  const cc=cleanCPF(cpf);
-  if(DB.noms.find(n=>cleanCPF(n.cpf)===cc)){
-    err('This CPF is already registered.');
-    btn.textContent='Submit Registration →'; btn.disabled=false;
-    return;
-  }
-  al.style.display='none';
   const ck=catOf(gender,age);
-  DB.noms.push({id:DB.nid++,cpf,name,age,gender,cat:ck,status:'pending',ts:new Date().toISOString()});
-  saveLocal(DB);
-  await pushDB();
+  const nom={cpf,name,age,gender,cat:ck,status:'pending',ts:new Date().toISOString()};
+  const result=await serverCmd({action:'addNom', nom});
   btn.textContent='Submit Registration →'; btn.disabled=false;
-  document.getElementById('reg-form').style.display='none';
-  document.getElementById('reg-ok').style.display='block';
-  document.getElementById('reg-ok-cat').innerHTML=`<span class="chip ${CATS[ck].css}">${CATS[ck].label}</span>`;
+  if(result.ok){
+    document.getElementById('reg-form').style.display='none';
+    document.getElementById('reg-ok').style.display='block';
+    document.getElementById('reg-ok-cat').innerHTML=`<span class="chip ${CATS[ck].css}">${CATS[ck].label}</span>`;
+  } else {
+    showErr(result.error||'Registration failed. Please try again.');
+  }
 }
 function resetReg(){
   ['n-cpf','n-name','n-age'].forEach(id=>document.getElementById(id).value='');
@@ -1161,10 +1137,10 @@ function renderNomTable(){
   updateSBC();
 }
 async function setNomStatus(id,s){
-  DB=loadDB(); const n=DB.noms.find(x=>x.id===id); if(!n) return;
-  n.status=s; saveLocal(DB); await pushDB(); renderNomTable(); updateSBC(); toast(`${n.name}: ${s}`);
+  await serverCmd({action:'updateNomStatus', id, status:s});
+  updateSBC();
 }
-function delNom(id){ confirm2('Delete this registration?','',async()=>{ DB=loadDB(); DB.noms=DB.noms.filter(x=>x.id!==id); saveLocal(DB); await pushDB(); renderNomTable(); updateSBC(); toast('Deleted'); }); }
+function delNom(id){ confirm2('Delete this registration?','',async()=>{ await serverCmd({action:'deleteNom', id}); updateSBC(); }); }
 function exportCSV(){
   const h=['ID','CPF','Name','Age','Gender','Category','Status','Registered'];
   const rows=DB.noms.map(n=>[n.id,n.cpf,n.name,n.age,n.gender,(CATS[n.cat]||{label:n.cat}).full,n.status,n.ts||'']);
@@ -1182,11 +1158,9 @@ async function saveAddPlayer(){
   const age=parseInt(document.getElementById('mp-age').value)||0, gender=document.getElementById('mp-gender').value;
   if(!cpf||!name||!age||!gender){toast('All fields required','e');return;}
   if(!validCPF(cpf)){toast('Invalid CPF','e');return;}
-  DB=loadDB();
-  const cc=cleanCPF(cpf);
-  if(DB.noms.find(n=>cleanCPF(n.cpf)===cc)){toast('CPF already registered','e');return;}
-  DB.noms.push({id:DB.nid++,cpf,name,age,gender,cat:catOf(gender,age),status:document.getElementById('mp-status').value,ts:new Date().toISOString()});
-  saveLocal(DB); await pushDB(); closeM('m-addplayer'); renderNomTable(); updateSBC(); toast('✅ Player added!');
+  const nom={cpf,name,age,gender,cat:catOf(gender,age),status:document.getElementById('mp-status').value,ts:new Date().toISOString()};
+  const result=await serverCmd({action:'addPlayerDirect', nom});
+  if(result.ok){ closeM('m-addplayer'); updateSBC(); toast('✅ Player added!'); }
 }
 
 // ═══════════════════════════════════════════
@@ -1219,7 +1193,9 @@ async function ddr(e,to){
   DB=loadDB();
   if(dragFrom!=='Unassigned') DB.groups[gbCat][dragFrom]=(DB.groups[gbCat][dragFrom]||[]).filter(p=>p!==dragP);
   if(to!=='Unassigned'){if(!DB.groups[gbCat][to])DB.groups[gbCat][to]=[];if(!DB.groups[gbCat][to].includes(dragP))DB.groups[gbCat][to].push(dragP);}
-  saveLocal(DB); await pushDB(); renderGBContent(); dragP=null; dragFrom=null;
+  saveLocal(DB);
+  await serverCmd({action:'saveGroups', groups:DB.groups});
+  dragP=null; dragFrom=null;
 }
 async function autoAssign(){
   DB=loadDB(); const mpg=DB.settings.mpg||4;
@@ -1230,12 +1206,15 @@ async function autoAssign(){
     for(let i=0;i<ng;i++) DB.groups[ck][`Group ${String.fromCharCode(65+i)}`]=[];
     [...players].sort(()=>Math.random()-.5).forEach((p,i)=>DB.groups[ck][`Group ${String.fromCharCode(65+(i%ng))}`].push(p));
   });
-  saveLocal(DB); await pushDB(); renderGBContent(); toast('⚡ Auto-assigned!');
+  saveLocal(DB);
+  await serverCmd({action:'saveGroups', groups:DB.groups});
+  toast('⚡ Auto-assigned!');
 }
 async function addGroup(){
   DB=loadDB(); const keys=Object.keys(DB.groups[gbCat]||{});
   DB.groups[gbCat][`Group ${String.fromCharCode(65+keys.length)}`]=[];
-  saveLocal(DB); await pushDB(); renderGBContent();
+  saveLocal(DB);
+  await serverCmd({action:'saveGroups', groups:DB.groups});
 }
 async function saveAndSync(){ saveLocal(DB); await pushDB(); toast('💾 Groups saved!'); }
 
@@ -1287,16 +1266,15 @@ function openMatchModal(eid){
 async function saveMatch(){
   const p1=document.getElementById('mm-p1').value, p2=document.getElementById('mm-p2').value;
   if(!p1||!p2||p1===p2){toast('Pick 2 different players','e');return;}
-  DB=loadDB();
   const eid=parseInt(document.getElementById('mm-eid').value)||0;
-  const m={id:eid||DB.nid++,cat:document.getElementById('mm-cat').value,grp:document.getElementById('mm-grp').value,
+  const m={id:eid||0,cat:document.getElementById('mm-cat').value,grp:document.getElementById('mm-grp').value,
     p1,p2,date:document.getElementById('mm-date').value,time:document.getElementById('mm-time').value,
     tbl:document.getElementById('mm-tbl').value,status:'upcoming'};
-  if(eid) DB.schedule=DB.schedule.map(x=>x.id===eid?m:x); else DB.schedule.push(m);
-  saveLocal(DB); await pushDB(); closeM('m-match'); renderAdmSched(); toast('✅ Match saved!');
+  const result=await serverCmd(eid?{action:'updateMatch',match:m}:{action:'addMatch',match:m});
+  if(result.ok){ closeM('m-match'); toast('✅ Match saved!'); }
 }
 function editMatch(id){openMatchModal(id);}
-function delMatch(id){confirm2('Delete match?','',async()=>{ DB=loadDB(); DB.schedule=DB.schedule.filter(x=>x.id!==id); saveLocal(DB); await pushDB(); renderAdmSched(); toast('Deleted'); });}
+function delMatch(id){confirm2('Delete match?','',async()=>{ await serverCmd({action:'deleteMatch',id}); });}
 
 // ═══════════════════════════════════════════
 // RESULTS ADMIN
@@ -1349,15 +1327,14 @@ async function saveResult(){
   const score=document.getElementById('mr-score').value.trim();
   if(!p1||!p2||p1===p2||!score){toast('Fill required fields','e');return;}
   if(!/^\d+-\d+$/.test(score)){toast('Score format: 3-1','e');return;}
-  DB=loadDB();
   const eid=parseInt(document.getElementById('mr-eid').value)||0;
-  const r={id:eid||DB.nid++,cat:document.getElementById('mr-cat').value,grp:document.getElementById('mr-grp').value,
+  const r={id:eid||0,cat:document.getElementById('mr-cat').value,grp:document.getElementById('mr-grp').value,
     p1,p2,score,sets:document.getElementById('mr-sets').value.trim(),date:document.getElementById('mr-date').value};
-  if(eid) DB.results=DB.results.map(x=>x.id===eid?r:x); else DB.results.push(r);
-  saveLocal(DB); await pushDB(); closeM('m-result'); renderAdmResults(); toast('✅ Result saved!');
+  const result=await serverCmd(eid?{action:'updateResult',result:r}:{action:'addResult',result:r});
+  if(result.ok){ closeM('m-result'); toast('✅ Result saved!'); }
 }
 function editResult(id){openResultModal(id);}
-function delResult(id){confirm2('Delete result?','',async()=>{ DB=loadDB(); DB.results=DB.results.filter(x=>x.id!==id); saveLocal(DB); await pushDB(); renderAdmResults(); toast('Deleted'); });}
+function delResult(id){confirm2('Delete result?','',async()=>{ await serverCmd({action:'deleteResult',id}); });}
 
 // ═══════════════════════════════════════════
 // SETTINGS
@@ -1394,7 +1371,7 @@ async function saveScriptURL(){
   }
 }
 async function saveSettings(){
-  DB.settings={...DB.settings,
+  const settings={
     name:document.getElementById('s-name').value.trim(),
     startDate:document.getElementById('s-start').value,
     endDate:document.getElementById('s-end').value,
@@ -1404,8 +1381,10 @@ async function saveSettings(){
     fmt:document.getElementById('s-fmt').value,
     msg:document.getElementById('s-msg').value.trim(),
     gf:document.getElementById('s-gf').value.trim(),
+    scriptURL:DB.settings.scriptURL,
   };
-  saveLocal(DB); await pushDB(); updateHeader(); toast('✅ Settings saved!');
+  await serverCmd({action:'saveSettings', settings});
+  updateHeader(); toast('✅ Settings saved!');
 }
 
 // ═══════════════════════════════════════════
@@ -1478,12 +1457,10 @@ function delArch(idx){
 // ═══════════════════════════════════════════
 async function doClear(what){
   const msgs={matches:'Clear ALL matches and results?',groups:'Clear ALL groups?',all:'DELETE ALL DATA? This cannot be undone.'};
+  const actions={matches:'clearMatches',groups:'clearGroups',all:'clearAll'};
   confirm2(msgs[what],'This cannot be undone.',async()=>{
-    DB=loadDB();
-    if(what==='matches'||what==='all'){DB.schedule=[];DB.results=[];}
-    if(what==='groups'||what==='all'){DB.groups={M45:{},M45P:{},F45:{},F45P:{}};}
-    if(what==='all'){DB.noms=[];DB.nid=1;}
-    saveLocal(DB); await pushDB(); toast(`✅ ${what} cleared`);
+    await serverCmd({action:actions[what]});
+    toast('✅ '+what+' cleared');
   });
 }
 
