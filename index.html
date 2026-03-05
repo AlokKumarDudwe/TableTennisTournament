@@ -729,6 +729,20 @@ async function pushDB(){
   const url=DB.settings.scriptURL;
   if(!url) return;
   try{
+    // Always fetch latest first, then merge our changes on top
+    const res=await fetch(url+'?action=get');
+    const remote=await res.json();
+    if(!remote.error){
+      // Merge: keep remote as base, overlay our local changes
+      const merged={...remote};
+      merged.settings={...remote.settings,...DB.settings};
+      merged.noms=DB.noms;
+      merged.groups=DB.groups;
+      merged.schedule=DB.schedule;
+      merged.results=DB.results;
+      merged.nid=Math.max(remote.nid||1, DB.nid||1);
+      DB=merged; saveLocal(DB);
+    }
     await fetch(url,{method:'POST',body:JSON.stringify(DB),headers:{'Content-Type':'application/json'}});
     setSyncState('ok','Saved');
   }catch(e){
