@@ -325,8 +325,9 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t1);displ
       <div class="cat-chips">
         <span class="chip chip-a">A · Employee Team</span>
         <span class="chip chip-b">B · Wards ≤10</span>
-        <span class="chip chip-c">C · Wards >10</span>
-        <span class="chip chip-d">D · Homemaker</span>
+        <span class="chip chip-c">C · Girls >10</span>
+        <span class="chip chip-d">D · Boys >10</span>
+        <span class="chip chip-e">E · Homemaker</span>
       </div>
     </div>
     <div class="stat-row">
@@ -354,9 +355,10 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t1);displ
         <select class="form-select" id="n-cat" onchange="onCatChange()">
           <option value="">— Select your category —</option>
           <option value="A">Category A — Employee (M/F) · Team Event</option>
-          <option value="B">Category B — Wards up to 10 yrs · Singles (All)</option>
-          <option value="C">Category C — Wards above 10 yrs · Singles (M/F)</option>
-          <option value="D">Category D — Homemaker / Wife · Singles</option>
+          <option value="B">Category B — Wards up to 10 yrs · Singles (All genders)</option>
+          <option value="C">Category C — Wards Girls above 10 yrs · Singles</option>
+          <option value="D">Category D — Wards Boys above 10 yrs · Singles</option>
+          <option value="E">Category E — Homemaker / Wife · Singles</option>
         </select>
       </div>
       <div id="cat-preview" style="display:none" class="form-group">
@@ -671,10 +673,11 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t1);displ
     <div class="af-group"><label class="af-label">Category *</label>
       <select class="af-select" id="mp-cat">
         <option value="">— Select —</option>
-        <option value="A">A · Employee (M/F) · Team Event</option>
+        <option value="A">A · Employee (M/F) · Team</option>
         <option value="B">B · Wards ≤10 yrs · Singles All</option>
-        <option value="C">C · Wards >10 yrs · Singles M/F</option>
-        <option value="D">D · Homemaker/Wife · Singles</option>
+        <option value="C">C · Wards Girls >10 · Singles</option>
+        <option value="D">D · Wards Boys >10 · Singles</option>
+        <option value="E">E · Homemaker/Wife · Singles</option>
       </select>
     </div>
     <div class="af-group"><label class="af-label">Status</label>
@@ -697,8 +700,9 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t1);displ
       <select class="af-select" id="mm-cat" onchange="populateMM()">
         <option value="A">A · Employee (M/F) · Team</option>
         <option value="B">B · Wards ≤10 yrs · Singles</option>
-        <option value="C">C · Wards >10 yrs · Singles</option>
-        <option value="D">D · Homemaker/Wife · Singles</option>
+        <option value="C">C · Wards Girls >10 · Singles</option>
+        <option value="D">D · Wards Boys >10 · Singles</option>
+        <option value="E">E · Homemaker/Wife · Singles</option>
       </select>
     </div>
     <div class="af-group"><label class="af-label">Group</label><select class="af-select" id="mm-grp" onchange="populateMMP()"></select></div>
@@ -738,8 +742,9 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t1);displ
       <select class="af-select" id="mr-cat" onchange="populateMRG()">
         <option value="A">A · Employee (M/F) · Team</option>
         <option value="B">B · Wards ≤10 yrs · Singles</option>
-        <option value="C">C · Wards >10 yrs · Singles</option>
-        <option value="D">D · Homemaker/Wife · Singles</option>
+        <option value="C">C · Wards Girls >10 · Singles</option>
+        <option value="D">D · Wards Boys >10 · Singles</option>
+        <option value="E">E · Homemaker/Wife · Singles</option>
       </select>
     </div>
     <div class="af-group"><label class="af-label">Group</label><select class="af-select" id="mr-grp" onchange="populateMRP()"></select></div>
@@ -843,11 +848,11 @@ const SK='tt_v5';
 const ARCH_KEY='tt_v5_arch';
 
 const CATS={
-  A:{label:'Cat A',full:'Employee (M/F)',      css:'chip-a', color:[77,166,255],  fmt:'Team Event',         fields:['name','cpf','gender','whatsapp']},
-  B:{label:'Cat B',full:'Wards ≤10 yrs',      css:'chip-b', color:[45,232,196],  fmt:'Singles — All',      fields:['empName','cpf','partName','gender','whatsapp']},
-  C:{label:'Cat C',full:'Wards >10 yrs',       css:'chip-c', color:[255,61,127],  fmt:'Singles — M/F',      fields:['empName','cpf','partName','gender','whatsapp']},
-  D:{label:'Cat D',full:'Homemaker / Wife',    css:'chip-d', color:[255,204,60],  fmt:'Singles only',       fields:['empName','cpf','partName','whatsapp']},
-  E:{label:'Cat E',full:'Homemakers (Female)', css:'chip-e', color:[184,255,60],  fmt:'League & Knockout',  fields:['empName','cpf','partName','whatsapp']},
+  A:{label:'Cat A',full:'Employee (M/F)',       css:'chip-a', color:[77,166,255],  fmt:'Team Event'},
+  B:{label:'Cat B',full:'Wards ≤10 yrs (All)', css:'chip-b', color:[45,232,196],  fmt:'Singles — All'},
+  C:{label:'Cat C',full:'Wards Girls >10 yrs', css:'chip-c', color:[255,61,127],  fmt:'Singles — Girls'},
+  D:{label:'Cat D',full:'Wards Boys >10 yrs',  css:'chip-d', color:[184,255,60],  fmt:'Singles — Boys'},
+  E:{label:'Cat E',full:'Homemaker / Wife',     css:'chip-e', color:[255,204,60],  fmt:'Singles only'},
 };
 const GCOLS=['#4da6ff','#2de8c4','#b8ff3c','#ff3d7f','#a78bfa','#ffcc3c','#fb923c','#34d399'];
 const gc=i=>GCOLS[i%GCOLS.length];
@@ -860,7 +865,7 @@ const gc=i=>GCOLS[i%GCOLS.length];
 function freshDB(){
   return {
     settings:{name:'Table Tennis Tournament 2025',startDate:'',endDate:'',venue:'',city:'',mpg:4,fmt:'Best of 5',msg:'',gf:'',scriptURL:''},
-    noms:[],groups:{A:{},B:{},C:{},D:{}},brackets:{B:{},C:{},D:{}},teams:[],
+    noms:[],groups:{A:{},B:{},C:{},D:{},E:{}},brackets:{B:{},C:{},D:{}},teams:[],
     schedule:[],results:[],nid:1
   };
 }
@@ -1170,13 +1175,18 @@ function onCatChange(){
   fields.style.display='block';
   // Show/hide fields based on category
   const isA = ck==='A';
+  // Cat C=Girls, Cat D=Boys, Cat E=Homemaker — gender implied, no dropdown needed
+  const needsGender = (ck==='A'||ck==='B'); // A and B need gender selection
   document.querySelectorAll('.f-name').forEach(el=>el.style.display=isA?'block':'none');
   document.querySelectorAll('.f-empname').forEach(el=>el.style.display=!isA?'block':'none');
   document.querySelectorAll('.f-partname').forEach(el=>el.style.display=!isA?'block':'none');
-  document.querySelectorAll('.f-gender').forEach(el=>el.style.display=(ck!=='D')?'block':'none');
+  document.querySelectorAll('.f-gender').forEach(el=>el.style.display=needsGender?'block':'none');
   // Update participant label
   const pl=document.getElementById('n-partname-label');
-  if(pl) pl.innerHTML=(ck==='D'?'Homemaker / Wife Name':'Ward / Child Name')+' <span class="req">*</span>';
+  if(pl){
+    const lbl=ck==='E'?'Homemaker / Wife Name':ck==='C'?'Girl's Name':ck==='D'?'Boy's Name':'Ward / Child Name';
+    pl.innerHTML=lbl+' <span class="req">*</span>';
+  }
 }
 function updateCatPreview(){ onCatChange(); }
 async function submitReg(){
@@ -1198,9 +1208,12 @@ async function submitReg(){
   } else {
     empName=document.getElementById('n-empname').value.trim();
     partName=document.getElementById('n-partname').value.trim();
-    if(ck!=='D') gender=document.getElementById('n-gender').value;
+    if(ck==='A'||ck==='B') gender=document.getElementById('n-gender').value;
+    else if(ck==='C') gender='Female';   // Wards Girls
+    else if(ck==='D') gender='Male';     // Wards Boys
+    else if(ck==='E') gender='Female';   // Homemakers
     if(!empName||!partName){showErr('Please fill all required fields.');return;}
-    if(ck!=='D'&&!gender){showErr('Please select gender.');return;}
+    if((ck==='A'||ck==='B')&&!gender){showErr('Please select gender.');return;}
     name=partName; // use participant name as display name
   }
   al.style.display='none';
@@ -1442,17 +1455,29 @@ function renderGBContent(){
   const cg=DB.groups[gbCat]||{};
   if(!Object.keys(cg).length){ DB.groups[gbCat]={'Group A':[],'Group B':[],'Group C':[],'Group D':[]}; saveLocal(DB); }
   if(gbCat==='A'){ renderGBContentTeams(); return; }
-  const approved=DB.noms.filter(n=>n.status==='approved'&&n.cat===gbCat).map(n=>n.partName||n.name);
+  const approvedNoms=DB.noms.filter(n=>n.status==='approved'&&n.cat===gbCat);
+  const approved=approvedNoms.map(n=>n.partName||n.name);
   const assigned=new Set(Object.values(DB.groups[gbCat]).flat());
   const unassigned=approved.filter(p=>!assigned.has(p));
   const pools={Unassigned:unassigned,...DB.groups[gbCat]};
-  document.getElementById('gb-body').innerHTML=Object.entries(pools).map(([pn,players])=>`
+  const catCNote=gbCat==='C'?`<div class="al al-info mb2" style="align-items:center">
+    <span>Cat C has Boys &amp; Girls — create separate groups per gender.</span>
+    <button class="btn btn-ghost btn-xs" style="margin-left:8px;flex-shrink:0" onclick="autoSeparateCatC()">⚡ Auto-Separate</button>
+  </div>`:'';
+  document.getElementById('gb-body').innerHTML=catCNote+Object.entries(pools).map(([pn,players])=>`
     <div class="gb-pool" id="pool-${pn.replace(/ /g,'_')}"
       ondragover="dov(event,this)" ondrop="ddr(event,'${pn}')" ondragleave="this.classList.remove('over')">
       <div class="gb-pool-title">${pn==='Unassigned'?'📦':'🏓'} ${pn} <span class="gb-cnt">${players.length}</span></div>
-      ${players.map(p=>`<div class="dp" draggable="true" ondragstart="dds(event,'${p.replace(/'/g,"\'")}','${pn.replace(/'/g,"\'")}')">👤 ${p}</div>`).join('')}
+      ${players.map(p=>{
+        const nom=approvedNoms.find(n=>(n.partName||n.name)===p);
+        const isFemale=nom?.gender==='Female';
+        const dot=`<span style="width:7px;height:7px;border-radius:50%;background:${isFemale?'var(--pink)':'var(--blue)'};display:inline-block;margin-right:5px;flex-shrink:0"></span>`;
+        const gLabel=gbCat==='C'?`<span style="font-size:.62rem;color:${isFemale?'var(--pink)':'var(--blue)'};margin-left:5px">${isFemale?'Girl':'Boy'}</span>`:'';
+        return `<div class="dp" draggable="true" ondragstart="dds(event,'${p.replace(/'/g,"\'")}','${pn.replace(/'/g,"\'")}')">
+          ${dot}${p}${gLabel}
+        </div>`;
+      }).join('')}
     </div>`).join('');
-}
 
 function renderGBContentTeams(){
   const teams=DB.teams||[];
@@ -1482,6 +1507,23 @@ function renderGBContentTeams(){
         </div>`;
       }).join('')}
     </div>`).join('');
+}
+async function autoSeparateCatC(){
+  DB=loadDB();
+  const boys=DB.noms.filter(n=>n.status==='approved'&&n.cat==='C'&&n.gender!=='Female').map(n=>n.partName||n.name);
+  const girls=DB.noms.filter(n=>n.status==='approved'&&n.cat==='C'&&n.gender==='Female').map(n=>n.partName||n.name);
+  const mpg=DB.settings.mpg||4;
+  DB.groups['C']={};
+  const nbg=Math.max(1,Math.ceil(boys.length/mpg));
+  for(let i=0;i<nbg;i++) DB.groups['C'][`Boys Group ${String.fromCharCode(65+i)}`]=[];
+  boys.forEach((p,i)=>DB.groups['C'][`Boys Group ${String.fromCharCode(65+(i%nbg))}`].push(p));
+  const ngg=Math.max(1,Math.ceil(girls.length/mpg));
+  for(let i=0;i<ngg;i++) DB.groups['C'][`Girls Group ${String.fromCharCode(65+i)}`]=[];
+  girls.forEach((p,i)=>DB.groups['C'][`Girls Group ${String.fromCharCode(65+(i%ngg))}`].push(p));
+  saveLocal(DB);
+  await serverCmd('saveGroups',{groups:DB.groups});
+  renderGBContent();
+  toast(`⚡ Separated: ${boys.length} boys, ${girls.length} girls`);
 }
 function dds(e,p,from){dragP=p;dragFrom=from;e.dataTransfer.effectAllowed='move';}
 function dov(e,el){e.preventDefault();el.classList.add('over');}
@@ -1843,10 +1885,11 @@ function generatePDF(snap){
   });
   y+=22;
   const catDefs={
-    A:{label:'Cat A · Employee (M/F) · Team Event',         color:[77,166,255]},
-    B:{label:'Cat B · Wards ≤10 yrs · Singles (All)',        color:[45,232,196]},
-    C:{label:'Cat C · Wards >10 yrs · Singles (M/F)',        color:[255,61,127]},
-    D:{label:'Cat D · Homemaker/Wife · Singles only',        color:[255,204,60]},
+    A:{label:'Cat A · Employee (M/F) · Team Event',          color:[77,166,255]},
+    B:{label:'Cat B · Wards ≤10 yrs · Singles (All)',         color:[45,232,196]},
+    C:{label:'Cat C · Wards Girls >10 yrs · Singles',         color:[255,61,127]},
+    D:{label:'Cat D · Wards Boys >10 yrs · Singles',          color:[184,255,60]},
+    E:{label:'Cat E · Homemaker/Wife · Singles only',         color:[255,204,60]},
   };
   Object.entries(catDefs).forEach(([ck,ci])=>{
     const cg=(snap.groups||{})[ck]||{};
@@ -2408,7 +2451,7 @@ async function generateTeamMatches(){ openGenerateModal(); }
 // ═══════════════════════════════════════════
 
 // HARDCODED SCRIPT URL — set this once, works for everyone
-const HARDCODED_URL = 'https://script.google.com/macros/s/AKfycbyA4IfdfGz2nzTSGUvdYQcTYXa0WwkjY_rx7J5LuFQCfoivBG2HeDnw0YmERh-JhtQ/exec'; // Admin: paste your Script URL between these quotes
+const HARDCODED_URL = ''; // Admin: paste your Script URL between these quotes
 
 // On every load: if hardcoded URL exists, use it regardless of localStorage
 if(HARDCODED_URL) {
