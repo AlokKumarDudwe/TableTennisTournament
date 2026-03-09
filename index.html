@@ -1283,59 +1283,38 @@ function renderSchBody(){
   const el=document.getElementById('sch-body');
   if(!all.length){el.innerHTML='<div class="empty"><span class="ei">📅</span><p>No matches yet.</p></div>';return;}
 
-  // Cat A: group by team tie, show all individual games inside
-  const catAMatches=all.filter(m=>m.cat==='A'&&m.teamTie);
-  const otherMatches=all.filter(m=>!(m.cat==='A'&&m.teamTie));
-
-  let html='';
-
-  // Render Cat A ties grouped
-  if(catAMatches.length){
-    const ties={};
-    catAMatches.forEach(m=>{
-      const key=m.teamTie||`${m.grp}:${m.homeTeam}v${m.awayTeam}`;
-      if(!ties[key]) ties[key]=[];
-      ties[key].push(m);
-    });
-    Object.entries(ties).forEach(([tieKey,games])=>{
-      const first=games[0];
-      const ci=CATS['A'];
-      const doneCount=games.filter(g=>g.status==='done').length;
-      const allDone=doneCount===games.length;
-      const cls=allDone?'sp-done':'sp-up';
-      const lbl=allDone?'Done':`${doneCount}/${games.length} Done`;
-      html+=`<div class="sch-item" style="flex-direction:column;align-items:stretch;gap:0;padding:0;overflow:hidden">
-        <div style="padding:8px 12px;background:var(--s2);display:flex;align-items:center;justify-content:space-between;gap:8px;border-bottom:1px solid var(--b1)">
-          <div>
-            <div style="font-weight:700;font-size:.88rem">🏆 ${first.homeTeam||first.p1} <span style="color:var(--t3);font-weight:400">vs</span> ${first.awayTeam||first.p2}</div>
-            <div style="font-size:.7rem;color:var(--t3);margin-top:2px"><span class="chip ${ci.css}" style="font-size:.6rem;padding:1px 6px">${ci.label}</span> · ${first.grp||'—'} · ${first.date||'TBD'}</div>
-          </div>
-          <span class="sp ${cls}">${lbl}</span>
-        </div>
-        ${games.map((g,gi)=>{
-          const gcls=g.status==='done'?'sp-done':g.status==='live'?'sp-live':'sp-up';
-          const glbl=g.status==='done'?'✓':g.status==='live'?'🔴':'—';
-          // Extract just player names from "TeamName: PlayerName" format
-          const hp=(g.p1||'').replace(/^[^:]+:\s*/,'');
-          const ap=(g.p2||'').replace(/^[^:]+:\s*/,'');
-          return `<div style="padding:6px 12px;border-bottom:1px solid var(--b1);display:flex;align-items:center;gap:8px;${gi===games.length-1?'border-bottom:none':''}">
-            <span style="width:18px;height:18px;border-radius:50%;background:var(--s3);color:var(--t3);font-size:.62rem;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">${gi+1}</span>
-            <div style="flex:1;min-width:0">
-              <div style="font-size:.78rem;font-weight:600"><span class="gtype ${typeCSS(g.gameType)}" style="font-size:.6rem;padding:1px 5px;margin-right:4px">${g.gameLabel||g.gameType||''}</span>${hp} <span style="color:var(--t3)">vs</span> ${ap}</div>
-              ${g.score?`<div style="font-size:.7rem;color:var(--lime);font-family:'JetBrains Mono',monospace;margin-top:2px">${g.score}</div>`:''}
-            </div>
-            <span style="font-size:.7rem;color:${g.status==='done'?'var(--teal)':g.status==='live'?'var(--pink)':'var(--t3)'}">${glbl}</span>
-          </div>`;
-        }).join('')}
-      </div>`;
-    });
-  }
-
-  // Render B/C/D matches normally
-  html+=otherMatches.map(m=>{
+  el.innerHTML=all.map(m=>{
     const ci=CATS[m.cat]||{label:'—',css:'chip-a'};
     const cls=m.status==='done'?'sp-done':m.status==='live'?'sp-live':'sp-up';
-    const lbl=m.status==='done'?'Done':m.status==='live'?'🔴 LIVE':'Upcoming';
+    const lbl=m.status==='done'?'✅ Done':m.status==='live'?'🔴 LIVE':'Upcoming';
+    const isTeam=m.cat==='A'&&m.teamTie;
+
+    if(isTeam){
+      // Extract player names from "TeamName: PlayerName" format
+      const hp=(m.p1||'').replace(/^[^:]+:\s*/,'');
+      const ap=(m.p2||'').replace(/^[^:]+:\s*/,'');
+      return `<div class="sch-item" style="flex-direction:column;align-items:stretch;gap:0;padding:0;overflow:hidden">
+        <div style="padding:5px 12px;background:var(--s2);border-bottom:1px solid var(--b1);display:flex;align-items:center;justify-content:space-between;gap:6px">
+          <div style="font-size:.7rem;color:var(--t3)">
+            <span class="chip ${ci.css}" style="font-size:.58rem;padding:1px 5px">${ci.label}</span>
+            · ${m.grp||'—'} · <strong style="color:var(--t2)">${m.homeTeam||''} vs ${m.awayTeam||''}</strong>
+          </div>
+          <span class="sp ${cls}" style="font-size:.62rem">${lbl}</span>
+        </div>
+        <div style="padding:8px 12px">
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">
+            <span class="gtype ${typeCSS(m.gameType)}" style="font-size:.64rem;padding:2px 7px;flex-shrink:0">${m.gameLabel||m.gameType||''}</span>
+          </div>
+          <div style="font-size:.82rem;font-weight:600;margin-top:4px">
+            ${hp} <span style="color:var(--t3);font-weight:400;margin:0 4px">vs</span> ${ap}
+          </div>
+          ${m.date?`<div style="font-size:.7rem;color:var(--t3);margin-top:3px">${m.date}${m.time?' · '+m.time:''}${m.tbl?' · '+m.tbl:''}</div>`:''}
+          ${m.score?`<div style="font-size:.78rem;color:var(--lime);font-family:'JetBrains Mono',monospace;font-weight:700;margin-top:4px">${m.score}</div>`:''}
+        </div>
+      </div>`;
+    }
+
+    // B/C/D normal display
     return `<div class="sch-item">
       <div class="sch-vs">
         <div class="sch-p">${m.p1} <span class="t3">vs</span> ${m.p2}</div>
@@ -1344,8 +1323,6 @@ function renderSchBody(){
       <div class="sch-status"><span class="sp ${cls}">${lbl}</span></div>
     </div>`;
   }).join('');
-
-  el.innerHTML=html||'<div class="empty"><span class="ei">📅</span><p>No matches yet.</p></div>';
 }
 
 // ═══════════════════════════════════════════
@@ -2398,7 +2375,7 @@ async function generateTeamMatches(){ openGenerateModal(); }
 // ═══════════════════════════════════════════
 
 // HARDCODED SCRIPT URL — set this once, works for everyone
-const HARDCODED_URL = 'https://script.google.com/macros/s/AKfycbx929O4T5I6W5k2eJoO6tAw9TJWeMlYuCXLpU35mrbiycdBKOnoAo9IcnoJR7o7Wis/exec'; // Admin: paste your Script URL between these quotes
+const HARDCODED_URL = ''; // Admin: paste your Script URL between these quotes
 
 // On every load: if hardcoded URL exists, use it regardless of localStorage
 if(HARDCODED_URL) {
