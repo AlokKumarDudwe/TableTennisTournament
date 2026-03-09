@@ -903,21 +903,20 @@ async function syncNow(silent){
     if(remote.error) throw new Error(remote.error);
     remote.settings.scriptURL=url;
 
-    // SAFETY: if server has no players but local does, recover local data to server first
+    // SAFETY: only auto-recover if server is brand new (nid=1, never had data)
+    // Skip recovery if admin intentionally cleared data (nid will be higher)
     const localNoms=DB.noms||[];
     const serverNoms=remote.noms||[];
-    if(serverNoms.length===0 && localNoms.length>0){
+    const serverNeverHadData=(remote.nid||1)<=1;
+    if(serverNoms.length===0 && localNoms.length>0 && serverNeverHadData){
       setSyncState('loading','Recovering data…');
-      // push each local player to server one by one
-      // recover all local noms in one request
       await serverCmd('recoverNoms', {noms: localNoms.map(n=>({...n, id:undefined}))});
-      // now pull again with recovered data
       const res2=await fetch(url+'?action=get');
       const remote2=await res2.json();
       remote2.settings.scriptURL=url;
       DB=remote2; saveLocal(DB);
       setSyncState('ok','Recovered ✅');
-      toast('✅ Local data recovered to server!');
+      toast('✅ Local data recovered!');
       refreshCurrentPage(); updateHeader();
       syncing=false; return;
     }
@@ -1891,8 +1890,22 @@ async function doClear(what){
   const msgs={matches:'Clear ALL matches and results?',groups:'Clear ALL groups?',all:'DELETE ALL DATA? This cannot be undone.'};
   const actions={matches:'clearMatches',groups:'clearGroups',all:'clearAll'};
   confirm2(msgs[what],'This cannot be undone.',async()=>{
+    const url=DB.settings.scriptURL;
     await serverCmd(actions[what], {});
-    toast('✅ '+what+' cleared');
+    // Wipe localStorage too so recovery never pushes cleared data back
+    if(what==='all'){
+      localStorage.removeItem('tt_v5');
+      localStorage.removeItem('tt_v5_arch');
+      DB=freshDB();
+      DB.settings.scriptURL=url;
+      saveLocal(DB);
+    } else if(what==='matches'){
+      DB.schedule=[]; DB.results=[]; saveLocal(DB);
+    } else if(what==='groups'){
+      DB.groups={A:{},B:{},C:{},D:{},E:{}}; saveLocal(DB);
+    }
+    refreshCurrentPage(); updateHeader();
+    toast('✅ Cleared!');
   });
 }
 
@@ -2496,7 +2509,7 @@ async function generateTeamMatches(){ openGenerateModal(); }
 // ═══════════════════════════════════════════
 
 // HARDCODED SCRIPT URL — set this once, works for everyone
-const HARDCODED_URL = 'https://script.google.com/macros/s/AKfycbw4wo6d8P08CehB-rRC7cSDy2ausm73SSQ2io29sofJOItoDfc0CfOw36nj2HVX95c/exec'; // Admin: paste your Script URL between these quotes
+const HARDCODED_URL = ''; // Admin: paste your Script URL between these quotes
 
 // On every load: if hardcoded URL exists, use it regardless of localStorage
 if(HARDCODED_URL) {
