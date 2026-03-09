@@ -534,10 +534,22 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t1);displ
 
     <!-- TEAMS (Cat A) -->
     <div class="adm-sec" id="asec-teams" style="display:none">
-      <div class="al al-info mb2">Create teams for Cat A. Team game types (Singles/Doubles/Mixed) are auto-determined by number of female players in each team.</div>
+      <div class="al al-info mb2">
+        <strong>Workflow:</strong> 1) Create teams &amp; assign players &nbsp;→&nbsp; 2) Set match format (how many Singles/Doubles/Mixed per tie) &nbsp;→&nbsp; 3) Generate matches
+      </div>
+      <!-- Match Format Card -->
+      <div class="card mb2">
+        <div class="card-head">
+          <span class="card-ttl">⚙ Match Format Per Tie</span>
+          <button class="btn btn-ghost btn-xs" onclick="openFormatBuilder()">✏️ Edit Format</button>
+        </div>
+        <div class="card-body" id="format-preview">
+          <div class="t3 ts">No format set yet. Click Edit Format to define match slots.</div>
+        </div>
+      </div>
       <div class="sec-row" style="margin-bottom:10px">
         <button class="btn btn-lime btn-sm" onclick="openTeamModal()">+ New Team</button>
-        <button class="btn btn-ghost btn-sm" onclick="generateTeamMatches()">⚡ Generate Matches</button>
+        <button class="btn btn-ghost btn-sm" onclick="openGenerateModal()">⚡ Generate Matches</button>
       </div>
       <div id="teams-body"></div>
     </div>
@@ -759,6 +771,40 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t1);displ
     <div class="mo-footer">
       <button class="btn btn-ghost btn-sm" onclick="closeM('m-team')">Cancel</button>
       <button class="btn btn-lime btn-sm" onclick="saveTeam()">Save Team</button>
+    </div>
+  </div>
+</div>
+
+<!-- Match Format Builder -->
+<div class="mo" id="m-format">
+  <div class="mo-box">
+    <div class="mo-handle"></div>
+    <div class="mo-title">⚙ MATCH FORMAT PER TIE</div>
+    <div class="al al-info" style="margin-bottom:12px;font-size:.78rem">Define every match slot. Use M1=1st Male, M2=2nd Male, F1=1st Female etc. This format applies to all team ties.</div>
+    <div id="fmt-slots" style="margin-bottom:12px"></div>
+    <div class="flex gap6" style="flex-wrap:wrap;margin-bottom:12px">
+      <button class="btn btn-ghost btn-xs" onclick="addFmtSlot('MS')">+ Men's Singles</button>
+      <button class="btn btn-ghost btn-xs" onclick="addFmtSlot('WS')">+ Women's Singles</button>
+      <button class="btn btn-ghost btn-xs" onclick="addFmtSlot('MD')">+ Men's Doubles</button>
+      <button class="btn btn-ghost btn-xs" onclick="addFmtSlot('WD')">+ Women's Doubles</button>
+      <button class="btn btn-ghost btn-xs" onclick="addFmtSlot('XD')">+ Mixed Doubles</button>
+    </div>
+    <div class="mo-footer">
+      <button class="btn btn-ghost btn-sm" onclick="closeM('m-format')">Cancel</button>
+      <button class="btn btn-lime btn-sm" onclick="saveFormat()">💾 Save Format</button>
+    </div>
+  </div>
+</div>
+
+<!-- Generate Matches Modal -->
+<div class="mo" id="m-generate">
+  <div class="mo-box">
+    <div class="mo-handle"></div>
+    <div class="mo-title">⚡ GENERATE TEAM MATCHES</div>
+    <div id="gen-preview" style="margin-bottom:12px"></div>
+    <div class="mo-footer">
+      <button class="btn btn-ghost btn-sm" onclick="closeM('m-generate')">Cancel</button>
+      <button class="btn btn-red btn-sm" onclick="doGenerateTeamMatches()">⚡ Generate</button>
     </div>
   </div>
 </div>
@@ -2049,13 +2095,15 @@ function getGameTypes(members){
 function renderTeamsSection(){
   const teams=DB.teams||[];
   const el=document.getElementById('teams-body');
+  renderFormatPreview();
   if(!teams.length){
     el.innerHTML='<div class="empty"><span class="ei">👨‍👩‍👧</span><p>No teams yet.<br/>Create teams and assign Cat A players.</p></div>';
     return;
   }
   el.innerHTML=teams.map((t,i)=>{
     const color=t.color||TEAM_COLORS[i%TEAM_COLORS.length];
-    const gameTypes=getGameTypes(t.members||[]);
+    const males=(t.members||[]).filter(m=>m.gender==='Male');
+    const females=(t.members||[]).filter(m=>m.gender==='Female');
     return `<div class="team-card">
       <div class="team-card-head">
         <div class="team-color" style="background:${color}"></div>
@@ -2066,130 +2114,230 @@ function renderTeamsSection(){
         </div>
       </div>
       <div class="team-members">
-        ${(t.members||[]).map(m=>`<div class="team-member">
-          <div class="gender-dot ${m.gender==='Female'?'gd-f':'gd-m'}"></div>
-          <span style="flex:1">${m.name}</span>
-          <span class="t3 ts">${m.gender||''}</span>
-        </div>`).join('')}
+        ${males.map((m,j)=>`<div class="team-member"><div class="gender-dot gd-m"></div><span class="t3 ts" style="min-width:28px">M${j+1}</span><span style="flex:1">${m.name}</span></div>`).join('')}
+        ${females.map((m,j)=>`<div class="team-member"><div class="gender-dot gd-f"></div><span class="t3 ts" style="min-width:28px">F${j+1}</span><span style="flex:1">${m.name}</span></div>`).join('')}
         ${!t.members?.length?'<div class="t3 ts">No members yet</div>':''}
-      </div>
-      <div class="game-types">
-        <span class="t3 ts" style="width:100%;margin-bottom:4px">Game types:</span>
-        ${gameTypes.map(g=>`<span class="gtype ${g.css}">${g.label}</span>`).join('')}
-        ${!gameTypes.length?'<span class="t3 ts">Add members to see game types</span>':''}
       </div>
     </div>`;
   }).join('');
 }
 
-function openTeamModal(editIdx){
+// ── MATCH FORMAT BUILDER ──────────────────────
+let fmtSlots=[];
+
+function renderFormatPreview(){
+  const fmt=DB.settings.teamMatchFormat||[];
+  const el=document.getElementById('format-preview');
+  if(!el) return;
+  if(!fmt.length){ el.innerHTML='<div class="t3 ts">No format set. Click ✏️ Edit Format to define match slots.</div>'; return; }
+  const total=fmt.length;
+  const types={MS:0,WS:0,MD:0,WD:0,XD:0};
+  fmt.forEach(s=>{ if(types[s.type]!==undefined) types[s.type]++; });
+  el.innerHTML=`
+    <div class="flex gap6" style="flex-wrap:wrap;margin-bottom:10px">
+      ${types.MS?`<span class="gtype gtype-ms">${types.MS}× Men's Singles</span>`:''}
+      ${types.WS?`<span class="gtype gtype-ws">${types.WS}× Women's Singles</span>`:''}
+      ${types.MD?`<span class="gtype gtype-md">${types.MD}× Men's Doubles</span>`:''}
+      ${types.WD?`<span class="gtype gtype-md">${types.WD}× Women's Doubles</span>`:''}
+      ${types.XD?`<span class="gtype gtype-xd">${types.XD}× Mixed Doubles</span>`:''}
+      <span class="t3 ts">= ${total} matches per tie</span>
+    </div>
+    <table style="width:100%;font-size:.76rem;border-collapse:collapse">
+      <thead><tr style="color:var(--t3);font-size:.64rem;text-transform:uppercase;letter-spacing:.8px">
+        <th style="padding:4px 6px;text-align:left">#</th>
+        <th style="padding:4px 6px;text-align:left">Type</th>
+        <th style="padding:4px 6px;text-align:left">Home Players</th>
+        <th style="padding:4px 6px;text-align:center">vs</th>
+        <th style="padding:4px 6px;text-align:left">Away Players</th>
+      </tr></thead>
+      <tbody>${fmt.map((s,i)=>`<tr style="border-top:1px solid var(--b1)">
+        <td style="padding:5px 6px;color:var(--t3)">${i+1}</td>
+        <td style="padding:5px 6px"><span class="gtype ${typeCSS(s.type)}">${typeLabel(s.type)}</span></td>
+        <td style="padding:5px 6px;font-weight:600">${s.home.join(' + ')}</td>
+        <td style="padding:5px 6px;text-align:center;color:var(--t3)">vs</td>
+        <td style="padding:5px 6px;font-weight:600">${s.away.join(' + ')}</td>
+      </tr>`).join('')}</tbody>
+    </table>`;
+}
+
+function typeLabel(t){ return {MS:"Men's Singles",WS:"Women's Singles",MD:"Men's Doubles",WD:"Women's Doubles",XD:"Mixed Doubles"}[t]||t; }
+function typeCSS(t){ return {MS:'gtype-ms',WS:'gtype-ws',MD:'gtype-md',WD:'gtype-md',XD:'gtype-xd'}[t]||'gtype-ms'; }
+
+// Role options based on type
+function roleOptions(type){
+  if(type==='MS') return ['M1','M2','M3','M4'];
+  if(type==='WS') return ['F1','F2','F3'];
+  if(type==='MD') return ['M1','M2','M3','M4'];
+  if(type==='WD') return ['F1','F2','F3'];
+  if(type==='XD') return ['M1','M2','M3','F1','F2','F3'];
+  return [];
+}
+
+// Singles → 1 player each side. Doubles/Mixed → 2 players each side
+function slotPairCount(type){ return (type==='MS'||type==='WS')?1:2; }
+
+function openFormatBuilder(){
+  const fmt=DB.settings.teamMatchFormat||[];
+  fmtSlots=fmt.map(s=>({...s,home:[...s.home],away:[...s.away]}));
+  renderFmtSlots();
+  openM('m-format');
+}
+
+function renderFmtSlots(){
+  const el=document.getElementById('fmt-slots');
+  if(!fmtSlots.length){
+    el.innerHTML='<div class="t3 ts" style="text-align:center;padding:12px">No match slots yet. Add some below.</div>';
+    return;
+  }
+  el.innerHTML=fmtSlots.map((s,i)=>{
+    const pc=slotPairCount(s.type);
+    const roles=roleOptions(s.type);
+    const opts=roles.map(r=>`<option>${r}</option>`).join('');
+    const makeSelects=(side,vals)=>Array(pc).fill(0).map((_,p)=>`
+      <select style="padding:4px 6px;background:var(--s3);border:1px solid var(--b1);border-radius:var(--rsm);color:var(--t1);font-size:.76rem;font-family:'JetBrains Mono',monospace"
+        onchange="fmtSlotChange(${i},'${side}',${p},this.value)">
+        ${roles.map(r=>`<option ${r===vals[p]?'selected':''}>${r}</option>`).join('')}
+      </select>`).join('<span style="color:var(--t3);font-size:.7rem;margin:0 2px">+</span>');
+    return `<div style="background:var(--s2);border:1px solid var(--b1);border-radius:var(--rsm);padding:8px 10px;margin-bottom:6px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+      <span class="gtype ${typeCSS(s.type)}" style="flex-shrink:0">${i+1}. ${typeLabel(s.type)}</span>
+      <div style="display:flex;align-items:center;gap:4px;flex:1;flex-wrap:wrap">
+        <span style="font-size:.68rem;color:var(--t3)">Home:</span>
+        ${makeSelects('home',s.home)}
+        <span style="color:var(--t3);margin:0 6px">vs</span>
+        <span style="font-size:.68rem;color:var(--t3)">Away:</span>
+        ${makeSelects('away',s.away)}
+      </div>
+      <button class="btn btn-red btn-xs" onclick="removeFmtSlot(${i})">✕</button>
+    </div>`;
+  }).join('');
+}
+
+function fmtSlotChange(i,side,pos,val){
+  fmtSlots[i][side][pos]=val;
+}
+function removeFmtSlot(i){ fmtSlots.splice(i,1); renderFmtSlots(); }
+function addFmtSlot(type){
+  const pc=slotPairCount(type);
+  const roles=roleOptions(type);
+  // Sensible defaults
+  const homeDefaults=roles.slice(0,pc);
+  const awayDefaults=roles.slice(0,pc);
+  fmtSlots.push({type,home:homeDefaults,away:awayDefaults});
+  renderFmtSlots();
+}
+async function saveFormat(){
+  if(!fmtSlots.length){toast('Add at least one match slot','e');return;}
+  DB.settings.teamMatchFormat=fmtSlots;
+  saveLocal(DB);
+  await serverCmd('saveSettings',{...DB.settings});
+  closeM('m-format');
+  renderTeamsSection();
+  toast('✅ Format saved!');
+}
+
+// ── GENERATE MATCHES MODAL ────────────────────
+function openGenerateModal(){
   const teams=DB.teams||[];
-  const t=editIdx!==undefined?teams[editIdx]:null;
-  document.getElementById('mt-id').value=editIdx!==undefined?editIdx:'';
-  document.getElementById('mt-name').value=t?t.name:'';
-  document.getElementById('mt-color').value=t?t.color||TEAM_COLORS[editIdx%TEAM_COLORS.length]:TEAM_COLORS[teams.length%TEAM_COLORS.length];
-  document.getElementById('mt-ttl').textContent=t?'✏️ EDIT TEAM':'👨‍👩‍👧 NEW TEAM';
-  
-  // Populate player list
-  const catAPlayers=DB.noms.filter(n=>n.status==='approved'&&n.cat==='A');
-  const selected=new Set((t?.members||[]).map(m=>m.cpf));
-  document.getElementById('mt-player-list').innerHTML=catAPlayers.length
-    ?catAPlayers.map(p=>`<label style="display:flex;align-items:center;gap:8px;padding:6px 4px;border-bottom:1px solid var(--b1);cursor:pointer;font-size:.82rem">
-        <input type="checkbox" ${selected.has(p.cpf)?'checked':''} data-cpf="${p.cpf}" data-name="${p.partName||p.name}" data-gender="${p.gender||''}" onchange="updateTeamPreview()" style="width:16px;height:16px;accent-color:var(--lime)"/>
-        <span style="flex:1">${p.partName||p.name}</span>
-        <span class="t3 ts">${p.gender||''}</span>
-      </label>`).join('')
-    :'<div class="t3 ts">No approved Cat A players yet.</div>';
-  
-  updateTeamPreview();
-  openM('m-team');
-}
-
-function updateTeamPreview(){
-  const checked=[...document.querySelectorAll('#mt-player-list input:checked')];
-  const members=checked.map(cb=>({cpf:cb.dataset.cpf,name:cb.dataset.name,gender:cb.dataset.gender}));
-  const wrap=document.getElementById('mt-preview-wrap');
-  const prev=document.getElementById('mt-preview');
-  if(!members.length){ wrap.style.display='none'; return; }
-  wrap.style.display='block';
-  const gameTypes=getGameTypes(members);
-  prev.innerHTML=`<div class="game-types" style="padding:0">${gameTypes.map(g=>`<span class="gtype ${g.css}">${g.label}</span>`).join('')}</div>`;
-}
-
-async function saveTeam(){
-  const name=document.getElementById('mt-name').value.trim();
-  if(!name){toast('Team name required','e');return;}
-  const color=document.getElementById('mt-color').value;
-  const checked=[...document.querySelectorAll('#mt-player-list input:checked')];
-  const members=checked.map(cb=>({cpf:cb.dataset.cpf,name:cb.dataset.name,gender:cb.dataset.gender}));
-  const editIdx=document.getElementById('mt-id').value;
-  const teams=[...(DB.teams||[])];
-  const team={name,color,members,gameTypes:getGameTypes(members)};
-  if(editIdx!=='') teams[parseInt(editIdx)]=team; else teams.push(team);
-  DB.teams=teams; saveLocal(DB);
-  const result=await serverCmd('saveTeams',{teams});
-  if(result.ok){ closeM('m-team'); renderTeamsSection(); toast('✅ Team saved!'); }
-}
-
-function deleteTeam(idx){
-  confirm2('Delete this team?','',async()=>{
-    const teams=[...(DB.teams||[])];
-    teams.splice(idx,1);
-    DB.teams=teams; saveLocal(DB);
-    await serverCmd('saveTeams',{teams});
-    renderTeamsSection(); toast('Team deleted');
-  });
-}
-
-async function generateTeamMatches(){
-  const teams=DB.teams||[];
+  const fmt=DB.settings.teamMatchFormat||[];
   const groups=DB.groups['A']||{};
   const hasGroups=Object.values(groups).some(g=>g.length>=2);
-  if(teams.length<2){toast('Need at least 2 teams','e');return;}
-  const desc=hasGroups?`Creates round-robin team ties within each group. Each tie = Singles + Doubles + Mixed Doubles.`:`Creates round-robin team ties among all ${teams.length} teams.`;
-  confirm2('Generate team match schedule?',desc,async()=>{
-    DB.schedule=DB.schedule.filter(m=>m.cat!=='A');
-    const newMatches=[];
-    // If groups exist, match within groups; else match all vs all
-    const matchPairs=[];
-    if(hasGroups){
-      Object.entries(groups).forEach(([grpName,teamNames])=>{
-        for(let i=0;i<teamNames.length;i++)
-          for(let j=i+1;j<teamNames.length;j++)
-            matchPairs.push({t1Name:teamNames[i],t2Name:teamNames[j],grp:grpName});
-      });
-    } else {
-      for(let i=0;i<teams.length;i++)
-        for(let j=i+1;j<teams.length;j++)
-          matchPairs.push({t1Name:teams[i].name,t2Name:teams[j].name,grp:'Team Event'});
-    }
-    matchPairs.forEach(({t1Name,t2Name,grp})=>{
-      const t1=teams.find(t=>t.name===t1Name), t2=teams.find(t=>t.name===t2Name);
-      if(!t1||!t2) return;
-      const gt1=getGameTypes(t1.members), gt2=getGameTypes(t2.members);
-      const common=gt1.filter(g=>gt2.some(g2=>g2.code===g.code));
-      // Always try: MS, WS, MD, XD in that order
-      ['MS','WS','MD','XD'].forEach(code=>{
-        if(common.find(g=>g.code===code)){
-          const g=common.find(g=>g.code===code);
-          newMatches.push({id:DB.nid++,cat:'A',grp,p1:t1Name,p2:t2Name,gameType:code,gameLabel:g.label,status:'upcoming',date:'',time:'',tbl:''});
-        }
+
+  if(teams.length<2){toast('Need at least 2 teams first','e');return;}
+  if(!fmt.length){toast('Set match format first (Edit Format button)','e');return;}
+
+  // Build preview
+  const pairs=[];
+  if(hasGroups){
+    Object.entries(groups).forEach(([grp,tns])=>{
+      for(let i=0;i<tns.length;i++) for(let j=i+1;j<tns.length;j++) pairs.push({t1:tns[i],t2:tns[j],grp});
+    });
+  } else {
+    for(let i=0;i<teams.length;i++) for(let j=i+1;j<teams.length;j++) pairs.push({t1:teams[i].name,t2:teams[j].name,grp:'Team Event'});
+  }
+
+  const total=pairs.length*fmt.length;
+  document.getElementById('gen-preview').innerHTML=`
+    <div class="al al-info mb2">${pairs.length} team tie${pairs.length>1?'s':''} × ${fmt.length} match slots = <strong>${total} matches</strong> total</div>
+    <div style="font-size:.78rem;color:var(--t2);margin-bottom:10px">Preview of ties:</div>
+    ${pairs.slice(0,6).map(p=>`
+    <div style="background:var(--s2);border-radius:var(--rsm);padding:8px 10px;margin-bottom:6px">
+      <div style="font-weight:700;margin-bottom:6px">🏆 ${p.grp}: ${p.t1} vs ${p.t2}</div>
+      ${fmt.map((s,i)=>{
+        const t1=teams.find(t=>t.name===p.t1), t2=teams.find(t=>t.name===p.t2);
+        const h=resolveRoles(t1,s.home), aw=resolveRoles(t2,s.away);
+        return `<div style="font-size:.74rem;color:var(--t3);padding:2px 0">${i+1}. <span class="gtype ${typeCSS(s.type)}" style="padding:1px 5px">${typeLabel(s.type)}</span> ${h} vs ${aw}</div>`;
+      }).join('')}
+    </div>`).join('')}
+    ${pairs.length>6?`<div class="t3 ts">...and ${pairs.length-6} more ties</div>`:''}
+    <div class="al al-warn" style="margin-top:10px">⚠ This will clear existing Cat A matches and regenerate all.</div>`;
+  openM('m-generate');
+}
+
+function resolveRoles(team,roles){
+  if(!team||!roles) return '?';
+  const males=(team.members||[]).filter(m=>m.gender==='Male');
+  const females=(team.members||[]).filter(m=>m.gender==='Female');
+  return roles.map(r=>{
+    if(r.startsWith('M')){ const idx=parseInt(r[1])-1; return males[idx]?males[idx].name:r+'(?)';}
+    if(r.startsWith('F')){ const idx=parseInt(r[1])-1; return females[idx]?females[idx].name:r+'(?)';}
+    return r;
+  }).join(' + ');
+}
+
+async function doGenerateTeamMatches(){
+  const teams=DB.teams||[];
+  const fmt=DB.settings.teamMatchFormat||[];
+  const groups=DB.groups['A']||{};
+  const hasGroups=Object.values(groups).some(g=>g.length>=2);
+
+  DB.schedule=DB.schedule.filter(m=>m.cat!=='A');
+  const newMatches=[];
+
+  const pairs=[];
+  if(hasGroups){
+    Object.entries(groups).forEach(([grp,tns])=>{
+      for(let i=0;i<tns.length;i++) for(let j=i+1;j<tns.length;j++) pairs.push({t1:tns[i],t2:tns[j],grp});
+    });
+  } else {
+    for(let i=0;i<teams.length;i++) for(let j=i+1;j<teams.length;j++) pairs.push({t1:teams[i].name,t2:teams[j].name,grp:'Team Event'});
+  }
+
+  pairs.forEach(({t1:t1Name,t2:t2Name,grp})=>{
+    const t1=teams.find(t=>t.name===t1Name), t2=teams.find(t=>t.name===t2Name);
+    if(!t1||!t2) return;
+    fmt.forEach((slot,si)=>{
+      const hp=resolveRoles(t1,slot.home);
+      const ap=resolveRoles(t2,slot.away);
+      newMatches.push({
+        id:DB.nid++, cat:'A', grp,
+        teamTie:`${t1Name} vs ${t2Name}`,
+        p1:`${t1Name}: ${hp}`,
+        p2:`${t2Name}: ${ap}`,
+        gameType:slot.type,
+        gameLabel:typeLabel(slot.type),
+        homeRoles:slot.home, awayRoles:slot.away,
+        homeTeam:t1Name, awayTeam:t2Name,
+        status:'upcoming', date:'', time:'', tbl:''
       });
     });
-    DB.schedule=[...DB.schedule,...newMatches];
-    saveLocal(DB);
-    await serverCmd('saveGroups',{groups:DB.groups});
-    toast(`✅ Generated ${newMatches.length} team game matches!`);
-    showAdmSec('sched',document.querySelector('.atab[data-sec=\'sched\']'));
   });
+
+  DB.schedule=[...DB.schedule,...newMatches];
+  saveLocal(DB);
+  await serverCmd('saveGroups',{groups:DB.groups});
+  closeM('m-generate');
+  toast(`✅ Generated ${newMatches.length} matches!`);
+  showAdmSec('sched',document.querySelector('.atab[data-sec="sched"]'));
 }
+
+async function generateTeamMatches(){ openGenerateModal(); }
 
 // ═══════════════════════════════════════════
 // INIT
 // ═══════════════════════════════════════════
 
 // HARDCODED SCRIPT URL — set this once, works for everyone
-const HARDCODED_URL = 'https://script.google.com/macros/s/AKfycbx929O4T5I6W5k2eJoO6tAw9TJWeMlYuCXLpU35mrbiycdBKOnoAo9IcnoJR7o7Wis/exec'; // Admin: paste your Script URL between these quotes
+const HARDCODED_URL = ''; // Admin: paste your Script URL between these quotes
 
 // On every load: if hardcoded URL exists, use it regardless of localStorage
 if(HARDCODED_URL) {
