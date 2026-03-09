@@ -1132,6 +1132,7 @@ async function submitReg(){
   if(!ck){showErr('Please select a category.');return;}
   if(!validCPF(cpf)){showErr('Employee ID must be 5 or 6 digits.');return;}
   if(!whatsapp){showErr('WhatsApp number is required.');return;}
+  // For Cat A: CPF must be unique. For B/C/D: CPF+partName combo must be unique (same employee can register multiple wards)
   // Build nom based on category
   let name='', empName='', partName='', gender='';
   if(ck==='A'){
@@ -2132,7 +2133,7 @@ async function generateTeamMatches(){
 // ═══════════════════════════════════════════
 
 // HARDCODED SCRIPT URL — set this once, works for everyone
-const HARDCODED_URL = 'https://script.google.com/macros/s/AKfycbw-_sJ--JUjHyH_c87-NczoPKffTfvmnjPxg0kqdtjt5StagpJRQRu9difTF3qYTtU/exec'; // Admin: paste your Script URL between these quotes
+const HARDCODED_URL = ''; // Admin: paste your Script URL between these quotes
 
 // On every load: if hardcoded URL exists, use it regardless of localStorage
 if(HARDCODED_URL) {

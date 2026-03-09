@@ -66,16 +66,41 @@ function doGet(e) {
 
     if (action === 'addNom') {
       const cpfClean = (req.cpf || '').replace(/\D/g, '');
-      if (!cpfClean) return respond({ ok: false, error: 'Invalid CPF' });
-      const exists = db.noms.some(n => n.cpf.replace(/\D/g, '') === cpfClean);
-      if (exists) return respond({ ok: false, error: 'CPF already registered' });
+      if (!cpfClean) return respond({ ok: false, error: 'Invalid ID number' });
+      const cat = req.cat || '';
+      // Cat A: CPF must be unique (employee registers themselves)
+      // Cat B/C/D: CPF + participantName must be unique (same employee can register multiple wards)
+      let exists;
+      if (cat === 'A') {
+        exists = db.noms.some(n => n.cat === 'A' && n.cpf.replace(/\D/g,'') === cpfClean);
+        if (exists) return respond({ ok: false, error: 'This employee CPF is already registered in Category A' });
+      } else {
+        const partName = (req.partName || req.name || '').trim().toLowerCase();
+        exists = db.noms.some(n =>
+          n.cat === cat &&
+          n.cpf.replace(/\D/g,'') === cpfClean &&
+          (n.partName || n.name || '').trim().toLowerCase() === partName
+        );
+        if (exists) return respond({ ok: false, error: 'This ward/participant is already registered' });
+      }
       req.id = db.nid++;
       db.noms.push(req);
     }
     else if (action === 'addPlayerDirect') {
       const cpfClean = (req.cpf || '').replace(/\D/g, '');
-      const exists = db.noms.some(n => n.cpf.replace(/\D/g, '') === cpfClean);
-      if (exists) return respond({ ok: false, error: 'CPF already registered' });
+      const cat = req.cat || '';
+      let exists;
+      if (cat === 'A') {
+        exists = db.noms.some(n => n.cat === 'A' && n.cpf.replace(/\D/g,'') === cpfClean);
+      } else {
+        const partName = (req.partName || req.name || '').trim().toLowerCase();
+        exists = db.noms.some(n =>
+          n.cat === cat &&
+          n.cpf.replace(/\D/g,'') === cpfClean &&
+          (n.partName || n.name || '').trim().toLowerCase() === partName
+        );
+      }
+      if (exists) return respond({ ok: false, error: 'Already registered' });
       req.id = db.nid++;
       db.noms.push(req);
     }
