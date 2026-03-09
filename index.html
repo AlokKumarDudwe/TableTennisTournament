@@ -1356,7 +1356,8 @@ function renderGroupBuilder(){
 function renderGBContent(){
   const cg=DB.groups[gbCat]||{};
   if(!Object.keys(cg).length){ DB.groups[gbCat]={'Group A':[],'Group B':[],'Group C':[],'Group D':[]}; saveLocal(DB); }
-  const approved=DB.noms.filter(n=>n.status==='approved'&&n.cat===gbCat).map(n=>n.name);
+  if(gbCat==='A'){ renderGBContentTeams(); return; }
+  const approved=DB.noms.filter(n=>n.status==='approved'&&n.cat===gbCat).map(n=>n.partName||n.name);
   const assigned=new Set(Object.values(DB.groups[gbCat]).flat());
   const unassigned=approved.filter(p=>!assigned.has(p));
   const pools={Unassigned:unassigned,...DB.groups[gbCat]};
@@ -1364,7 +1365,37 @@ function renderGBContent(){
     <div class="gb-pool" id="pool-${pn.replace(/ /g,'_')}"
       ondragover="dov(event,this)" ondrop="ddr(event,'${pn}')" ondragleave="this.classList.remove('over')">
       <div class="gb-pool-title">${pn==='Unassigned'?'📦':'🏓'} ${pn} <span class="gb-cnt">${players.length}</span></div>
-      ${players.map(p=>`<div class="dp" draggable="true" ondragstart="dds(event,'${p.replace(/'/g,"\\'")}','${pn.replace(/'/g,"\\'")}')">👤 ${p}</div>`).join('')}
+      ${players.map(p=>`<div class="dp" draggable="true" ondragstart="dds(event,'${p.replace(/'/g,"\'")}','${pn.replace(/'/g,"\'")}')">👤 ${p}</div>`).join('')}
+    </div>`).join('');
+}
+
+function renderGBContentTeams(){
+  const teams=DB.teams||[];
+  const cg=DB.groups['A']||{};
+  const assignedTeams=new Set(Object.values(cg).flat());
+  const unassignedTeams=teams.filter(t=>!assignedTeams.has(t.name)).map(t=>t.name);
+  if(!teams.length){
+    document.getElementById('gb-body').innerHTML=`<div class="al al-warn" style="margin-top:8px">No teams yet. Go to <strong>👨‍👩‍👧 Teams</strong> tab to create teams first, then come back here to place them into groups.</div>`;
+    return;
+  }
+  const pools={Unassigned:unassignedTeams,...cg};
+  document.getElementById('gb-body').innerHTML=`<div class="al al-info mb2">Drag <strong>teams</strong> into groups. Each team plays others in same group — Singles, Doubles &amp; Mixed Doubles per tie.</div>`
+  +Object.entries(pools).map(([pn,teamNames])=>`
+    <div class="gb-pool" id="pool-${pn.replace(/ /g,'_')}"
+      ondragover="dov(event,this)" ondrop="ddr(event,'${pn}')" ondragleave="this.classList.remove('over')">
+      <div class="gb-pool-title">${pn==='Unassigned'?'📦':'🏆'} ${pn} <span class="gb-cnt">${teamNames.length} teams</span></div>
+      ${teamNames.map(tn=>{
+        const team=teams.find(t=>t.name===tn);
+        const color=team?.color||'#4da6ff';
+        const mc=team?.members?.length||0;
+        const fc=(team?.members||[]).filter(m=>m.gender==='Female').length;
+        const gt=team?getGameTypes(team.members):[];
+        return `<div class="dp" draggable="true" ondragstart="dds(event,'${tn.replace(/'/g,"\'")}','${pn.replace(/'/g,"\'")}')">
+          <div style="width:10px;height:10px;border-radius:50%;background:${color};flex-shrink:0"></div>
+          <div style="flex:1"><strong>${tn}</strong>
+          <div style="font-size:.68rem;color:var(--t3);margin-top:1px">${mc} players · ${fc}F ${mc-fc}M · ${gt.map(g=>g.code).join('/')}</div></div>
+        </div>`;
+      }).join('')}
     </div>`).join('');
 }
 function dds(e,p,from){dragP=p;dragFrom=from;e.dataTransfer.effectAllowed='move';}
@@ -1376,29 +1407,45 @@ async function ddr(e,to){
   if(dragFrom!=='Unassigned') DB.groups[gbCat][dragFrom]=(DB.groups[gbCat][dragFrom]||[]).filter(p=>p!==dragP);
   if(to!=='Unassigned'){if(!DB.groups[gbCat][to])DB.groups[gbCat][to]=[];if(!DB.groups[gbCat][to].includes(dragP))DB.groups[gbCat][to].push(dragP);}
   saveLocal(DB);
-  await serverCmd('saveGroups', {groups:DB.groups});
+  await serverCmd('saveGroups',{groups:DB.groups});
+  renderGBContent();
   dragP=null; dragFrom=null;
 }
 async function autoAssign(){
   DB=loadDB(); const mpg=DB.settings.mpg||4;
-  Object.keys(CATS).forEach(ck=>{ // Cat A team handled same way
-    const players=DB.noms.filter(n=>n.status==='approved'&&n.cat===ck).map(n=>n.name);
+  // Cat A: assign TEAMS to groups
+  const teams=DB.teams||[];
+  if(teams.length){
+    const tpg=Math.max(2,mpg);
+    const ng=Math.max(1,Math.ceil(teams.length/tpg));
+    DB.groups['A']={};
+    for(let i=0;i<ng;i++) DB.groups['A'][`Group ${String.fromCharCode(65+i)}`]=[];
+    [...teams].sort(()=>Math.random()-.5).forEach((t,i)=>DB.groups['A'][`Group ${String.fromCharCode(65+(i%ng))}`].push(t.name));
+  }
+  // B/C/D: assign individual players to groups
+  ['B','C','D'].forEach(ck=>{
+    const players=DB.noms.filter(n=>n.status==='approved'&&n.cat===ck).map(n=>n.partName||n.name);
     const ng=Math.max(1,Math.ceil(players.length/mpg));
     DB.groups[ck]={};
     for(let i=0;i<ng;i++) DB.groups[ck][`Group ${String.fromCharCode(65+i)}`]=[];
     [...players].sort(()=>Math.random()-.5).forEach((p,i)=>DB.groups[ck][`Group ${String.fromCharCode(65+(i%ng))}`].push(p));
   });
   saveLocal(DB);
-  await serverCmd('saveGroups', {groups:DB.groups});
+  await serverCmd('saveGroups',{groups:DB.groups});
+  renderGBContent();
   toast('⚡ Auto-assigned!');
 }
 async function addGroup(){
   DB=loadDB(); const keys=Object.keys(DB.groups[gbCat]||{});
   DB.groups[gbCat][`Group ${String.fromCharCode(65+keys.length)}`]=[];
   saveLocal(DB);
-  await serverCmd('saveGroups', {groups:DB.groups});
+  await serverCmd('saveGroups',{groups:DB.groups});
+  renderGBContent();
 }
-async function saveAndSync(){ saveLocal(DB); await pushDB(); toast('💾 Groups saved!'); }
+async function saveAndSync(){
+  await serverCmd('saveGroups',{groups:DB.groups});
+  toast('💾 Groups saved!');
+}
 
 // ═══════════════════════════════════════════
 // SCHEDULE ADMIN
@@ -2096,35 +2143,44 @@ function deleteTeam(idx){
 
 async function generateTeamMatches(){
   const teams=DB.teams||[];
+  const groups=DB.groups['A']||{};
+  const hasGroups=Object.values(groups).some(g=>g.length>=2);
   if(teams.length<2){toast('Need at least 2 teams','e');return;}
-  confirm2('Generate team match schedule?',`Creates round-robin matches between ${teams.length} teams with all game types per match.`,async()=>{
-    // Clear existing Cat A schedule
+  const desc=hasGroups?`Creates round-robin team ties within each group. Each tie = Singles + Doubles + Mixed Doubles.`:`Creates round-robin team ties among all ${teams.length} teams.`;
+  confirm2('Generate team match schedule?',desc,async()=>{
     DB.schedule=DB.schedule.filter(m=>m.cat!=='A');
-    // Round robin: each team vs every other team
     const newMatches=[];
-    for(let i=0;i<teams.length;i++){
-      for(let j=i+1;j<teams.length;j++){
-        const t1=teams[i], t2=teams[j];
-        // Determine common game types
-        const gt1=getGameTypes(t1.members);
-        const gt2=getGameTypes(t2.members);
-        const common=gt1.filter(g=>gt2.some(g2=>g2.code===g.code));
-        common.forEach(g=>{
-          newMatches.push({
-            id:DB.nid++, cat:'A', grp:'Team Event',
-            p1:t1.name, p2:t2.name,
-            gameType:g.code, gameLabel:g.label,
-            status:'upcoming', date:'', time:'', tbl:''
-          });
-        });
-      }
+    // If groups exist, match within groups; else match all vs all
+    const matchPairs=[];
+    if(hasGroups){
+      Object.entries(groups).forEach(([grpName,teamNames])=>{
+        for(let i=0;i<teamNames.length;i++)
+          for(let j=i+1;j<teamNames.length;j++)
+            matchPairs.push({t1Name:teamNames[i],t2Name:teamNames[j],grp:grpName});
+      });
+    } else {
+      for(let i=0;i<teams.length;i++)
+        for(let j=i+1;j<teams.length;j++)
+          matchPairs.push({t1Name:teams[i].name,t2Name:teams[j].name,grp:'Team Event'});
     }
+    matchPairs.forEach(({t1Name,t2Name,grp})=>{
+      const t1=teams.find(t=>t.name===t1Name), t2=teams.find(t=>t.name===t2Name);
+      if(!t1||!t2) return;
+      const gt1=getGameTypes(t1.members), gt2=getGameTypes(t2.members);
+      const common=gt1.filter(g=>gt2.some(g2=>g2.code===g.code));
+      // Always try: MS, WS, MD, XD in that order
+      ['MS','WS','MD','XD'].forEach(code=>{
+        if(common.find(g=>g.code===code)){
+          const g=common.find(g=>g.code===code);
+          newMatches.push({id:DB.nid++,cat:'A',grp,p1:t1Name,p2:t2Name,gameType:code,gameLabel:g.label,status:'upcoming',date:'',time:'',tbl:''});
+        }
+      });
+    });
     DB.schedule=[...DB.schedule,...newMatches];
     saveLocal(DB);
-    await serverCmd('saveGroups',{groups:DB.groups}); // reuse to trigger sync
-    await serverCmd('saveTeams',{teams:DB.teams});
-    toast(`✅ Generated ${newMatches.length} team matches!`);
-    showAdmSec('sched',document.querySelector('.atab[data-sec="sched"]'));
+    await serverCmd('saveGroups',{groups:DB.groups});
+    toast(`✅ Generated ${newMatches.length} team game matches!`);
+    showAdmSec('sched',document.querySelector('.atab[data-sec=\'sched\']'));
   });
 }
 
@@ -2133,7 +2189,7 @@ async function generateTeamMatches(){
 // ═══════════════════════════════════════════
 
 // HARDCODED SCRIPT URL — set this once, works for everyone
-const HARDCODED_URL = 'https://script.google.com/macros/s/AKfycbx929O4T5I6W5k2eJoO6tAw9TJWeMlYuCXLpU35mrbiycdBKOnoAo9IcnoJR7o7Wis/exec'; // Admin: paste your Script URL between these quotes
+const HARDCODED_URL = ''; // Admin: paste your Script URL between these quotes
 
 // On every load: if hardcoded URL exists, use it regardless of localStorage
 if(HARDCODED_URL) {
