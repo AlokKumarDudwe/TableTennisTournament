@@ -702,9 +702,19 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t1);displ
       </select>
     </div>
     <div class="af-group"><label class="af-label">Group</label><select class="af-select" id="mm-grp" onchange="populateMMP()"></select></div>
+    <div class="af-group" id="mm-gt-row" style="display:none">
+      <label class="af-label">Game Type (Cat A)</label>
+      <select class="af-select" id="mm-gt">
+        <option value="MS">Men's Singles</option>
+        <option value="WS">Women's Singles</option>
+        <option value="MD">Men's Doubles</option>
+        <option value="WD">Women's Doubles</option>
+        <option value="XD">Mixed Doubles</option>
+      </select>
+    </div>
     <div class="af-grid2">
-      <div class="af-group"><label class="af-label">Player 1</label><select class="af-select" id="mm-p1"></select></div>
-      <div class="af-group"><label class="af-label">Player 2</label><select class="af-select" id="mm-p2"></select></div>
+      <div class="af-group"><label class="af-label" id="mm-p1-label">Team 1</label><select class="af-select" id="mm-p1"></select></div>
+      <div class="af-group"><label class="af-label" id="mm-p2-label">Team 2</label><select class="af-select" id="mm-p2"></select></div>
     </div>
     <div class="af-grid2">
       <div class="af-group"><label class="af-label">Date</label><input class="af-input" id="mm-date" type="date"/></div>
@@ -1552,10 +1562,22 @@ function populateMM(){
   const ck=document.getElementById('mm-cat').value;
   const gs=Object.keys(DB.groups[ck]||{});
   document.getElementById('mm-grp').innerHTML=gs.map(g=>`<option>${g}</option>`).join('');
+  // Show/hide game type row for Cat A
+  const gtRow=document.getElementById('mm-gt-row');
+  if(gtRow) gtRow.style.display=ck==='A'?'block':'none';
   populateMMP();
 }
 function populateMMP(s1,s2){
   const ck=document.getElementById('mm-cat').value, grp=document.getElementById('mm-grp').value;
+  if(ck==='A'){
+    // For Cat A: show teams in group as player options
+    const teamNames=(DB.groups['A']||{})[grp]||[];
+    const opts=teamNames.map(t=>`<option>${t}</option>`).join('');
+    ['mm-p1','mm-p2'].forEach(id=>{document.getElementById(id).innerHTML=opts||'<option>No teams in group</option>';});
+    if(s1) document.getElementById('mm-p1').value=s1;
+    if(s2) document.getElementById('mm-p2').value=s2;
+    return;
+  }
   const pl=(DB.groups[ck]||{})[grp]||[];
   const opts=pl.map(p=>`<option>${p}</option>`).join('');
   ['mm-p1','mm-p2'].forEach(id=>{document.getElementById(id).innerHTML=opts;});
@@ -1580,14 +1602,25 @@ async function saveMatch(){
   const p1=document.getElementById('mm-p1').value, p2=document.getElementById('mm-p2').value;
   if(!p1||!p2||p1===p2){toast('Pick 2 different players','e');return;}
   const eid=parseInt(document.getElementById('mm-eid').value)||0;
-  const m={id:eid||0,cat:document.getElementById('mm-cat').value,grp:document.getElementById('mm-grp').value,
-    p1,p2,date:document.getElementById('mm-date').value,time:document.getElementById('mm-time').value,
+  const mcat=document.getElementById('mm-cat').value;
+  const mgt=mcat==='A'?document.getElementById('mm-gt').value:'';
+  const mgtLabel=mcat==='A'?typeLabel(mgt):'';
+  const m={id:eid||0,cat:mcat,grp:document.getElementById('mm-grp').value,
+    p1,p2,
+    homeTeam:mcat==='A'?p1:'', awayTeam:mcat==='A'?p2:'',
+    gameType:mgt, gameLabel:mgtLabel,
+    teamTie:mcat==='A'?`${p1} vs ${p2}`:'',
+    date:document.getElementById('mm-date').value,time:document.getElementById('mm-time').value,
     tbl:document.getElementById('mm-tbl').value,status:'upcoming'};
-  const result=await serverCmd(eid?'updateMatch':'addMatch', m);
-  if(result.ok){ closeM('m-match'); toast('✅ Match saved!'); }
+  DB=loadDB();
+  if(eid) DB.schedule=DB.schedule.map(x=>x.id===eid?{...m,id:eid}:x);
+  else { m.id=DB.nid++; DB.schedule.push(m); }
+  saveLocal(DB);
+  const result=await serverCmd('saveSchedule',{schedule:DB.schedule});
+  if(result.ok){ closeM('m-match'); renderAdmSched(); toast('✅ Match saved!'); }
 }
 function editMatch(id){openMatchModal(id);}
-function delMatch(id){confirm2('Delete match?','',async()=>{ await serverCmd('deleteMatch', {id}); });}
+function delMatch(id){confirm2('Delete match?','',async()=>{ DB=loadDB(); DB.schedule=DB.schedule.filter(x=>x.id!==id); saveLocal(DB); await serverCmd('saveSchedule',{schedule:DB.schedule}); renderAdmSched(); toast('Deleted'); });}
 
 // ═══════════════════════════════════════════
 // RESULTS ADMIN
@@ -2362,7 +2395,7 @@ async function doGenerateTeamMatches(){
 
   DB.schedule=[...DB.schedule,...newMatches];
   saveLocal(DB);
-  await serverCmd('saveGroups',{groups:DB.groups});
+  await serverCmd('saveSchedule',{schedule:DB.schedule});
   closeM('m-generate');
   toast(`✅ Generated ${newMatches.length} matches!`);
   showAdmSec('sched',document.querySelector('.atab[data-sec="sched"]'));
@@ -2375,7 +2408,7 @@ async function generateTeamMatches(){ openGenerateModal(); }
 // ═══════════════════════════════════════════
 
 // HARDCODED SCRIPT URL — set this once, works for everyone
-const HARDCODED_URL = 'https://script.google.com/macros/s/AKfycbx929O4T5I6W5k2eJoO6tAw9TJWeMlYuCXLpU35mrbiycdBKOnoAo9IcnoJR7o7Wis/exec'; // Admin: paste your Script URL between these quotes
+const HARDCODED_URL = ''; // Admin: paste your Script URL between these quotes
 
 // On every load: if hardcoded URL exists, use it regardless of localStorage
 if(HARDCODED_URL) {

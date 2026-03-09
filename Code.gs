@@ -140,6 +140,9 @@ function doGet(e) {
     else if (action === 'clearMatches') {
       db.schedule = []; db.results = [];
     }
+    else if (action === 'saveSchedule') {
+      db.schedule = req.schedule || [];
+    }
     else if (action === 'saveBracket') {
       if(!db.brackets) db.brackets={};
       db.brackets[req.cat]=req.bracket;
