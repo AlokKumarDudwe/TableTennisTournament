@@ -345,6 +345,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t1);displ
   <!-- PAGE: REGISTER -->
   <div class="page" id="page-register">
     <div class="sec-ttl">PLAYER <em>REGISTRATION</em></div>
+    <div id="deadline-banner" style="display:none;margin-bottom:10px"></div>
     <div id="gform-banner" style="display:none;margin-bottom:14px"></div>
     <div id="reg-form">
       <div id="reg-al" style="display:none"></div>
@@ -630,7 +631,10 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t1);displ
               <select class="af-select" id="s-fmt"><option>Best of 5</option><option>Best of 3</option><option>Best of 7</option></select>
             </div>
           </div>
-          <div class="af-group"><label class="af-label">Welcome Message</label><input class="af-input" id="s-msg"/></div>
+          <div class="af-grid2">
+            <div class="af-group"><label class="af-label">Registration Deadline</label><input class="af-input" id="s-regdeadline" type="date"/></div>
+            <div class="af-group"><label class="af-label">Welcome Message</label><input class="af-input" id="s-msg"/></div>
+          </div>
           <div class="af-group"><label class="af-label">Google Form URL (optional)</label><input class="af-input" id="s-gf" placeholder="https://forms.gle/..."/></div>
           <button class="btn btn-lime btn-sm" onclick="saveSettings()">💾 Save Settings</button>
         </div>
@@ -915,7 +919,7 @@ async function syncNow(silent){
       setSyncState('ok','Recovered ✅');
       toast('✅ Local data recovered to server!');
       refreshCurrentPage(); updateHeader();
-      sincing=false; return;
+      syncing=false; return;
     }
 
     DB=remote; saveLocal(DB);
@@ -997,6 +1001,9 @@ function goPage(pg,btn){
   curPage=pg;
   // scroll top
   document.getElementById('main-area').scrollTop=0;
+  // Show footer on public pages
+  const footer=document.getElementById('site-footer');
+  if(footer) footer.style.display=(pg==='admin'||pg==='login')?'none':'block';
 
   if(pg==='admin'){
     if(sessionStorage.getItem('adm')==='1'){
@@ -1160,6 +1167,40 @@ function renderRegPage(){
   const b=document.getElementById('gform-banner');
   if(gf){ b.style.display='block'; b.innerHTML=`<div class="al al-info">📋 Also register via <a href="${gf}" target="_blank" style="color:var(--lime);font-weight:700">Google Form</a></div>`; }
   else b.style.display='none';
+
+  // Check registration deadline
+  const deadline=DB.settings.regDeadline;
+  const deadlineBanner=document.getElementById('deadline-banner');
+  if(deadline){
+    const dl=new Date(deadline);
+    const now=new Date();
+    const today=new Date(now.getFullYear(),now.getMonth(),now.getDate());
+    const dlDay=new Date(dl.getFullYear(),dl.getMonth(),dl.getDate());
+    const daysLeft=Math.ceil((dlDay-today)/(1000*60*60*24));
+    if(daysLeft<0){
+      // Deadline passed — block registration
+      document.getElementById('reg-form').style.display='none';
+      document.getElementById('reg-ok').style.display='none';
+      deadlineBanner.style.display='block';
+      deadlineBanner.innerHTML=`<div class="al al-err" style="text-align:center;display:block;padding:16px">
+        <div style="font-size:1.5rem;margin-bottom:6px">🔒</div>
+        <strong>Registration Closed</strong><br>
+        <span style="font-size:.82rem">The registration deadline was ${dl.toLocaleDateString('en-IN',{day:'numeric',month:'long',year:'numeric'})}.</span><br>
+        <span style="font-size:.78rem;margin-top:6px;display:block">For queries, contact Alok Kumar Dudwe · 9407407147</span>
+      </div>`;
+      document.getElementById('reg-count').textContent='';
+      return;
+    } else if(daysLeft<=3){
+      deadlineBanner.style.display='block';
+      deadlineBanner.innerHTML=`<div class="al al-warn">⏳ Registration closes in <strong>${daysLeft===0?'today':daysLeft+' day'+(daysLeft>1?'s':'')+''}</strong> — ${dl.toLocaleDateString('en-IN',{day:'numeric',month:'long'})}</div>`;
+    } else {
+      deadlineBanner.style.display='block';
+      deadlineBanner.innerHTML=`<div class="al al-info">📅 Registration open until <strong>${dl.toLocaleDateString('en-IN',{day:'numeric',month:'long',year:'numeric'})}</strong></div>`;
+    }
+  } else {
+    if(deadlineBanner) deadlineBanner.style.display='none';
+  }
+
   document.getElementById('reg-form').style.display='block';
   document.getElementById('reg-ok').style.display='none';
   document.getElementById('reg-count').textContent=`${DB.noms.filter(n=>n.status==='approved').length} players approved`;
@@ -1184,7 +1225,7 @@ function onCatChange(){
   // Update participant label
   const pl=document.getElementById('n-partname-label');
   if(pl){
-    const lbl=ck==='E'?'Homemaker / Wife Name':ck==='C'?'Girl's Name':ck==='D'?'Boy's Name':'Ward / Child Name';
+    const lbl=ck==='E'?'Homemaker / Wife Name':ck==='C'?'Girls Name':ck==='D'?'Boys Name':'Ward / Child Name';
     pl.innerHTML=lbl+' <span class="req">*</span>';
   }
 }
@@ -1730,6 +1771,7 @@ function delResult(id){confirm2('Delete result?','',async()=>{ await serverCmd('
 function loadSettings(){
   const s=DB.settings;
   document.getElementById('s-url').value=s.scriptURL||'';
+  document.getElementById('s-regdeadline').value=s.regDeadline||'';
   document.getElementById('s-name').value=s.name||'';
   document.getElementById('s-start').value=s.startDate||'';
   document.getElementById('s-end').value=s.endDate||'';
@@ -1768,6 +1810,7 @@ async function saveSettings(){
     mpg:parseInt(document.getElementById('s-mpg').value)||4,
     fmt:document.getElementById('s-fmt').value,
     msg:document.getElementById('s-msg').value.trim(),
+    regDeadline:document.getElementById('s-regdeadline').value,
     gf:document.getElementById('s-gf').value.trim(),
     scriptURL:DB.settings.scriptURL,
   };
@@ -2057,7 +2100,8 @@ function renderBracketView(bk,catKey){
   const results=DB.results.filter(r=>r.cat===catKey&&r.matchType==='ko');
   const rounds=bk.rounds||[];
   
-  let html=`<div class="card"><div class="card-head"><span class="card-ttl" style="color:${`rgb(${ci.color.join(',')})`}">${ci.full} — Knockout Bracket</span><button class="btn btn-ghost btn-xs" onclick="showSeedModal('${catKey}')">✏️ Reseed</button></div><div class="card-body"><div class="bracket-wrap"><div class="bracket">`;
+  const catColor='rgb('+ci.color.join(',')+')';
+  let html=`<div class="card"><div class="card-head"><span class="card-ttl" style="color:${catColor}">${ci.full} — Knockout Bracket</span><button class="btn btn-ghost btn-xs" onclick="showSeedModal('${catKey}')">✏️ Reseed</button></div><div class="card-body"><div class="bracket-wrap"><div class="bracket">`;
   
   const numRounds=rounds.length;
   rounds.forEach((round,ri)=>{
@@ -2451,7 +2495,7 @@ async function generateTeamMatches(){ openGenerateModal(); }
 // ═══════════════════════════════════════════
 
 // HARDCODED SCRIPT URL — set this once, works for everyone
-const HARDCODED_URL = 'https://script.google.com/macros/s/AKfycbw4wo6d8P08CehB-rRC7cSDy2ausm73SSQ2io29sofJOItoDfc0CfOw36nj2HVX95c/exec'; // Admin: paste your Script URL between these quotes
+const HARDCODED_URL = ''; // Admin: paste your Script URL between these quotes
 
 // On every load: if hardcoded URL exists, use it regardless of localStorage
 if(HARDCODED_URL) {
@@ -2461,6 +2505,7 @@ if(HARDCODED_URL) {
 
 updateHeader();
 renderHome();
+const _f=document.getElementById('site-footer'); if(_f) _f.style.display='block';
 
 // Auto-sync on every page load for ALL visitors
 if(DB.settings.scriptURL){
@@ -2470,5 +2515,13 @@ if(DB.settings.scriptURL){
   document.getElementById('setup-notice').style.display='block';
 }
 </script>
+<!-- FOOTER -->
+<div id="site-footer" style="display:none;background:var(--s1);border-top:1px solid var(--b1);padding:14px 16px;text-align:center;flex-shrink:0">
+  <div style="font-size:.75rem;color:var(--t2);font-weight:600;margin-bottom:4px">📞 For registration issues, contact:</div>
+  <div style="font-size:.88rem;font-weight:700;color:var(--t1)">Alok Kumar Dudwe</div>
+  <div style="font-size:.78rem;color:var(--t3);margin-top:2px">Manager Programming</div>
+  <a href="tel:9407407147" style="display:inline-flex;align-items:center;gap:6px;margin-top:8px;padding:7px 16px;background:rgba(184,255,60,.1);border:1px solid rgba(184,255,60,.3);border-radius:999px;color:var(--lime);font-weight:700;font-size:.85rem;text-decoration:none">📱 9407407147</a>
+</div>
+
 </body>
 </html>
