@@ -22,7 +22,7 @@ function defaultDB() {
       startDate: '', endDate: '', venue: '', city: '',
       mpg: 4, fmt: 'Best of 5', msg: '', gf: '', scriptURL: ''
     },
-    noms: [], groups: { M45: {}, M45P: {}, F45: {}, F45P: {} },
+    noms: [], groups: { A: {}, B: {}, C: {}, D: {} },
     schedule: [], results: [], nid: 1
   };
 }
@@ -115,8 +115,17 @@ function doGet(e) {
     else if (action === 'clearMatches') {
       db.schedule = []; db.results = [];
     }
+    else if (action === 'saveBracket') {
+      if(!db.brackets) db.brackets={};
+      db.brackets[req.cat]=req.bracket;
+    }
+    else if (action === 'saveTeams') {
+      db.teams = req.teams || [];
+    }
     else if (action === 'clearGroups') {
-      db.groups = { M45: {}, M45P: {}, F45: {}, F45P: {} };
+      db.groups = { A:{}, B:{}, C:{}, D:{} };
+      db.brackets = {};
+      db.teams = [];
     }
     else if (action === 'clearAll') {
       const url = db.settings.scriptURL;

@@ -67,10 +67,11 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t1);displ
 .hero-sub{font-size:.78rem;color:var(--t2);margin-top:6px}
 .cat-chips{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:12px}
 .chip{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:999px;font-size:.7rem;font-weight:700;border:1px solid}
-.chip-m{background:rgba(77,166,255,.1);color:var(--blue);border-color:rgba(77,166,255,.3)}
-.chip-mp{background:rgba(167,139,250,.1);color:var(--purple);border-color:rgba(167,139,250,.3)}
-.chip-f{background:rgba(255,61,127,.1);color:var(--pink);border-color:rgba(255,61,127,.3)}
-.chip-fp{background:rgba(255,204,60,.1);color:var(--gold);border-color:rgba(255,204,60,.3)}
+.chip-a{background:rgba(77,166,255,.1);color:#4da6ff;border-color:rgba(77,166,255,.3)}
+.chip-b{background:rgba(45,232,196,.1);color:#2de8c4;border-color:rgba(45,232,196,.3)}
+.chip-c{background:rgba(255,61,127,.1);color:#ff3d7f;border-color:rgba(255,61,127,.3)}
+.chip-d{background:rgba(184,255,60,.1);color:#b8ff3c;border-color:rgba(184,255,60,.3)}
+.chip-e{background:rgba(255,204,60,.1);color:#ffcc3c;border-color:rgba(255,204,60,.3)}
 
 /* ── STAT ROW ── */
 .stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px}
@@ -249,6 +250,49 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t1);displ
 
 /* ── NO SCRIPT WARNING for setup ── */
 .not-setup{background:var(--s1);border:1px solid rgba(255,204,60,.3);border-radius:var(--rl);padding:20px;text-align:center}
+
+/* ── BRACKET ── */
+.bracket-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:8px}
+.bracket{display:flex;gap:0;align-items:flex-start}
+.bracket-round{display:flex;flex-direction:column;min-width:160px;flex-shrink:0}
+.br-title{font-size:.62rem;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:1px;padding:4px 8px;text-align:center;margin-bottom:8px;border-bottom:1px solid var(--b1)}
+.bm-wrap{display:flex;flex-direction:column;justify-content:space-around;flex:1;gap:8px}
+.bm{background:var(--s2);border:1px solid var(--b1);border-radius:var(--rsm);overflow:hidden;position:relative}
+.bm.winner-set{border-color:var(--lime)}
+.bm-p{padding:6px 10px;font-size:.8rem;font-weight:600;border-bottom:1px solid var(--b1);display:flex;align-items:center;justify-content:space-between;gap:6px}
+.bm-p:last-child{border-bottom:none}
+.bm-p.winner{background:rgba(184,255,60,.08);color:var(--lime)}
+.bm-p.bye{color:var(--t3);font-style:italic}
+.bm-score{font-family:'JetBrains Mono',monospace;font-size:.75rem;color:var(--t2);min-width:20px;text-align:right}
+.bm-score.w{color:var(--lime);font-weight:700}
+.br-connector{width:20px;flex-shrink:0;position:relative;display:flex;flex-direction:column;justify-content:space-around}
+/* TEAM CARDS */
+.team-card{background:var(--s1);border:1.5px solid var(--b1);border-radius:var(--rl);overflow:hidden;margin-bottom:12px}
+.team-card-head{padding:10px 14px;background:var(--s2);display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--b1)}
+.team-color{width:12px;height:12px;border-radius:50%;flex-shrink:0}
+.team-name-ttl{font-weight:700;font-size:.92rem;flex:1}
+.team-members{padding:8px 14px}
+.team-member{padding:5px 0;border-bottom:1px solid var(--b1);display:flex;align-items:center;gap:8px;font-size:.82rem}
+.team-member:last-child{border-bottom:none}
+.gender-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.gd-m{background:var(--blue)}.gd-f{background:var(--pink)}
+.game-types{display:flex;flex-wrap:wrap;gap:5px;padding:8px 14px;border-top:1px solid var(--b1)}
+.gtype{padding:3px 9px;border-radius:999px;font-size:.68rem;font-weight:700;border:1px solid}
+.gtype-ms{background:rgba(77,166,255,.1);color:var(--blue);border-color:rgba(77,166,255,.3)}
+.gtype-ws{background:rgba(255,61,127,.1);color:var(--pink);border-color:rgba(255,61,127,.3)}
+.gtype-md{background:rgba(167,139,250,.1);color:var(--purple);border-color:rgba(167,139,250,.3)}
+.gtype-xd{background:rgba(45,232,196,.1);color:var(--teal);border-color:rgba(45,232,196,.3)}
+/* FORMAT BADGE */
+.fmt-badge{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:var(--rsm);font-size:.75rem;font-weight:700}
+.fmt-league{background:rgba(77,166,255,.1);color:var(--blue);border:1px solid rgba(77,166,255,.3)}
+.fmt-ko{background:rgba(255,61,127,.1);color:var(--pink);border:1px solid rgba(255,61,127,.3)}
+.fmt-lko{background:rgba(184,255,60,.1);color:var(--lime);border:1px solid rgba(184,255,60,.3)}
+.fmt-team{background:rgba(255,204,60,.1);color:var(--gold);border:1px solid rgba(255,204,60,.3)}
+.seed-list{list-style:none}
+.seed-item{background:var(--s2);border:1px solid var(--b1);border-radius:var(--rsm);padding:8px 12px;margin-bottom:6px;display:flex;align-items:center;gap:10px;cursor:grab}
+.seed-item:active{cursor:grabbing;border-color:var(--lime)}
+.seed-num{width:22px;height:22px;border-radius:50%;background:var(--lime);color:#060a00;font-weight:700;font-size:.72rem;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.bye-badge{background:var(--s3);color:var(--t3);border-radius:3px;padding:1px 6px;font-size:.65rem;font-weight:700}
 </style>
 </head>
 <body>
@@ -279,10 +323,10 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t1);displ
       <div class="hero-title" id="h-title">🏓 <b>TOURNAMENT</b></div>
       <div class="hero-sub" id="h-sub">Compete in your category</div>
       <div class="cat-chips">
-        <span class="chip chip-m">♂ Men U45</span>
-        <span class="chip chip-mp">♂ Men 45+</span>
-        <span class="chip chip-f">♀ Women U45</span>
-        <span class="chip chip-fp">♀ Women 45+</span>
+        <span class="chip chip-a">A · Employee Team</span>
+        <span class="chip chip-b">B · Wards ≤10</span>
+        <span class="chip chip-c">C · Wards >10</span>
+        <span class="chip chip-d">D · Homemaker</span>
       </div>
     </div>
     <div class="stat-row">
@@ -303,32 +347,66 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t1);displ
     <div id="gform-banner" style="display:none;margin-bottom:14px"></div>
     <div id="reg-form">
       <div id="reg-al" style="display:none"></div>
+
+      <!-- Step 1: Category Selection -->
       <div class="form-group">
-        <label class="form-label">CPF Number <span class="req">*</span></label>
-        <input class="form-input cpf" id="n-cpf" placeholder="e.g. 12345" maxlength="6" inputmode="numeric"/>
-        <div class="form-hint">Your CPF — 5 or 6 digit number</div>
+        <label class="form-label">Category <span class="req">*</span></label>
+        <select class="form-select" id="n-cat" onchange="onCatChange()">
+          <option value="">— Select your category —</option>
+          <option value="A">Category A — Employee (M/F) · Team Event</option>
+          <option value="B">Category B — Wards up to 10 yrs · Singles (All)</option>
+          <option value="C">Category C — Wards above 10 yrs · Singles (M/F)</option>
+          <option value="D">Category D — Homemaker / Wife · Singles</option>
+        </select>
       </div>
-      <div class="form-group">
-        <label class="form-label">Full Name <span class="req">*</span></label>
-        <input class="form-input" id="n-name" placeholder="e.g. Carlos Silva" autocomplete="name"/>
+      <div id="cat-preview" style="display:none" class="form-group">
+        <div class="cat-preview"><span class="cat-preview-lbl">Format:</span><span id="cat-badge"></span></div>
       </div>
-      <div class="af-grid2" style="gap:12px;margin-bottom:14px">
-        <div class="form-group" style="margin-bottom:0">
-          <label class="form-label">Age <span class="req">*</span></label>
-          <input class="form-input" id="n-age" type="number" placeholder="32" min="5" max="100" inputmode="numeric" oninput="updateCatPreview()"/>
+
+      <!-- Dynamic fields shown based on category -->
+      <div id="reg-fields" style="display:none">
+
+        <!-- Cat A only: Employee Name -->
+        <div class="form-group f-name">
+          <label class="form-label">Your Name <span class="req">*</span></label>
+          <input class="form-input" id="n-name" placeholder="Employee full name" autocomplete="name"/>
         </div>
-        <div class="form-group" style="margin-bottom:0">
+
+        <!-- Cat B/C/D: Employee Name -->
+        <div class="form-group f-empname">
+          <label class="form-label">Employee Name <span class="req">*</span></label>
+          <input class="form-input" id="n-empname" placeholder="Your name as employee"/>
+        </div>
+
+        <!-- CPF always shown -->
+        <div class="form-group">
+          <label class="form-label">Employee CPF / ID <span class="req">*</span></label>
+          <input class="form-input cpf" id="n-cpf" placeholder="e.g. 12345" maxlength="6" inputmode="numeric"/>
+          <div class="form-hint">5 or 6 digit employee ID</div>
+        </div>
+
+        <!-- Cat B/C/D: Participant Name -->
+        <div class="form-group f-partname">
+          <label class="form-label" id="n-partname-label">Participant Name <span class="req">*</span></label>
+          <input class="form-input" id="n-partname" placeholder="Ward / Homemaker full name"/>
+        </div>
+
+        <!-- Gender shown for A, B, C (not D) -->
+        <div class="form-group f-gender">
           <label class="form-label">Gender <span class="req">*</span></label>
-          <select class="form-select" id="n-gender" onchange="updateCatPreview()">
+          <select class="form-select" id="n-gender">
             <option value="">— Select —</option>
             <option value="Male">Male</option>
             <option value="Female">Female</option>
           </select>
         </div>
-      </div>
-      <div id="cat-preview" style="display:none" class="form-group">
-        <label class="form-label">Your Category</label>
-        <div class="cat-preview"><span class="cat-preview-lbl">You will compete in:</span><span id="cat-badge"></span></div>
+
+        <!-- WhatsApp always shown -->
+        <div class="form-group">
+          <label class="form-label">WhatsApp Number <span class="req">*</span></label>
+          <input class="form-input" id="n-whatsapp" placeholder="e.g. 9876543210" inputmode="numeric" maxlength="15"/>
+        </div>
+
       </div>
       <button class="btn btn-lime btn-full" onclick="submitReg()" style="margin-top:4px">Submit Registration →</button>
       <p class="t3 ts" style="text-align:center;margin-top:10px" id="reg-count"></p>
@@ -389,6 +467,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t1);displ
       <button class="atab active" data-sec="dash"    onclick="showAdmSec('dash',this)">📊 Dash</button>
       <button class="atab" data-sec="noms"    onclick="showAdmSec('noms',this)">📋 Players <span id="sb-pend" style="background:var(--pink);color:#fff;border-radius:999px;padding:1px 6px;font-size:.62rem;margin-left:3px">0</span></button>
       <button class="atab" data-sec="groups"  onclick="showAdmSec('groups',this)">👥 Groups</button>
+      <button class="atab" data-sec="bracket" onclick="showAdmSec('bracket',this)">🏆 Bracket</button>
+      <button class="atab" data-sec="teams"   onclick="showAdmSec('teams',this)">👨‍👩‍👧 Teams</button>
       <button class="atab" data-sec="sched"   onclick="showAdmSec('sched',this)">📅 Schedule</button>
       <button class="atab" data-sec="results" onclick="showAdmSec('results',this)">✅ Results</button>
       <button class="atab" data-sec="history" onclick="showAdmSec('history',this)">🗂 History</button>
@@ -426,7 +506,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t1);displ
       </div>
       <div class="tbl-scroll">
         <table class="dtbl">
-          <thead><tr><th>#</th><th>CPF</th><th>Name</th><th>Age</th><th>Cat</th><th>Status</th><th>Actions</th></tr></thead>
+          <thead><tr><th>#</th><th>ID</th><th>Employee</th><th>Participant</th><th>WhatsApp</th><th>Cat</th><th>Status</th><th>Actions</th></tr></thead>
           <tbody id="nom-tbody"></tbody>
         </table>
       </div>
@@ -443,6 +523,23 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t1);displ
       </div>
       <div class="cat-tabs" id="gb-tabs"></div>
       <div id="gb-body"></div>
+    </div>
+
+    <!-- BRACKET -->
+    <div class="adm-sec" id="asec-bracket" style="display:none">
+      <div class="al al-info mb2">Auto-generates knockout brackets. For B/C/D: ≤8 players = League + Knockout; >8 = Direct Knockout. Seed players by dragging order.</div>
+      <div class="cat-tabs" id="bk-cat-tabs"></div>
+      <div id="bk-body"></div>
+    </div>
+
+    <!-- TEAMS (Cat A) -->
+    <div class="adm-sec" id="asec-teams" style="display:none">
+      <div class="al al-info mb2">Create teams for Cat A. Team game types (Singles/Doubles/Mixed) are auto-determined by number of female players in each team.</div>
+      <div class="sec-row" style="margin-bottom:10px">
+        <button class="btn btn-lime btn-sm" onclick="openTeamModal()">+ New Team</button>
+        <button class="btn btn-ghost btn-sm" onclick="generateTeamMatches()">⚡ Generate Matches</button>
+      </div>
+      <div id="teams-body"></div>
     </div>
 
     <!-- SCHEDULE -->
@@ -557,13 +654,16 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t1);displ
   <div class="mo-box">
     <div class="mo-handle"></div>
     <div class="mo-title">➕ ADD PLAYER</div>
-    <div class="af-group"><label class="af-label">CPF *</label><input class="af-input mono" id="mp-cpf" maxlength="6" inputmode="numeric" placeholder="e.g. 12345"/></div>
+    <div class="af-group"><label class="af-label">CPF / ID *</label><input class="af-input mono" id="mp-cpf" maxlength="6" inputmode="numeric" placeholder="e.g. 12345"/></div>
     <div class="af-group"><label class="af-label">Full Name *</label><input class="af-input" id="mp-name"/></div>
-    <div class="af-grid2">
-      <div class="af-group"><label class="af-label">Age *</label><input class="af-input" id="mp-age" type="number" inputmode="numeric"/></div>
-      <div class="af-group"><label class="af-label">Gender *</label>
-        <select class="af-select" id="mp-gender"><option value="">—</option><option>Male</option><option>Female</option></select>
-      </div>
+    <div class="af-group"><label class="af-label">Category *</label>
+      <select class="af-select" id="mp-cat">
+        <option value="">— Select —</option>
+        <option value="A">A · Employee (M/F) · Team Event</option>
+        <option value="B">B · Wards ≤10 yrs · Singles All</option>
+        <option value="C">C · Wards >10 yrs · Singles M/F</option>
+        <option value="D">D · Homemaker/Wife · Singles</option>
+      </select>
     </div>
     <div class="af-group"><label class="af-label">Status</label>
       <select class="af-select" id="mp-status"><option value="approved">Approved</option><option value="pending">Pending</option></select>
@@ -583,8 +683,10 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t1);displ
     <input type="hidden" id="mm-eid"/>
     <div class="af-group"><label class="af-label">Category</label>
       <select class="af-select" id="mm-cat" onchange="populateMM()">
-        <option value="M45">♂ Men Under 45</option><option value="M45P">♂ Men 45+</option>
-        <option value="F45">♀ Women Under 45</option><option value="F45P">♀ Women 45+</option>
+        <option value="A">A · Employee (M/F) · Team</option>
+        <option value="B">B · Wards ≤10 yrs · Singles</option>
+        <option value="C">C · Wards >10 yrs · Singles</option>
+        <option value="D">D · Homemaker/Wife · Singles</option>
       </select>
     </div>
     <div class="af-group"><label class="af-label">Group</label><select class="af-select" id="mm-grp" onchange="populateMMP()"></select></div>
@@ -612,8 +714,10 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t1);displ
     <input type="hidden" id="mr-eid"/>
     <div class="af-group"><label class="af-label">Category</label>
       <select class="af-select" id="mr-cat" onchange="populateMRG()">
-        <option value="M45">♂ Men Under 45</option><option value="M45P">♂ Men 45+</option>
-        <option value="F45">♀ Women Under 45</option><option value="F45P">♀ Women 45+</option>
+        <option value="A">A · Employee (M/F) · Team</option>
+        <option value="B">B · Wards ≤10 yrs · Singles</option>
+        <option value="C">C · Wards >10 yrs · Singles</option>
+        <option value="D">D · Homemaker/Wife · Singles</option>
       </select>
     </div>
     <div class="af-group"><label class="af-label">Group</label><select class="af-select" id="mr-grp" onchange="populateMRP()"></select></div>
@@ -629,6 +733,32 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t1);displ
     <div class="mo-footer">
       <button class="btn btn-ghost btn-sm" onclick="closeM('m-result')">Cancel</button>
       <button class="btn btn-lime btn-sm" onclick="saveResult()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Team Modal -->
+<div class="mo" id="m-team">
+  <div class="mo-box">
+    <div class="mo-handle"></div>
+    <div class="mo-title" id="mt-ttl">👨‍👩‍👧 NEW TEAM</div>
+    <input type="hidden" id="mt-id"/>
+    <div class="af-group"><label class="af-label">Team Name *</label><input class="af-input" id="mt-name" placeholder="e.g. Team Alpha"/></div>
+    <div class="af-group">
+      <label class="af-label">Team Color</label>
+      <input type="color" id="mt-color" value="#4da6ff" style="width:100%;height:40px;border:none;border-radius:var(--rsm);background:var(--s2);cursor:pointer"/>
+    </div>
+    <div class="af-group">
+      <label class="af-label">Add Members (select approved Cat A players)</label>
+      <div id="mt-player-list" style="max-height:200px;overflow-y:auto;background:var(--s2);border:1px solid var(--b1);border-radius:var(--rsm);padding:8px"></div>
+    </div>
+    <div class="af-group" id="mt-preview-wrap" style="display:none">
+      <label class="af-label">Team Preview</label>
+      <div id="mt-preview"></div>
+    </div>
+    <div class="mo-footer">
+      <button class="btn btn-ghost btn-sm" onclick="closeM('m-team')">Cancel</button>
+      <button class="btn btn-lime btn-sm" onclick="saveTeam()">Save Team</button>
     </div>
   </div>
 </div>
@@ -657,18 +787,16 @@ const SK='tt_v5';
 const ARCH_KEY='tt_v5_arch';
 
 const CATS={
-  M45: {label:'♂ Men U45',   full:'Men Under 45',   css:'chip-m',  color:[77,166,255]},
-  M45P:{label:'♂ Men 45+',   full:'Men 45+',         css:'chip-mp', color:[167,139,250]},
-  F45: {label:'♀ Women U45', full:'Women Under 45',  css:'chip-f',  color:[255,61,127]},
-  F45P:{label:'♀ Women 45+', full:'Women 45+',        css:'chip-fp', color:[255,204,60]},
+  A:{label:'Cat A',full:'Employee (M/F)',      css:'chip-a', color:[77,166,255],  fmt:'Team Event',         fields:['name','cpf','gender','whatsapp']},
+  B:{label:'Cat B',full:'Wards ≤10 yrs',      css:'chip-b', color:[45,232,196],  fmt:'Singles — All',      fields:['empName','cpf','partName','gender','whatsapp']},
+  C:{label:'Cat C',full:'Wards >10 yrs',       css:'chip-c', color:[255,61,127],  fmt:'Singles — M/F',      fields:['empName','cpf','partName','gender','whatsapp']},
+  D:{label:'Cat D',full:'Homemaker / Wife',    css:'chip-d', color:[255,204,60],  fmt:'Singles only',       fields:['empName','cpf','partName','whatsapp']},
+  E:{label:'Cat E',full:'Homemakers (Female)', css:'chip-e', color:[184,255,60],  fmt:'League & Knockout',  fields:['empName','cpf','partName','whatsapp']},
 };
 const GCOLS=['#4da6ff','#2de8c4','#b8ff3c','#ff3d7f','#a78bfa','#ffcc3c','#fb923c','#34d399'];
 const gc=i=>GCOLS[i%GCOLS.length];
 
-function catOf(gender,age){
-  const m=(gender||'').toLowerCase().startsWith('m');
-  return m?(age>=45?'M45P':'M45'):(age>=45?'F45P':'F45');
-}
+// catOf removed — category selected directly by player
 
 // ═══════════════════════════════════════════
 // DATA
@@ -676,7 +804,7 @@ function catOf(gender,age){
 function freshDB(){
   return {
     settings:{name:'Table Tennis Tournament 2025',startDate:'',endDate:'',venue:'',city:'',mpg:4,fmt:'Best of 5',msg:'',gf:'',scriptURL:''},
-    noms:[],groups:{M45:{},M45P:{},F45:{},F45P:{}},
+    noms:[],groups:{A:{},B:{},C:{},D:{}},brackets:{B:{},C:{},D:{}},teams:[],
     schedule:[],results:[],nid:1
   };
 }
@@ -799,7 +927,7 @@ async function saveAndSync(){
 // NAVIGATION
 // ═══════════════════════════════════════════
 let curPage='home', curAdmSec='dash';
-let pubGrpCat='M45', pubResCat='M45', pubResGrp='All', pubSchCat='ALL', gbCat='M45';
+let pubGrpCat='A', pubResCat='A', pubResGrp='All', pubSchCat='ALL', gbCat='A';
 
 function goPage(pg,btn){
   DB=loadDB();
@@ -847,6 +975,8 @@ function renderAdmSec(s){
   if(s==='dash')    renderDash();
   if(s==='noms')    renderNomTable();
   if(s==='groups')  renderGroupBuilder();
+  if(s==='bracket') renderBracketSection();
+  if(s==='teams')   renderTeamsSection();
   if(s==='sched')   renderAdmSched();
   if(s==='results') renderAdmResults();
   if(s==='history') renderHistory();
@@ -942,7 +1072,7 @@ function renderGCard(ck,grp,idx){
   return `<div class="gcard">
     <div class="gcard-head" style="color:${color}">
       <span class="gcard-name">🏓 ${grp}</span>
-      <span class="gcard-cnt">${(DB.groups[ck][grp]||[]).length}p · ${CATS[ck].label}</span>
+      <span class="gcard-cnt">${(DB.groups[ck][grp]||[]).length}p · ${CATS[ck].label} · ${CATS[ck].fmt}</span>
     </div>
     <div style="overflow-x:auto">
     <table class="tbl">
@@ -973,27 +1103,53 @@ function renderRegPage(){
   document.getElementById('reg-ok').style.display='none';
   document.getElementById('reg-count').textContent=`${DB.noms.filter(n=>n.status==='approved').length} players approved`;
 }
-function updateCatPreview(){
-  const age=parseInt(document.getElementById('n-age').value)||0;
-  const gender=document.getElementById('n-gender').value;
+function onCatChange(){
+  const ck=document.getElementById('n-cat').value;
   const el=document.getElementById('cat-preview');
-  if(age&&gender){ const ck=catOf(gender,age); const ci=CATS[ck]; document.getElementById('cat-badge').innerHTML=`<span class="chip ${ci.css}">${ci.label}</span>`; el.style.display='block'; }
-  else el.style.display='none';
+  const fields=document.getElementById('reg-fields');
+  if(!ck||!CATS[ck]){ el.style.display='none'; fields.style.display='none'; return; }
+  const ci=CATS[ck];
+  document.getElementById('cat-badge').innerHTML=`<span class="chip ${ci.css}">${ci.full} · ${ci.fmt}</span>`;
+  el.style.display='block';
+  fields.style.display='block';
+  // Show/hide fields based on category
+  const isA = ck==='A';
+  document.querySelectorAll('.f-name').forEach(el=>el.style.display=isA?'block':'none');
+  document.querySelectorAll('.f-empname').forEach(el=>el.style.display=!isA?'block':'none');
+  document.querySelectorAll('.f-partname').forEach(el=>el.style.display=!isA?'block':'none');
+  document.querySelectorAll('.f-gender').forEach(el=>el.style.display=(ck!=='D')?'block':'none');
+  // Update participant label
+  const pl=document.getElementById('n-partname-label');
+  if(pl) pl.innerHTML=(ck==='D'?'Homemaker / Wife Name':'Ward / Child Name')+' <span class="req">*</span>';
 }
+function updateCatPreview(){ onCatChange(); }
 async function submitReg(){
+  const ck=document.getElementById('n-cat').value;
   const cpf=document.getElementById('n-cpf').value.trim();
-  const name=document.getElementById('n-name').value.trim();
-  const age=parseInt(document.getElementById('n-age').value)||0;
-  const gender=document.getElementById('n-gender').value;
+  const whatsapp=document.getElementById('n-whatsapp').value.trim();
   const al=document.getElementById('reg-al');
   const showErr=m=>{ al.className='al al-err'; al.innerHTML=m; al.style.display='flex'; };
-  if(!cpf||!name||!age||!gender){showErr('Please fill all required fields.');return;}
-  if(!validCPF(cpf)){showErr('CPF must be 5 or 6 digits.');return;}
+  if(!ck){showErr('Please select a category.');return;}
+  if(!validCPF(cpf)){showErr('Employee ID must be 5 or 6 digits.');return;}
+  if(!whatsapp){showErr('WhatsApp number is required.');return;}
+  // Build nom based on category
+  let name='', empName='', partName='', gender='';
+  if(ck==='A'){
+    name=document.getElementById('n-name').value.trim();
+    gender=document.getElementById('n-gender').value;
+    if(!name||!gender){showErr('Please fill all required fields.');return;}
+  } else {
+    empName=document.getElementById('n-empname').value.trim();
+    partName=document.getElementById('n-partname').value.trim();
+    if(ck!=='D') gender=document.getElementById('n-gender').value;
+    if(!empName||!partName){showErr('Please fill all required fields.');return;}
+    if(ck!=='D'&&!gender){showErr('Please select gender.');return;}
+    name=partName; // use participant name as display name
+  }
   al.style.display='none';
   const btn=document.querySelector('#reg-form .btn-lime');
   btn.textContent='Submitting…'; btn.disabled=true;
-  const ck=catOf(gender,age);
-  const nom={cpf,name,age,gender,cat:ck,status:'pending',ts:new Date().toISOString()};
+  const nom={cpf,name,empName,partName,gender,whatsapp,cat:ck,status:'pending',ts:new Date().toISOString()};
   const result=await serverCmd('addNom', nom);
   btn.textContent='Submit Registration →'; btn.disabled=false;
   if(result.ok){
@@ -1005,9 +1161,11 @@ async function submitReg(){
   }
 }
 function resetReg(){
-  ['n-cpf','n-name','n-age'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('n-gender').selectedIndex=0;
+  ['n-cpf','n-name','n-empname','n-partname','n-whatsapp'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  const ng=document.getElementById('n-gender'); if(ng) ng.selectedIndex=0;
+  document.getElementById('n-cat').selectedIndex=0;
   document.getElementById('cat-preview').style.display='none';
+  document.getElementById('reg-fields').style.display='none';
   document.getElementById('reg-al').style.display='none';
   document.getElementById('reg-form').style.display='block';
   document.getElementById('reg-ok').style.display='none';
@@ -1066,7 +1224,7 @@ function renderResCards(){
 // ═══════════════════════════════════════════
 function renderPubSchedule(){
   const tabs=document.getElementById('sch-tabs');
-  tabs.innerHTML=[{k:'ALL',label:'All'},...Object.entries(CATS).map(([k,v])=>({k,label:v.label}))].map(({k,label})=>
+  tabs.innerHTML=[{k:'ALL',label:'All Categories'},...Object.entries(CATS).map(([k,v])=>({k,label:v.label+' '+v.full}))].map(({k,label})=>
     `<button class="ctab ${pubSchCat===k?'active':''}" onclick="filterSch('${k}',this)">${label}</button>`
   ).join('');
   renderSchBody();
@@ -1078,7 +1236,7 @@ function renderSchBody(){
   const el=document.getElementById('sch-body');
   if(!all.length){el.innerHTML='<div class="empty"><span class="ei">📅</span><p>No matches yet.</p></div>';return;}
   el.innerHTML=all.map(m=>{
-    const ci=CATS[m.cat]||{label:'—',css:'chip-m'};
+    const ci=CATS[m.cat]||{label:'—',css:'chip-a'};
     const cls=m.status==='done'?'sp-done':m.status==='live'?'sp-live':'sp-up';
     const lbl=m.status==='done'?'Done':m.status==='live'?'🔴 LIVE':'Upcoming';
     return `<div class="sch-item">
@@ -1118,7 +1276,7 @@ function renderDash(){
   ].map(([i,v,l,c])=>`<div class="stat-box" style="--lime:${c}"><span class="stat-v" style="color:${c}">${v}</span><span class="stat-l">${l}</span></div>`).join('');
   const rec=[...n].reverse().slice(0,5);
   document.getElementById('dash-noms').innerHTML=rec.length
-    ?`<table class="dtbl"><tbody>${rec.map(x=>`<tr><td class="cpf-disp">${x.cpf}</td><td><strong>${x.name}</strong></td><td>${x.age}y</td><td><span class="badge b-${x.status[0]}">${x.status}</span></td></tr>`).join('')}</tbody></table>`
+    ?`<table class="dtbl"><tbody>${rec.map(x=>`<tr><td class="cpf-disp">${x.cpf}</td><td><strong>${x.name}</strong></td><td class="ts t3">${(CATS[x.cat]||{label:x.cat}).label}</td><td><span class="badge b-${x.status[0]}">${x.status}</span></td></tr>`).join('')}</tbody></table>`
     :'<div class="empty" style="padding:20px"><span class="ei">📋</span><p>No registrations</p></div>';
   const up=DB.schedule.slice(0,4);
   document.getElementById('dash-matches').innerHTML=up.length
@@ -1137,12 +1295,15 @@ function renderNomTable(){
   const tb=document.getElementById('nom-tbody');
   if(!list.length){tb.innerHTML=`<tr><td colspan="7" class="empty" style="padding:30px;text-align:center">No records.</td></tr>`;return;}
   tb.innerHTML=list.map((n,i)=>{
-    const ci=CATS[n.cat]||{label:n.cat,css:'chip-m'};
+    const ci=CATS[n.cat]||{label:n.cat,css:'chip-a'};
+    const empDisp=n.cat==='A'?n.name:(n.empName||n.name||'—');
+    const partDisp=n.cat==='A'?'—':(n.partName||n.name||'—');
     return `<tr class="${n.status==='rejected'?'rej':''}">
       <td class="t3 mono" style="font-size:.65rem">${i+1}</td>
       <td class="cpf-disp">${n.cpf}</td>
-      <td><strong>${n.name}</strong></td>
-      <td class="mono">${n.age}</td>
+      <td><strong>${empDisp}</strong></td>
+      <td>${partDisp}</td>
+      <td class="mono ts">${n.whatsapp||'—'}</td>
       <td><span class="chip ${ci.css}" style="font-size:.62rem;padding:2px 7px">${ci.label}</span></td>
       <td><span class="badge b-${n.status[0]}">${n.status}</span></td>
       <td>
@@ -1162,23 +1323,23 @@ async function setNomStatus(id,s){
 }
 function delNom(id){ confirm2('Delete this registration?','',async()=>{ await serverCmd('deleteNom', {id}); updateSBC(); }); }
 function exportCSV(){
-  const h=['ID','CPF','Name','Age','Gender','Category','Status','Registered'];
-  const rows=DB.noms.map(n=>[n.id,n.cpf,n.name,n.age,n.gender,(CATS[n.cat]||{label:n.cat}).full,n.status,n.ts||'']);
+  const h=['ID','CPF','Employee Name','Participant Name','Gender','WhatsApp','Category','Format','Status','Registered'];
+  const rows=DB.noms.map(n=>[n.id,n.cpf,n.empName||n.name,n.partName||'',n.gender||'',n.whatsapp||'',(CATS[n.cat]||{full:n.cat}).full,(CATS[n.cat]||{fmt:''}).fmt,n.status,n.ts||'']);
   const csv=[h,...rows].map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
   const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);a.download='registrations.csv';a.click();
 }
 function openAddModal(){
-  ['mp-cpf','mp-name','mp-age'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('mp-gender').selectedIndex=0;
+  ['mp-cpf','mp-name'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('mp-cat').selectedIndex=0;
   document.getElementById('mp-status').selectedIndex=0;
   openM('m-addplayer');
 }
 async function saveAddPlayer(){
   const cpf=document.getElementById('mp-cpf').value.trim(), name=document.getElementById('mp-name').value.trim();
-  const age=parseInt(document.getElementById('mp-age').value)||0, gender=document.getElementById('mp-gender').value;
-  if(!cpf||!name||!age||!gender){toast('All fields required','e');return;}
-  if(!validCPF(cpf)){toast('Invalid CPF','e');return;}
-  const nom={cpf,name,age,gender,cat:catOf(gender,age),status:document.getElementById('mp-status').value,ts:new Date().toISOString()};
+  const cat=document.getElementById('mp-cat').value;
+  if(!cpf||!name||!cat){toast('All fields required','e');return;}
+  if(!validCPF(cpf)){toast('Invalid ID','e');return;}
+  const nom={cpf,name,cat,status:document.getElementById('mp-status').value,ts:new Date().toISOString()};
   const result=await serverCmd('addPlayerDirect', nom);
   if(result.ok){ closeM('m-addplayer'); updateSBC(); toast('✅ Player added!'); }
 }
@@ -1219,7 +1380,7 @@ async function ddr(e,to){
 }
 async function autoAssign(){
   DB=loadDB(); const mpg=DB.settings.mpg||4;
-  Object.keys(CATS).forEach(ck=>{
+  Object.keys(CATS).forEach(ck=>{ // Cat A team handled same way
     const players=DB.noms.filter(n=>n.status==='approved'&&n.cat===ck).map(n=>n.name);
     const ng=Math.max(1,Math.ceil(players.length/mpg));
     DB.groups[ck]={};
@@ -1245,7 +1406,7 @@ function renderAdmSched(){
   const tb=document.getElementById('sched-tbody');
   if(!DB.schedule.length){tb.innerHTML=`<tr><td colspan="8" class="empty" style="padding:30px;text-align:center">No matches.</td></tr>`;return;}
   tb.innerHTML=DB.schedule.map((m,i)=>{
-    const ci=CATS[m.cat]||{label:'—',css:'chip-m'};
+    const ci=CATS[m.cat]||{label:'—',css:'chip-a'};
     return `<tr><td><span class="chip ${ci.css}" style="font-size:.6rem;padding:2px 6px">${ci.label}</span></td>
       <td>${m.grp||'—'}</td><td>${m.p1}</td><td>${m.p2}</td>
       <td class="mono">${m.date||'—'}</td><td class="mono">${m.time||'—'}</td><td class="mono">${m.tbl||'—'}</td>
@@ -1275,7 +1436,7 @@ function openMatchModal(eid){
   document.getElementById('mm-ttl').textContent=eid?'✏️ EDIT MATCH':'📅 ADD MATCH';
   if(eid){
     const m=DB.schedule.find(x=>x.id===eid); if(!m) return;
-    document.getElementById('mm-cat').value=m.cat||'M45'; populateMM();
+    document.getElementById('mm-cat').value=m.cat||'A'; populateMM();
     document.getElementById('mm-grp').value=m.grp; populateMMP(m.p1,m.p2);
     document.getElementById('mm-date').value=m.date||'';
     document.getElementById('mm-time').value=m.time||'';
@@ -1303,7 +1464,7 @@ function renderAdmResults(){
   const tb=document.getElementById('res-tbody');
   if(!DB.results.length){tb.innerHTML=`<tr><td colspan="7" class="empty" style="padding:30px;text-align:center">No results.</td></tr>`;return;}
   tb.innerHTML=[...DB.results].reverse().map(r=>{
-    const ci=CATS[r.cat]||{label:'—',css:'chip-m'};
+    const ci=CATS[r.cat]||{label:'—',css:'chip-a'};
     return `<tr><td><span class="chip ${ci.css}" style="font-size:.6rem;padding:2px 6px">${ci.label}</span></td>
       <td>${r.grp||'—'}</td><td>${r.p1}</td>
       <td><strong class="mono" style="color:var(--lime)">${r.score}</strong></td>
@@ -1335,7 +1496,7 @@ function openResultModal(eid){
   document.getElementById('mr-ttl').textContent=eid?'✏️ EDIT RESULT':'✅ ENTER RESULT';
   if(eid){
     const r=DB.results.find(x=>x.id===eid); if(!r) return;
-    document.getElementById('mr-cat').value=r.cat||'M45'; populateMRG(r.grp); populateMRP(r.p1,r.p2);
+    document.getElementById('mr-cat').value=r.cat||'A'; populateMRG(r.grp); populateMRP(r.p1,r.p2);
     document.getElementById('mr-score').value=r.score||'';
     document.getElementById('mr-sets').value=r.sets||'';
     document.getElementById('mr-date').value=r.date||'';
@@ -1416,8 +1577,8 @@ function renderHistory(){
     <div class="arc-name">${DB.settings.name||'Untitled Tournament'}</div>
     <div class="arc-meta">${DB.settings.venue||''} ${DB.settings.startDate?'· '+DB.settings.startDate:''}</div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
-      <span class="chip chip-m" style="font-size:.72rem">${ap} Players</span>
-      <span class="chip chip-f" style="font-size:.72rem">${DB.results.length} Results</span>
+      <span class="chip chip-a" style="font-size:.72rem">${ap} Players</span>
+      <span class="chip chip-b" style="font-size:.72rem">${DB.results.length} Results</span>
     </div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
       <button class="btn btn-pdf btn-sm" onclick="downloadPDF()">⬇ Download PDF</button>
@@ -1516,7 +1677,12 @@ function generatePDF(snap){
     doc.text(l.toUpperCase(),bx+(bw-3)/2,y+11.5,{align:'center'});
   });
   y+=22;
-  const catDefs={M45:{label:'Men Under 45',color:[77,166,255]},M45P:{label:'Men 45+',color:[167,139,250]},F45:{label:'Women Under 45',color:[255,61,127]},F45P:{label:'Women 45+',color:[255,204,60]}};
+  const catDefs={
+    A:{label:'Cat A · Employee (M/F) · Team Event',         color:[77,166,255]},
+    B:{label:'Cat B · Wards ≤10 yrs · Singles (All)',        color:[45,232,196]},
+    C:{label:'Cat C · Wards >10 yrs · Singles (M/F)',        color:[255,61,127]},
+    D:{label:'Cat D · Homemaker/Wife · Singles only',        color:[255,204,60]},
+  };
   Object.entries(catDefs).forEach(([ck,ci])=>{
     const cg=(snap.groups||{})[ck]||{};
     const catR=(snap.results||[]).filter(r=>r.cat===ck);
@@ -1588,12 +1754,385 @@ function toast(msg,t='s'){
   clearTimeout(el._t);el._t=setTimeout(()=>{el.style.opacity='0';el.style.transform='translateX(-50%) translateY(10px)';},3000);
 }
 
+
+// ═══════════════════════════════════════════
+// BRACKET ENGINE
+// ═══════════════════════════════════════════
+const TEAM_COLORS=['#4da6ff','#ff3d7f','#b8ff3c','#ffcc3c','#a78bfa','#2de8c4','#fb923c','#f472b6'];
+const KO_THRESHOLD = 8; // >8 players = direct KO, <=8 = league + KO
+
+function nextPow2(n){ let p=1; while(p<n) p*=2; return p; }
+
+function getRoundName(total, round){
+  const names={2:'Final',4:'Semi-Final',8:'Quarter-Final',16:'Round of 16',32:'Round of 32'};
+  const matchesInRound = total >> round;
+  return names[matchesInRound*2] || 'Round '+round;
+}
+
+// Generate full knockout bracket from seeded player list
+function generateKOBracket(players){
+  const size = nextPow2(players.length);
+  // Standard bracket seeding: 1v(size), 2v(size-1), etc.
+  const seeded = [...players];
+  while(seeded.length < size) seeded.push({name:'BYE',id:'bye'+seeded.length});
+  
+  // Pair: 1vs8, 4vs5, 3vs6, 2vs7 etc (standard bracket)
+  const pairs=[];
+  const arranged=Array(size).fill(null);
+  arranged[0]=seeded[0]; arranged[size-1]=seeded[1];
+  arranged[size/2-1]=seeded[2]; arranged[size/2]=seeded[3];
+  if(size>=8){
+    arranged[size/4-1]=seeded[4]||{name:'BYE'}; arranged[size*3/4]=seeded[5]||{name:'BYE'};
+    arranged[size/4]=seeded[6]||{name:'BYE'}; arranged[size*3/4-1]=seeded[7]||{name:'BYE'};
+  }
+  for(let i=0;i<size;i++) if(!arranged[i]) arranged[i]=seeded[i]||{name:'BYE'};
+
+  const rounds=[];
+  let prev=arranged;
+  const numRounds=Math.log2(size);
+  for(let r=0;r<numRounds;r++){
+    const ms=[];
+    for(let i=0;i<prev.length;i+=2){
+      const p1=r===0?prev[i]:{name:'TBD'};
+      const p2=r===0?prev[i+1]:{name:'TBD'};
+      const isBye = (p1.name==='BYE'||p2.name==='BYE');
+      ms.push({
+        id:`bm-${r}-${i/2}`,
+        p1: r===0?prev[i].name:'TBD',
+        p2: r===0?prev[i+1].name:'TBD',
+        score:'',winner:'',
+        bye: isBye,
+        autoWinner: isBye?(p1.name!=='BYE'?p1.name:p2.name):''
+      });
+    }
+    rounds.push(ms);
+    prev=ms.map(m=>({name:'TBD'}));
+  }
+  return {rounds, type:'ko', generated: new Date().toISOString()};
+}
+
+// ── BRACKET SECTION RENDER ──
+let bkCat='B';
+function renderBracketSection(){
+  const cats=['B','C','D'];
+  const tabs=document.getElementById('bk-cat-tabs');
+  tabs.innerHTML=cats.map(k=>`<button class="ctab ${k===bkCat?'active':''}" onclick="bkCatClick('${k}',this)">${CATS[k].label} · ${CATS[k].full}</button>`).join('');
+  renderBracketContent();
+}
+function bkCatClick(k,btn){ bkCat=k; document.querySelectorAll('#bk-cat-tabs .ctab').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); renderBracketContent(); }
+
+function renderBracketContent(){
+  const el=document.getElementById('bk-body');
+  const approved=DB.noms.filter(n=>n.status==='approved'&&n.cat===bkCat);
+  const count=approved.length;
+  const fmt=count<=KO_THRESHOLD?'lko':'ko';
+  const fmtLabel=count<=KO_THRESHOLD?`🔵 League + Knockout (${count} players ≤ 8)`:`🔴 Direct Knockout (${count} players > 8)`;
+  const brackets=DB.brackets||{};
+  const bk=brackets[bkCat]||null;
+
+  el.innerHTML=`
+    <div class="card mb2">
+      <div class="card-head"><span class="card-ttl">Format Detection</span></div>
+      <div class="card-body">
+        <div class="fmt-badge ${fmt==='lko'?'fmt-lko':'fmt-ko'}">${fmtLabel}</div>
+        ${fmt==='lko'?'<p class="t3 ts mt1">Players are placed in league groups. Top 2 from each group advance to knockout.</p>':'<p class="t3 ts mt1">Players are directly seeded into a knockout bracket. No league stage.</p>'}
+        <div class="flex gap6 mt2" style="flex-wrap:wrap">
+          ${fmt==='ko'?`<button class="btn btn-lime btn-sm" onclick="showSeedModal('${bkCat}')">🏆 Seed & Generate Bracket</button>`:`<button class="btn btn-ghost btn-sm" onclick="showAdmSec('groups',document.querySelector('.atab[data-sec=groups]'))">👥 Set Up League Groups</button><button class="btn btn-lime btn-sm" onclick="showKOFromLeague('${bkCat}')">🏆 Generate KO from League Top 2</button>`}
+        </div>
+      </div>
+    </div>
+    ${bk?renderBracketView(bk,bkCat):'<div class="empty"><span class="ei">🏆</span><p>No bracket generated yet.<br/>Seed players and generate the bracket above.</p></div>'}`;
+}
+
+function renderBracketView(bk,catKey){
+  const ci=CATS[catKey];
+  const results=DB.results.filter(r=>r.cat===catKey&&r.matchType==='ko');
+  const rounds=bk.rounds||[];
+  
+  let html=`<div class="card"><div class="card-head"><span class="card-ttl" style="color:${`rgb(${ci.color.join(',')})`}">${ci.full} — Knockout Bracket</span><button class="btn btn-ghost btn-xs" onclick="showSeedModal('${catKey}')">✏️ Reseed</button></div><div class="card-body"><div class="bracket-wrap"><div class="bracket">`;
+  
+  const numRounds=rounds.length;
+  rounds.forEach((round,ri)=>{
+    const roundName = ri===numRounds-1?'🥇 FINAL':ri===numRounds-2?'🥈 SEMI-FINAL':ri===numRounds-3?'🥉 QUARTER-FINAL':`Round ${ri+1}`;
+    html+=`<div class="bracket-round"><div class="br-title">${roundName}</div><div class="bm-wrap">`;
+    round.forEach(m=>{
+      // Check if result exists
+      const res=results.find(r=>r.bracketMatchId===m.id);
+      const w=res?res.winner:(m.bye?m.autoWinner:'');
+      const p1win=w===m.p1&&w; const p2win=w===m.p2&&w;
+      const isBye=m.bye||m.p1==='BYE'||m.p2==='BYE';
+      html+=`<div class="bm ${w?'winner-set':''}">
+        <div class="bm-p ${p1win?'winner':''} ${m.p1==='BYE'||m.p1==='TBD'?'bye':''}">
+          <span>${m.p1==='BYE'?'BYE':m.p1||'TBD'}</span>
+          <span class="bm-score ${p1win?'w':''}">${res&&p1win?'W':res&&!p1win&&m.p1!=='TBD'?'L':''}</span>
+        </div>
+        <div class="bm-p ${p2win?'winner':''} ${m.p2==='BYE'||m.p2==='TBD'?'bye':''}">
+          <span>${m.p2==='BYE'?'BYE':m.p2||'TBD'}</span>
+          <span class="bm-score ${p2win?'w':''}">${res&&p2win?'W':res&&!p2win&&m.p2!=='TBD'?'L':''}</span>
+        </div>
+        ${!isBye&&!w&&m.p1!=='TBD'?`<div style="padding:3px 8px;text-align:right"><button class="btn btn-xs btn-ghost" onclick="enterBracketResult('${catKey}','${m.id}','${m.p1}','${m.p2}')">Enter Result</button></div>`:''}
+        ${m.bye&&m.autoWinner?`<div style="padding:2px 8px 4px;font-size:.65rem;color:var(--lime)">Auto-advance: ${m.autoWinner}</div>`:''}
+      </div>`;
+    });
+    html+=`</div></div>`;
+    if(ri<numRounds-1) html+=`<div style="width:12px;flex-shrink:0"></div>`;
+  });
+  html+=`</div></div></div></div>`;
+  return html;
+}
+
+// ── SEED MODAL ──
+let seedCat='', seedPlayers=[];
+function showSeedModal(catKey){
+  seedCat=catKey;
+  const approved=DB.noms.filter(n=>n.status==='approved'&&n.cat===catKey);
+  seedPlayers=[...approved];
+  const size=nextPow2(seedPlayers.length);
+  const byeCount=size-seedPlayers.length;
+  
+  const existing=document.getElementById('bk-seed-modal');
+  if(existing) existing.remove();
+  
+  const mo=document.createElement('div');
+  mo.className='mo open'; mo.id='bk-seed-modal';
+  mo.innerHTML=`<div class="mo-box">
+    <div class="mo-handle"></div>
+    <div class="mo-title">🎯 SEED PLAYERS — ${CATS[catKey].full}</div>
+    <div class="al al-info mb2">${approved.length} players → bracket size: ${size}${byeCount>0?` (${byeCount} BYE${byeCount>1?'s':''})`:''}. Drag to reorder seeding. Seed 1 is top of bracket.</div>
+    <ul class="seed-list" id="seed-list" style="max-height:300px;overflow-y:auto;padding:4px">
+      ${seedPlayers.map((p,i)=>`<li class="seed-item" draggable="true" data-idx="${i}" ondragstart="seedDragStart(event,${i})" ondragover="seedDragOver(event)" ondrop="seedDrop(event,${i})">
+        <div class="seed-num">${i+1}</div>
+        <span style="flex:1;font-weight:600">${p.partName||p.name}</span>
+        <span class="bye-badge" style="display:none">BYE</span>
+      </li>`).join('')}
+      ${Array(byeCount).fill(0).map((_,i)=>`<li class="seed-item" style="opacity:.4;cursor:default"><div class="seed-num" style="background:var(--s3);color:var(--t3)">${seedPlayers.length+i+1}</div><span class="bye-badge">BYE</span></li>`).join('')}
+    </ul>
+    <div class="mo-footer">
+      <button class="btn btn-ghost btn-sm" onclick="document.getElementById('bk-seed-modal').remove()">Cancel</button>
+      <button class="btn btn-lime btn-sm" onclick="doGenerateBracket('${catKey}')">⚡ Generate Bracket</button>
+    </div>
+  </div>`;
+  mo.addEventListener('click',e=>{ if(e.target===mo) mo.remove(); });
+  document.body.appendChild(mo);
+}
+
+let seedDragIdx=-1;
+function seedDragStart(e,i){ seedDragIdx=i; e.dataTransfer.effectAllowed='move'; }
+function seedDragOver(e){ e.preventDefault(); }
+function seedDrop(e,toIdx){
+  e.preventDefault();
+  if(seedDragIdx<0||seedDragIdx===toIdx) return;
+  const moved=seedPlayers.splice(seedDragIdx,1)[0];
+  seedPlayers.splice(toIdx,0,moved);
+  seedDragIdx=-1;
+  // Re-render list
+  const list=document.getElementById('seed-list');
+  [...list.children].forEach((li,i)=>{
+    if(i<seedPlayers.length){
+      li.querySelector('.seed-num').textContent=i+1;
+      li.querySelector('span:not(.seed-num):not(.bye-badge)').textContent=seedPlayers[i].partName||seedPlayers[i].name;
+      li.setAttribute('data-idx',i);
+      li.ondragstart=ev=>seedDragStart(ev,i);
+      li.ondrop=ev=>seedDrop(ev,i);
+    }
+  });
+}
+
+async function doGenerateBracket(catKey){
+  const players=seedPlayers.map(p=>({name:p.partName||p.name,id:p.cpf}));
+  const bk=generateKOBracket(players);
+  if(!DB.brackets) DB.brackets={};
+  DB.brackets[catKey]=bk;
+  saveLocal(DB);
+  document.getElementById('bk-seed-modal').remove();
+  const result=await serverCmd('saveBracket',{cat:catKey,bracket:bk});
+  if(result.ok){ toast('✅ Bracket generated!'); renderBracketContent(); }
+}
+
+async function showKOFromLeague(catKey){
+  // Get top 2 from each league group
+  const cg=DB.groups[catKey]||{};
+  const qualifiers=[];
+  Object.keys(cg).forEach(grp=>{
+    const st=standings(catKey,grp);
+    if(st[0]) qualifiers.push({name:st[0].name,seed:qualifiers.length+1,grp,rank:1});
+    if(st[1]) qualifiers.push({name:st[1].name,seed:qualifiers.length+1,grp,rank:2});
+  });
+  if(qualifiers.length<2){toast('Need at least 2 groups with players','e');return;}
+  seedPlayers=qualifiers.map(q=>({name:q.name,partName:q.name,cpf:q.name}));
+  seedCat=catKey;
+  showSeedModal(catKey);
+}
+
+function enterBracketResult(catKey,matchId,p1,p2){
+  // Pre-fill result modal for this bracket match
+  document.getElementById('mr-cat').value=catKey;
+  populateMRG();
+  // Find group if any
+  const mo=document.getElementById('m-result');
+  document.getElementById('mr-eid').value='';
+  document.getElementById('mr-ttl').textContent='✅ BRACKET RESULT';
+  document.getElementById('mr-p1').innerHTML=`<option value="${p1}">${p1}</option><option value="${p2}">${p2}</option>`;
+  document.getElementById('mr-p2').innerHTML=`<option value="${p2}">${p2}</option><option value="${p1}">${p1}</option>`;
+  document.getElementById('mr-score').value='';
+  document.getElementById('mr-sets').value='';
+  document.getElementById('mr-date').value='';
+  // Store bracketMatchId for later
+  mo.dataset.bracketMatchId=matchId;
+  mo.dataset.bracketCat=catKey;
+  openM('m-result');
+}
+
+// ═══════════════════════════════════════════
+// TEAM MANAGER (Cat A)
+// ═══════════════════════════════════════════
+function getGameTypes(members){
+  const females=members.filter(m=>m.gender==='Female');
+  const males=members.filter(m=>m.gender==='Male');
+  const fCount=females.length, mCount=males.length;
+  const types=[];
+  if(mCount>=1) types.push({code:'MS',label:"Men's Singles",css:'gtype-ms'});
+  if(mCount>=2) types.push({code:'MD',label:"Men's Doubles",css:'gtype-md'});
+  if(fCount>=1) types.push({code:'WS',label:"Women's Singles",css:'gtype-ws'});
+  if(fCount>=1&&mCount>=1) types.push({code:'XD',label:'Mixed Doubles',css:'gtype-xd'});
+  return types;
+}
+
+function renderTeamsSection(){
+  const teams=DB.teams||[];
+  const el=document.getElementById('teams-body');
+  if(!teams.length){
+    el.innerHTML='<div class="empty"><span class="ei">👨‍👩‍👧</span><p>No teams yet.<br/>Create teams and assign Cat A players.</p></div>';
+    return;
+  }
+  el.innerHTML=teams.map((t,i)=>{
+    const color=t.color||TEAM_COLORS[i%TEAM_COLORS.length];
+    const gameTypes=getGameTypes(t.members||[]);
+    return `<div class="team-card">
+      <div class="team-card-head">
+        <div class="team-color" style="background:${color}"></div>
+        <div class="team-name-ttl">${t.name}</div>
+        <div class="flex gap6">
+          <button class="btn btn-ghost btn-xs" onclick="openTeamModal(${i})">✏️</button>
+          <button class="btn btn-red btn-xs" onclick="deleteTeam(${i})">🗑</button>
+        </div>
+      </div>
+      <div class="team-members">
+        ${(t.members||[]).map(m=>`<div class="team-member">
+          <div class="gender-dot ${m.gender==='Female'?'gd-f':'gd-m'}"></div>
+          <span style="flex:1">${m.name}</span>
+          <span class="t3 ts">${m.gender||''}</span>
+        </div>`).join('')}
+        ${!t.members?.length?'<div class="t3 ts">No members yet</div>':''}
+      </div>
+      <div class="game-types">
+        <span class="t3 ts" style="width:100%;margin-bottom:4px">Game types:</span>
+        ${gameTypes.map(g=>`<span class="gtype ${g.css}">${g.label}</span>`).join('')}
+        ${!gameTypes.length?'<span class="t3 ts">Add members to see game types</span>':''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openTeamModal(editIdx){
+  const teams=DB.teams||[];
+  const t=editIdx!==undefined?teams[editIdx]:null;
+  document.getElementById('mt-id').value=editIdx!==undefined?editIdx:'';
+  document.getElementById('mt-name').value=t?t.name:'';
+  document.getElementById('mt-color').value=t?t.color||TEAM_COLORS[editIdx%TEAM_COLORS.length]:TEAM_COLORS[teams.length%TEAM_COLORS.length];
+  document.getElementById('mt-ttl').textContent=t?'✏️ EDIT TEAM':'👨‍👩‍👧 NEW TEAM';
+  
+  // Populate player list
+  const catAPlayers=DB.noms.filter(n=>n.status==='approved'&&n.cat==='A');
+  const selected=new Set((t?.members||[]).map(m=>m.cpf));
+  document.getElementById('mt-player-list').innerHTML=catAPlayers.length
+    ?catAPlayers.map(p=>`<label style="display:flex;align-items:center;gap:8px;padding:6px 4px;border-bottom:1px solid var(--b1);cursor:pointer;font-size:.82rem">
+        <input type="checkbox" ${selected.has(p.cpf)?'checked':''} data-cpf="${p.cpf}" data-name="${p.partName||p.name}" data-gender="${p.gender||''}" onchange="updateTeamPreview()" style="width:16px;height:16px;accent-color:var(--lime)"/>
+        <span style="flex:1">${p.partName||p.name}</span>
+        <span class="t3 ts">${p.gender||''}</span>
+      </label>`).join('')
+    :'<div class="t3 ts">No approved Cat A players yet.</div>';
+  
+  updateTeamPreview();
+  openM('m-team');
+}
+
+function updateTeamPreview(){
+  const checked=[...document.querySelectorAll('#mt-player-list input:checked')];
+  const members=checked.map(cb=>({cpf:cb.dataset.cpf,name:cb.dataset.name,gender:cb.dataset.gender}));
+  const wrap=document.getElementById('mt-preview-wrap');
+  const prev=document.getElementById('mt-preview');
+  if(!members.length){ wrap.style.display='none'; return; }
+  wrap.style.display='block';
+  const gameTypes=getGameTypes(members);
+  prev.innerHTML=`<div class="game-types" style="padding:0">${gameTypes.map(g=>`<span class="gtype ${g.css}">${g.label}</span>`).join('')}</div>`;
+}
+
+async function saveTeam(){
+  const name=document.getElementById('mt-name').value.trim();
+  if(!name){toast('Team name required','e');return;}
+  const color=document.getElementById('mt-color').value;
+  const checked=[...document.querySelectorAll('#mt-player-list input:checked')];
+  const members=checked.map(cb=>({cpf:cb.dataset.cpf,name:cb.dataset.name,gender:cb.dataset.gender}));
+  const editIdx=document.getElementById('mt-id').value;
+  const teams=[...(DB.teams||[])];
+  const team={name,color,members,gameTypes:getGameTypes(members)};
+  if(editIdx!=='') teams[parseInt(editIdx)]=team; else teams.push(team);
+  DB.teams=teams; saveLocal(DB);
+  const result=await serverCmd('saveTeams',{teams});
+  if(result.ok){ closeM('m-team'); renderTeamsSection(); toast('✅ Team saved!'); }
+}
+
+function deleteTeam(idx){
+  confirm2('Delete this team?','',async()=>{
+    const teams=[...(DB.teams||[])];
+    teams.splice(idx,1);
+    DB.teams=teams; saveLocal(DB);
+    await serverCmd('saveTeams',{teams});
+    renderTeamsSection(); toast('Team deleted');
+  });
+}
+
+async function generateTeamMatches(){
+  const teams=DB.teams||[];
+  if(teams.length<2){toast('Need at least 2 teams','e');return;}
+  confirm2('Generate team match schedule?',`Creates round-robin matches between ${teams.length} teams with all game types per match.`,async()=>{
+    // Clear existing Cat A schedule
+    DB.schedule=DB.schedule.filter(m=>m.cat!=='A');
+    // Round robin: each team vs every other team
+    const newMatches=[];
+    for(let i=0;i<teams.length;i++){
+      for(let j=i+1;j<teams.length;j++){
+        const t1=teams[i], t2=teams[j];
+        // Determine common game types
+        const gt1=getGameTypes(t1.members);
+        const gt2=getGameTypes(t2.members);
+        const common=gt1.filter(g=>gt2.some(g2=>g2.code===g.code));
+        common.forEach(g=>{
+          newMatches.push({
+            id:DB.nid++, cat:'A', grp:'Team Event',
+            p1:t1.name, p2:t2.name,
+            gameType:g.code, gameLabel:g.label,
+            status:'upcoming', date:'', time:'', tbl:''
+          });
+        });
+      }
+    }
+    DB.schedule=[...DB.schedule,...newMatches];
+    saveLocal(DB);
+    await serverCmd('saveGroups',{groups:DB.groups}); // reuse to trigger sync
+    await serverCmd('saveTeams',{teams:DB.teams});
+    toast(`✅ Generated ${newMatches.length} team matches!`);
+    showAdmSec('sched',document.querySelector('.atab[data-sec="sched"]'));
+  });
+}
+
 // ═══════════════════════════════════════════
 // INIT
 // ═══════════════════════════════════════════
 
 // HARDCODED SCRIPT URL — set this once, works for everyone
-const HARDCODED_URL = 'https://script.google.com/macros/s/AKfycbwyflSHm0mG9USLMx3H37mDRJ7yccBJeJoj64Ph1NKIhNuCOYFOUPjf47BdSdWf-gs/exec'; // Admin: paste your Script URL between these quotes
+const HARDCODED_URL = ''; // Admin: paste your Script URL between these quotes
 
 // On every load: if hardcoded URL exists, use it regardless of localStorage
 if(HARDCODED_URL) {
