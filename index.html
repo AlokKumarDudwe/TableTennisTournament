@@ -2407,6 +2407,66 @@ async function saveFormat(){
   toast('✅ Format saved!');
 }
 
+// ── TEAM MODAL ────────────────────────────────
+function openTeamModal(editIdx){
+  const teams=DB.teams||[];
+  const t=editIdx!==undefined?teams[editIdx]:null;
+  document.getElementById('mt-id').value=editIdx!==undefined?editIdx:'';
+  document.getElementById('mt-name').value=t?t.name:'';
+  document.getElementById('mt-color').value=t?t.color||TEAM_COLORS[editIdx%TEAM_COLORS.length]:TEAM_COLORS[teams.length%TEAM_COLORS.length];
+  document.getElementById('mt-ttl').textContent=t?'✏️ EDIT TEAM':'👨‍👩‍👧 NEW TEAM';
+  const catAPlayers=DB.noms.filter(n=>n.status==='approved'&&n.cat==='A');
+  const selected=new Set((t?.members||[]).map(m=>m.cpf));
+  document.getElementById('mt-player-list').innerHTML=catAPlayers.length
+    ?catAPlayers.map(p=>`<label style="display:flex;align-items:center;gap:8px;padding:6px 4px;border-bottom:1px solid var(--b1);cursor:pointer;font-size:.82rem">
+        <input type="checkbox" ${selected.has(p.cpf)?'checked':''} data-cpf="${p.cpf}" data-name="${p.partName||p.name}" data-gender="${p.gender||''}" onchange="updateTeamPreview()" style="width:16px;height:16px;accent-color:var(--lime)"/>
+        <span style="flex:1">${p.partName||p.name}</span>
+        <span class="t3 ts">${p.gender==='Female'?'👩 F':'👨 M'}</span>
+      </label>`).join('')
+    :'<div class="t3 ts" style="padding:8px">No approved Cat A players yet.</div>';
+  updateTeamPreview();
+  openM('m-team');
+}
+
+function updateTeamPreview(){
+  const checked=[...document.querySelectorAll('#mt-player-list input:checked')];
+  const members=checked.map(cb=>({cpf:cb.dataset.cpf,name:cb.dataset.name,gender:cb.dataset.gender}));
+  const wrap=document.getElementById('mt-preview-wrap');
+  const prev=document.getElementById('mt-preview');
+  if(!members.length){ wrap.style.display='none'; return; }
+  wrap.style.display='block';
+  const females=members.filter(m=>m.gender==='Female').length;
+  const males=members.filter(m=>m.gender==='Male').length;
+  const gameTypes=getGameTypes(members);
+  prev.innerHTML=`<div style="font-size:.8rem;color:var(--t2);margin-bottom:6px">👥 ${members.length} players — 👨 ${males} Male, 👩 ${females} Female</div>
+    <div class="game-types" style="padding:0">${gameTypes.map(g=>`<span class="gtype ${g.css}">${g.label}</span>`).join('')}</div>`;
+}
+
+async function saveTeam(){
+  const name=document.getElementById('mt-name').value.trim();
+  if(!name){toast('Team name required','e');return;}
+  const color=document.getElementById('mt-color').value;
+  const checked=[...document.querySelectorAll('#mt-player-list input:checked')];
+  const members=checked.map(cb=>({cpf:cb.dataset.cpf,name:cb.dataset.name,gender:cb.dataset.gender}));
+  const editIdx=document.getElementById('mt-id').value;
+  const teams=[...(DB.teams||[])];
+  const team={name,color,members,gameTypes:getGameTypes(members)};
+  if(editIdx!=='') teams[parseInt(editIdx)]=team; else teams.push(team);
+  DB.teams=teams; saveLocal(DB);
+  const result=await serverCmd('saveTeams',{teams});
+  if(result.ok){ closeM('m-team'); renderTeamsSection(); toast('✅ Team saved!'); }
+}
+
+function deleteTeam(idx){
+  confirm2('Delete this team?','',async()=>{
+    const teams=[...(DB.teams||[])];
+    teams.splice(idx,1);
+    DB.teams=teams; saveLocal(DB);
+    await serverCmd('saveTeams',{teams});
+    renderTeamsSection(); toast('Team deleted');
+  });
+}
+
 // ── GENERATE MATCHES MODAL ────────────────────
 function openGenerateModal(){
   const teams=DB.teams||[];
@@ -2509,7 +2569,7 @@ async function generateTeamMatches(){ openGenerateModal(); }
 // ═══════════════════════════════════════════
 
 // HARDCODED SCRIPT URL — set this once, works for everyone
-const HARDCODED_URL = 'https://script.google.com/macros/s/AKfycbw4wo6d8P08CehB-rRC7cSDy2ausm73SSQ2io29sofJOItoDfc0CfOw36nj2HVX95c/exec'; // Admin: paste your Script URL between these quotes
+const HARDCODED_URL = ''; // Admin: paste your Script URL between these quotes
 
 // On every load: if hardcoded URL exists, use it regardless of localStorage
 if(HARDCODED_URL) {
