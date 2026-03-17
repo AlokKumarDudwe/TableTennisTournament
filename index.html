@@ -875,7 +875,7 @@ const gc=i=>GCOLS[i%GCOLS.length];
 function freshDB(){
   return {
     settings:{name:'Table Tennis Tournament 2025',startDate:'',endDate:'',venue:'',city:'',mpg:4,fmt:'Best of 5',msg:'',gf:'',scriptURL:''},
-    noms:[],groups:{A:{},B:{},C:{},D:{},E:{}},brackets:{B:{},C:{},D:{}},teams:[],
+    noms:[],groups:{A:{},B:{},C:{},D:{},E:{}},brackets:{B:{},C:{},D:{},E:{}},teams:[],
     schedule:[],results:[],nid:1
   };
 }
@@ -1499,7 +1499,7 @@ function renderGroupBuilder(){
 }
 function renderGBContent(){
   const cg=DB.groups[gbCat]||{};
-  if(!Object.keys(cg).length){ DB.groups[gbCat]={'Group A':[],'Group B':[],'Group C':[],'Group D':[]}; saveLocal(DB); }
+  if(!Object.keys(cg).length){ DB.groups[gbCat]={'Group A':[]}; saveLocal(DB); }
   if(gbCat==='A'){ renderGBContentTeams(); return; }
   const approvedNoms=DB.noms.filter(n=>n.status==='approved'&&n.cat===gbCat);
   const approved=approvedNoms.map(n=>n.partName||n.name);
@@ -1596,8 +1596,8 @@ async function autoAssign(){
     for(let i=0;i<ng;i++) DB.groups['A'][`Group ${String.fromCharCode(65+i)}`]=[];
     [...teams].sort(()=>Math.random()-.5).forEach((t,i)=>DB.groups['A'][`Group ${String.fromCharCode(65+(i%ng))}`].push(t.name));
   }
-  // B/C/D: assign individual players to groups
-  ['B','C','D'].forEach(ck=>{
+  // B/C/D/E: assign individual players to groups
+  ['B','C','D','E'].forEach(ck=>{
     const players=DB.noms.filter(n=>n.status==='approved'&&n.cat===ck).map(n=>n.partName||n.name);
     const ng=Math.max(1,Math.ceil(players.length/mpg));
     DB.groups[ck]={};
@@ -2085,7 +2085,7 @@ function generateKOBracket(players){
 // ── BRACKET SECTION RENDER ──
 let bkCat='B';
 function renderBracketSection(){
-  const cats=['B','C','D'];
+  const cats=['B','C','D','E'];
   const tabs=document.getElementById('bk-cat-tabs');
   tabs.innerHTML=cats.map(k=>`<button class="ctab ${k===bkCat?'active':''}" onclick="bkCatClick('${k}',this)">${CATS[k].label} · ${CATS[k].full}</button>`).join('');
   renderBracketContent();
@@ -2650,7 +2650,7 @@ async function generateTeamMatches(){ openGenerateModal(); }
 // ═══════════════════════════════════════════
 
 // HARDCODED SCRIPT URL — set this once, works for everyone
-const HARDCODED_URL = 'https://script.google.com/macros/s/AKfycbw4wo6d8P08CehB-rRC7cSDy2ausm73SSQ2io29sofJOItoDfc0CfOw36nj2HVX95c/exec'; // Admin: paste your Script URL between these quotes
+const HARDCODED_URL = ''; // Admin: paste your Script URL between these quotes
 
 // On every load: if hardcoded URL exists, use it regardless of localStorage
 if(HARDCODED_URL) {
