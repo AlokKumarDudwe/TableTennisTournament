@@ -293,6 +293,17 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t1);displ
 .seed-item:active{cursor:grabbing;border-color:var(--lime)}
 .seed-num{width:22px;height:22px;border-radius:50%;background:var(--lime);color:#060a00;font-weight:700;font-size:.72rem;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .bye-badge{background:var(--s3);color:var(--t3);border-radius:3px;padding:1px 6px;font-size:.65rem;font-weight:700}
+/* TIE ENTRY ROWS */
+.tie-row{background:var(--s2);border:1px solid var(--b1);border-radius:var(--rsm);padding:10px 12px;margin-bottom:8px}
+.tie-row-head{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.tie-row-num{width:22px;height:22px;border-radius:50%;background:var(--lime);color:#060a00;font-weight:700;font-size:.72rem;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.tie-row-type{font-weight:700;font-size:.82rem}
+.tie-players{display:grid;grid-template-columns:1fr auto 1fr;gap:6px;align-items:center;margin-bottom:8px}
+.tie-vs{font-size:.72rem;color:var(--t3);text-align:center;font-weight:700}
+.tie-score{display:flex;gap:6px;align-items:center;margin-top:4px}
+.tie-score-label{font-size:.68rem;color:var(--t3);width:60px}
+.tie-score-input{flex:1;padding:6px 8px;background:var(--s3);border:1px solid var(--b1);border-radius:var(--rsm);color:var(--lime);font-family:'JetBrains Mono',monospace;font-size:.88rem;text-align:center;font-weight:700;outline:none}
+.tie-score-input:focus{border-color:var(--lime)}
 </style>
 </head>
 <body>
@@ -562,8 +573,9 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t1);displ
 
     <!-- SCHEDULE -->
     <div class="adm-sec" id="asec-sched" style="display:none">
-      <div class="sec-row" style="margin-bottom:10px">
-        <button class="btn btn-lime btn-sm" onclick="openMatchModal()">+ Match</button>
+      <div class="sec-row" style="margin-bottom:10px;flex-wrap:wrap;gap:6px">
+        <button class="btn btn-lime btn-sm" onclick="openTieModal()">🏆 Cat A Tie</button>
+        <button class="btn btn-ghost btn-sm" onclick="openMatchModal()">+ B/C/D/E Match</button>
       </div>
       <div class="tbl-scroll">
         <table class="dtbl">
@@ -709,7 +721,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t1);displ
   </div>
 </div>
 
-<!-- Match Modal -->
+<!-- Match Modal (B/C/D/E single match) -->
 <div class="mo" id="m-match">
   <div class="mo-box">
     <div class="mo-handle"></div>
@@ -717,7 +729,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t1);displ
     <input type="hidden" id="mm-eid"/>
     <div class="af-group"><label class="af-label">Category</label>
       <select class="af-select" id="mm-cat" onchange="populateMM()">
-        <option value="A">A · Employee (M/F) · Team</option>
         <option value="B">B · Wards ≤10 yrs · Singles</option>
         <option value="C">C · Wards Girls >10 · Singles</option>
         <option value="D">D · Wards Boys >10 · Singles</option>
@@ -725,35 +736,9 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t1);displ
       </select>
     </div>
     <div class="af-group"><label class="af-label">Group</label><select class="af-select" id="mm-grp" onchange="populateMM_grp()"></select></div>
-
-    <!-- Cat B/C/D/E: simple player vs player -->
-    <div id="mm-bcd-row">
-      <div class="af-grid2">
-        <div class="af-group"><label class="af-label">Player 1</label><select class="af-select" id="mm-p1"></select></div>
-        <div class="af-group"><label class="af-label">Player 2</label><select class="af-select" id="mm-p2"></select></div>
-      </div>
-    </div>
-
-    <!-- Cat A: team vs team with game type and specific players -->
-    <div id="mm-a-row" style="display:none">
-      <div class="af-group">
-        <label class="af-label">Game Type</label>
-        <select class="af-select" id="mm-gt" onchange="populateMMTeamPlayers()">
-          <option value="MS">Men's Singles</option>
-          <option value="WS">Women's Singles</option>
-          <option value="MD">Men's Doubles</option>
-          <option value="WD">Women's Doubles</option>
-          <option value="XD">Mixed Doubles</option>
-        </select>
-      </div>
-      <div class="af-grid2">
-        <div class="af-group"><label class="af-label">Home Team</label><select class="af-select" id="mm-team1" onchange="populateMMTeamPlayers()"></select></div>
-        <div class="af-group"><label class="af-label">Away Team</label><select class="af-select" id="mm-team2" onchange="populateMMTeamPlayers()"></select></div>
-      </div>
-      <div class="af-grid2" id="mm-player-selectors">
-        <div class="af-group"><label class="af-label" id="mm-hp-label">Home Player(s)</label><div id="mm-home-players"></div></div>
-        <div class="af-group"><label class="af-label" id="mm-ap-label">Away Player(s)</label><div id="mm-away-players"></div></div>
-      </div>
+    <div class="af-grid2">
+      <div class="af-group"><label class="af-label">Player 1</label><select class="af-select" id="mm-p1"></select></div>
+      <div class="af-group"><label class="af-label">Player 2</label><select class="af-select" id="mm-p2"></select></div>
     </div>
     <div class="af-grid2">
       <div class="af-group"><label class="af-label">Date</label><input class="af-input" id="mm-date" type="date"/></div>
@@ -763,6 +748,32 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t1);displ
     <div class="mo-footer">
       <button class="btn btn-ghost btn-sm" onclick="closeM('m-match')">Cancel</button>
       <button class="btn btn-lime btn-sm" onclick="saveMatch()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Cat A Tie Entry Modal — all 5 matches + results at once -->
+<div class="mo" id="m-tie">
+  <div class="mo-box" style="max-height:95vh">
+    <div class="mo-handle"></div>
+    <div class="mo-title">🏆 CAT A — ENTER TIE</div>
+    <div class="af-group">
+      <label class="af-label">Group</label>
+      <select class="af-select" id="tie-grp" onchange="populateTieTeams()"></select>
+    </div>
+    <div class="af-grid2" style="margin-bottom:10px">
+      <div class="af-group"><label class="af-label">Home Team</label><select class="af-select" id="tie-t1" onchange="buildTieRows()"></select></div>
+      <div class="af-group"><label class="af-label">Away Team</label><select class="af-select" id="tie-t2" onchange="buildTieRows()"></select></div>
+    </div>
+    <div class="af-grid2" style="margin-bottom:12px">
+      <div class="af-group"><label class="af-label">Date</label><input class="af-input" id="tie-date" type="date"/></div>
+      <div class="af-group"><label class="af-label">Table</label><input class="af-input" id="tie-tbl" placeholder="T1"/></div>
+    </div>
+    <div id="tie-rows"></div>
+    <div class="mo-footer">
+      <button class="btn btn-ghost btn-sm" onclick="closeM('m-tie')">Cancel</button>
+      <button class="btn btn-ghost btn-sm" onclick="saveTieSchedule()">💾 Schedule Only</button>
+      <button class="btn btn-lime btn-sm" onclick="saveTieWithResults()">✅ Save + Results</button>
     </div>
   </div>
 </div>
@@ -1790,153 +1801,47 @@ function renderAdmSched(){
       </div></td></tr>`;
   }).join('');
 }
+// ── B/C/D/E match modal ──
 function populateMM(){
   const ck=document.getElementById('mm-cat').value;
   const gs=Object.keys(DB.groups[ck]||{});
   document.getElementById('mm-grp').innerHTML=gs.map(g=>`<option>${g}</option>`).join('');
-  const isA=ck==='A';
-  document.getElementById('mm-a-row').style.display=isA?'block':'none';
-  document.getElementById('mm-bcd-row').style.display=isA?'none':'block';
-  if(isA) populateMMTeams(); else populateMMPlayers();
+  populateMM_grp();
 }
-
 function populateMM_grp(){
-  const ck=document.getElementById('mm-cat').value;
-  if(ck==='A') populateMMTeams(); else populateMMPlayers();
-}
-
-function populateMMPlayers(s1,s2){
   const ck=document.getElementById('mm-cat').value;
   const grp=document.getElementById('mm-grp').value;
   const pl=(DB.groups[ck]||{})[grp]||[];
   const opts=pl.map(p=>`<option>${p}</option>`).join('');
   ['mm-p1','mm-p2'].forEach(id=>{ document.getElementById(id).innerHTML=opts; });
-  if(s1) document.getElementById('mm-p1').value=s1;
-  if(s2) document.getElementById('mm-p2').value=s2;
 }
-
-function populateMMTeams(){
-  const grp=document.getElementById('mm-grp').value;
-  const teamNames=(DB.groups['A']||{})[grp]||[];
-  const opts=teamNames.map(t=>`<option>${t}</option>`).join('');
-  ['mm-team1','mm-team2'].forEach(id=>{ document.getElementById(id).innerHTML=opts||'<option>No teams</option>'; });
-  // Set team2 to second team if available
-  if(teamNames.length>1) document.getElementById('mm-team2').value=teamNames[1];
-  populateMMTeamPlayers();
-}
-
-function populateMMTeamPlayers(){
-  const gt=document.getElementById('mm-gt').value;
-  const t1name=document.getElementById('mm-team1').value;
-  const t2name=document.getElementById('mm-team2').value;
-  const t1=( DB.teams||[]).find(t=>t.name===t1name);
-  const t2=(DB.teams||[]).find(t=>t.name===t2name);
-
-  const isDoubles=gt==='MD'||gt==='WD'||gt==='XD';
-  const slots=isDoubles?2:1;
-
-  // Determine eligible players per team based on game type
-  const eligible=(team)=>{
-    if(!team) return [];
-    const m=(team.members||[]).filter(p=>p.gender==='Male');
-    const f=(team.members||[]).filter(p=>p.gender==='Female');
-    if(gt==='MS'||gt==='MD') return m;
-    if(gt==='WS'||gt==='WD') return f;
-    if(gt==='XD') return team.members||[];
-    return team.members||[];
-  };
-
-  const makeSelects=(teamObj, prefix, count)=>{
-    const players=eligible(teamObj);
-    const opts=players.map(p=>`<option value="${p.name}">${p.name} (${p.gender==='Female'?'F':'M'})</option>`).join('');
-    let html='';
-    for(let i=0;i<count;i++){
-      html+=`<select class="af-select" id="${prefix}${i}" style="margin-bottom:4px">
-        <option value="">— Select —</option>${opts}
-      </select>`;
-    }
-    return html;
-  };
-
-  const lbl=isDoubles?'Players (pick 2)':'Player';
-  document.getElementById('mm-hp-label').textContent='Home: '+t1name+' — '+lbl;
-  document.getElementById('mm-ap-label').textContent='Away: '+t2name+' — '+lbl;
-  document.getElementById('mm-home-players').innerHTML=makeSelects(t1,'mm-hp',slots);
-  document.getElementById('mm-away-players').innerHTML=makeSelects(t2,'mm-ap',slots);
-}
-
 function openMatchModal(eid){
+  // Cat A uses the tie modal instead
   populateMM();
   document.getElementById('mm-eid').value=eid||'';
   document.getElementById('mm-ttl').textContent=eid?'✏️ EDIT MATCH':'📅 ADD MATCH';
   if(eid){
     const m=DB.schedule.find(x=>x.id===eid); if(!m) return;
-    document.getElementById('mm-cat').value=m.cat||'A'; populateMM();
-    document.getElementById('mm-grp').value=m.grp;
-    if(m.cat==='A'){
-      populateMMTeams();
-      if(m.gameType) document.getElementById('mm-gt').value=m.gameType;
-      if(m.homeTeam) document.getElementById('mm-team1').value=m.homeTeam;
-      if(m.awayTeam) document.getElementById('mm-team2').value=m.awayTeam;
-      populateMMTeamPlayers();
-    } else {
-      populateMMPlayers(m.p1,m.p2);
-    }
+    document.getElementById('mm-cat').value=m.cat||'B'; populateMM();
+    document.getElementById('mm-grp').value=m.grp; populateMM_grp();
+    document.getElementById('mm-p1').value=m.p1||'';
+    document.getElementById('mm-p2').value=m.p2||'';
     document.getElementById('mm-date').value=m.date||'';
     document.getElementById('mm-time').value=m.time||'';
     document.getElementById('mm-tbl').value=m.tbl||'';
-  } else {
-    ['mm-date','mm-time','mm-tbl'].forEach(id=>document.getElementById(id).value='');
-  }
+  } else ['mm-date','mm-time','mm-tbl'].forEach(id=>document.getElementById(id).value='');
   openM('m-match');
 }
-
 async function saveMatch(){
+  const p1=document.getElementById('mm-p1').value, p2=document.getElementById('mm-p2').value;
+  if(!p1||!p2||p1===p2){toast('Pick 2 different players','e');return;}
   const eid=parseInt(document.getElementById('mm-eid').value)||0;
   const mcat=document.getElementById('mm-cat').value;
-  const grp=document.getElementById('mm-grp').value;
-  let m;
-
-  if(mcat==='A'){
-    const gt=document.getElementById('mm-gt').value;
-    const t1name=document.getElementById('mm-team1').value;
-    const t2name=document.getElementById('mm-team2').value;
-    if(!t1name||!t2name||t1name===t2name){toast('Select two different teams','e');return;}
-    const isDoubles=gt==='MD'||gt==='WD'||gt==='XD';
-    const slots=isDoubles?2:1;
-    // Collect home players
-    const hp=[],ap=[];
-    for(let i=0;i<slots;i++){
-      const hEl=document.getElementById('mm-hp'+i);
-      const aEl=document.getElementById('mm-ap'+i);
-      if(hEl&&hEl.value) hp.push(hEl.value);
-      if(aEl&&aEl.value) ap.push(aEl.value);
-    }
-    if(!hp.length||!ap.length){toast('Select players for both teams','e');return;}
-    const hpStr=hp.join(' / '), apStr=ap.join(' / ');
-    m={id:eid||0, cat:'A', grp,
-      stage:'group',
-      format:DB.settings.catAGroupFmt==='bo5'?'Best of 5':'Best of 3',
-      teamTie:`${t1name} vs ${t2name}`,
-      homeTeam:t1name, awayTeam:t2name,
-      p1:`${t1name}: ${hpStr}`,
-      p2:`${t2name}: ${apStr}`,
-      gameType:gt, gameLabel:typeLabel(gt),
-      date:document.getElementById('mm-date').value,
-      time:document.getElementById('mm-time').value,
-      tbl:document.getElementById('mm-tbl').value,
-      status:'upcoming'};
-  } else {
-    const p1=document.getElementById('mm-p1').value;
-    const p2=document.getElementById('mm-p2').value;
-    if(!p1||!p2||p1===p2){toast('Pick 2 different players','e');return;}
-    m={id:eid||0, cat:mcat, grp, p1, p2,
-      date:document.getElementById('mm-date').value,
-      time:document.getElementById('mm-time').value,
-      tbl:document.getElementById('mm-tbl').value,
-      status:'upcoming'};
-  }
-
+  const m={id:eid||0, cat:mcat, grp:document.getElementById('mm-grp').value,
+    p1, p2,
+    date:document.getElementById('mm-date').value,
+    time:document.getElementById('mm-time').value,
+    tbl:document.getElementById('mm-tbl').value, status:'upcoming'};
   DB=loadDB();
   if(eid) DB.schedule=DB.schedule.map(x=>x.id===eid?{...m,id:eid}:x);
   else { m.id=DB.nid++; DB.schedule.push(m); }
@@ -1944,7 +1849,240 @@ async function saveMatch(){
   const result=await serverCmd('saveSchedule',{schedule:DB.schedule});
   if(result.ok){ closeM('m-match'); renderAdmSched(); toast('✅ Match saved!'); }
 }
-function editMatch(id){openMatchModal(id);}
+function editMatch(id){
+  const m=DB.schedule.find(x=>x.id===id); if(!m) return;
+  if(m.cat==='A'){ openTieModal(m); return; }
+  openMatchModal(id);
+}
+
+// ── Cat A Tie Modal ──────────────────────────────
+// Each tie = all 5 matches between two teams
+// Admin selects players for each game + optionally enters scores
+
+const TIE_GAMES=[
+  {code:'MS1', type:'MS', label:"Men's Singles #1"},
+  {code:'MS2', type:'MS', label:"Men's Singles #2"},
+  {code:'WS',  type:'WS', label:"Women's Singles"},
+  {code:'MD',  type:'MD', label:"Men's Doubles"},
+  {code:'XD',  type:'XD', label:"Mixed Doubles"},
+];
+
+function openTieModal(existingMatch){
+  DB=loadDB();
+  // Populate group dropdown
+  const groups=Object.keys(DB.groups['A']||{});
+  document.getElementById('tie-grp').innerHTML=groups.map(g=>`<option>${g}</option>`).join('');
+  if(existingMatch && existingMatch.grp) document.getElementById('tie-grp').value=existingMatch.grp;
+  populateTieTeams(existingMatch);
+  document.getElementById('tie-date').value=existingMatch?.date||'';
+  document.getElementById('tie-tbl').value=existingMatch?.tbl||'';
+  openM('m-tie');
+}
+
+function populateTieTeams(existingMatch){
+  const grp=document.getElementById('tie-grp').value;
+  const teamNames=(DB.groups['A']||{})[grp]||[];
+  const opts=teamNames.map(t=>`<option>${t}</option>`).join('');
+  document.getElementById('tie-t1').innerHTML=opts;
+  document.getElementById('tie-t2').innerHTML=opts;
+  if(teamNames.length>1) document.getElementById('tie-t2').value=teamNames[1];
+  if(existingMatch?.homeTeam) document.getElementById('tie-t1').value=existingMatch.homeTeam;
+  if(existingMatch?.awayTeam) document.getElementById('tie-t2').value=existingMatch.awayTeam;
+  buildTieRows(existingMatch);
+}
+
+function getTeamMembers(teamName){
+  const team=(DB.teams||[]).find(t=>t.name===teamName);
+  return team?.members||[];
+}
+
+function getEligible(members, gameType){
+  if(gameType==='MS'||gameType==='MD') return members.filter(m=>m.gender==='Male');
+  if(gameType==='WS'||gameType==='WD') return members.filter(m=>m.gender==='Female');
+  return members; // XD — all
+}
+
+function makePlayerSelect(id, players, val){
+  const opts=players.map(p=>`<option value="${p.name}">${p.name}</option>`).join('');
+  return `<select class="af-select" id="${id}" style="font-size:.78rem;padding:6px 8px">
+    <option value="">— Select —</option>${opts}
+  </select>`;
+}
+
+function makeDoubleSelect(prefix, players){
+  const opts=players.map(p=>`<option value="${p.name}">${p.name}</option>`).join('');
+  const sel=(id)=>`<select class="af-select" id="${id}" style="font-size:.78rem;padding:5px 8px;margin-bottom:4px">
+    <option value="">— Select —</option>${opts}
+  </select>`;
+  return sel(prefix+'_a')+sel(prefix+'_b');
+}
+
+function buildTieRows(existingMatch){
+  const t1name=document.getElementById('tie-t1').value;
+  const t2name=document.getElementById('tie-t2').value;
+  if(!t1name||!t2name||t1name===t2name){
+    document.getElementById('tie-rows').innerHTML='<div class="al al-warn">Select two different teams</div>';
+    return;
+  }
+  const t1m=getTeamMembers(t1name);
+  const t2m=getTeamMembers(t2name);
+
+  // Check if there are existing results for this tie to pre-fill
+  const grp=document.getElementById('tie-grp').value;
+  const tieKey=`${t1name} vs ${t2name}`;
+  const existingResults=DB.results.filter(r=>r.cat==='A'&&r.grp===grp&&(r.teamTie===tieKey||r.teamTie===`${t2name} vs ${t1name}`));
+
+  document.getElementById('tie-rows').innerHTML=TIE_GAMES.map((game,i)=>{
+    const gt=game.type;
+    const isDoubles=gt==='MD'||gt==='WD'||gt==='XD';
+    const h1=getEligible(t1m, gt);
+    const h2=getEligible(t2m, gt);
+    // For XD doubles need M+F
+    const hMale=t1m.filter(m=>m.gender==='Male'), hFem=t1m.filter(m=>m.gender==='Female');
+    const aMale=t2m.filter(m=>m.gender==='Male'), aFem=t2m.filter(m=>m.gender==='Female');
+
+    // Find existing result for this game
+    const exR=existingResults.find(r=>r.gameCode===game.code);
+
+    // Home selectors
+    let homeSelHtml='', awaySelHtml='';
+    if(gt==='XD'){
+      homeSelHtml=makePlayerSelect('hp_'+i+'_m',hMale,exR?.homePlayerM||'')+
+                  makePlayerSelect('hp_'+i+'_f',hFem,exR?.homePlayerF||'');
+      awaySelHtml=makePlayerSelect('ap_'+i+'_m',aMale,exR?.awayPlayerM||'')+
+                  makePlayerSelect('ap_'+i+'_f',aFem,exR?.awayPlayerF||'');
+    } else if(isDoubles){
+      homeSelHtml=makeDoubleSelect('hp_'+i, h1);
+      awaySelHtml=makeDoubleSelect('ap_'+i, h2);
+    } else {
+      homeSelHtml=makePlayerSelect('hp_'+i,h1,exR?.homePlayer||'');
+      awaySelHtml=makePlayerSelect('ap_'+i,h2,exR?.awayPlayer||'');
+    }
+
+    return `<div class="tie-row">
+      <div class="tie-row-head">
+        <div class="tie-row-num">${i+1}</div>
+        <span class="tie-row-type"><span class="gtype ${typeCSS(gt)}" style="font-size:.72rem;padding:2px 8px">${game.label}</span></span>
+      </div>
+      <div class="tie-players">
+        <div>${homeSelHtml}</div>
+        <div class="tie-vs">VS</div>
+        <div>${awaySelHtml}</div>
+      </div>
+      <div class="tie-score">
+        <span class="tie-score-label" style="color:var(--lime);font-size:.7rem">${t1name.substring(0,10)}</span>
+        <input class="tie-score-input" id="ts_${i}_h" placeholder="0" maxlength="2" inputmode="numeric" style="max-width:50px" value="${exR?.homeGames||''}"/>
+        <span style="color:var(--t3);font-weight:700;font-size:.9rem">—</span>
+        <input class="tie-score-input" id="ts_${i}_a" placeholder="0" maxlength="2" inputmode="numeric" style="max-width:50px" value="${exR?.awayGames||''}"/>
+        <span class="tie-score-label" style="text-align:right;color:var(--blue);font-size:.7rem">${t2name.substring(0,10)}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function collectTieData(){
+  const grp=document.getElementById('tie-grp').value;
+  const t1name=document.getElementById('tie-t1').value;
+  const t2name=document.getElementById('tie-t2').value;
+  const date=document.getElementById('tie-date').value;
+  const tbl=document.getElementById('tie-tbl').value;
+  const tieKey=`${t1name} vs ${t2name}`;
+  const fmt=DB.settings.catAGroupFmt==='bo5'?'Best of 5':'Best of 3';
+  const matches=[];
+
+  TIE_GAMES.forEach((game,i)=>{
+    const gt=game.type;
+    const isDoubles=gt==='MD'||gt==='WD';
+    const isXD=gt==='XD';
+    let hp='', ap='';
+    if(isXD){
+      const hm=document.getElementById('hp_'+i+'_m')?.value||'';
+      const hf=document.getElementById('hp_'+i+'_f')?.value||'';
+      const am=document.getElementById('ap_'+i+'_m')?.value||'';
+      const af=document.getElementById('ap_'+i+'_f')?.value||'';
+      hp=[hm,hf].filter(Boolean).join(' + ');
+      ap=[am,af].filter(Boolean).join(' + ');
+    } else if(isDoubles){
+      const ha=document.getElementById('hp_'+i+'_a')?.value||'';
+      const hb=document.getElementById('hp_'+i+'_b')?.value||'';
+      const aa=document.getElementById('ap_'+i+'_a')?.value||'';
+      const ab=document.getElementById('ap_'+i+'_b')?.value||'';
+      hp=[ha,hb].filter(Boolean).join(' + ');
+      ap=[aa,ab].filter(Boolean).join(' + ');
+    } else {
+      hp=document.getElementById('hp_'+i)?.value||'';
+      ap=document.getElementById('ap_'+i)?.value||'';
+    }
+    const hScore=document.getElementById('ts_'+i+'_h')?.value||'';
+    const aScore=document.getElementById('ts_'+i+'_a')?.value||'';
+    matches.push({
+      cat:'A', grp, stage:'group', format:fmt,
+      teamTie:tieKey, homeTeam:t1name, awayTeam:t2name,
+      gameCode:game.code, gameType:gt, gameLabel:game.label,
+      p1:t1name+(hp?': '+hp:''), p2:t2name+(ap?': '+ap:''),
+      homePlayer:hp, awayPlayer:ap,
+      date, tbl, status:'upcoming',
+      homeGames:hScore, awayGames:aScore,
+      score: hScore&&aScore?hScore+'-'+aScore:'',
+    });
+  });
+  return {grp, t1name, t2name, tieKey, matches};
+}
+
+async function saveTieSchedule(){
+  const {matches, t1name, t2name}=collectTieData();
+  if(!t1name||!t2name){toast('Select both teams','e');return;}
+  DB=loadDB();
+  // Remove old schedule for this tie
+  DB.schedule=DB.schedule.filter(m=>!(m.cat==='A'&&m.teamTie===`${t1name} vs ${t2name}`&&m.stage==='group'));
+  matches.forEach(m=>{ m.id=DB.nid++; m.status='upcoming'; delete m.score; delete m.homeGames; delete m.awayGames; DB.schedule.push(m); });
+  saveLocal(DB);
+  const r=await serverCmd('saveSchedule',{schedule:DB.schedule});
+  if(r.ok){ closeM('m-tie'); renderAdmSched(); toast('✅ Tie scheduled!'); }
+}
+
+async function saveTieWithResults(){
+  const {matches, t1name, t2name, grp}=collectTieData();
+  if(!t1name||!t2name){toast('Select both teams','e');return;}
+  DB=loadDB();
+  const tieKey=`${t1name} vs ${t2name}`;
+  // Remove old schedule + results for this tie
+  DB.schedule=DB.schedule.filter(m=>!(m.cat==='A'&&m.teamTie===tieKey&&m.stage==='group'));
+  DB.results=DB.results.filter(r=>!(r.cat==='A'&&r.teamTie===tieKey));
+  const newResults=[];
+  matches.forEach(m=>{
+    m.id=DB.nid++;
+    if(m.score&&m.score!=='-'){
+      m.status='done';
+      const[h,a]=(m.score||'0-0').split('-').map(Number);
+      const resId=DB.nid++;
+      newResults.push({
+        id:resId, cat:'A', grp, stage:'group',
+        teamTie:tieKey, homeTeam:t1name, awayTeam:t2name,
+        gameCode:m.gameCode, gameType:m.gameType, gameLabel:m.gameLabel,
+        p1:m.p1, p2:m.p2,
+        homePlayer:m.homePlayer, awayPlayer:m.awayPlayer,
+        homeGames:m.homeGames, awayGames:m.awayGames,
+        score:m.score, date:m.date,
+        winner: h>a?t1name:a>h?t2name:'draw'
+      });
+    } else {
+      m.status='upcoming';
+    }
+    DB.schedule.push(m);
+  });
+  DB.results=[...DB.results,...newResults];
+  saveLocal(DB);
+  await serverCmd('saveSchedule',{schedule:DB.schedule});
+  const r=await serverCmd('addResult',{results:newResults, bulkCatA:true});
+  if(r.ok){ closeM('m-tie'); renderAdmSched(); toast('✅ Tie + results saved!'); }
+}
+
+function editMatch(id){
+  const m=DB.schedule.find(x=>x.id===id); if(!m) return;
+  if(m.cat==='A'){ openTieModal(m); return; }
+  openMatchModal(id);
+}
 function delMatch(id){confirm2('Delete match?','',async()=>{ DB=loadDB(); DB.schedule=DB.schedule.filter(x=>x.id!==id); saveLocal(DB); await serverCmd('saveSchedule',{schedule:DB.schedule}); renderAdmSched(); toast('Deleted'); });}
 
 // ═══════════════════════════════════════════
@@ -3264,7 +3402,7 @@ function downloadTeamsPDF(){
 // ═══════════════════════════════════════════
 
 // HARDCODED SCRIPT URL — set this once, works for everyone
-const HARDCODED_URL = 'https://script.google.com/macros/s/AKfycbzmtYN_ibISW0_3R_meKt8HJHp44DW4Rt1LrhHBi5soNHv40Cj5iM5t-GLB9mBhbXM/exec'; // Admin: paste your Script URL between these quotes
+const HARDCODED_URL = 'https://script.google.com/macros/s/AKfycbxuA0yXnsJA4_Zu70VTSmsTq0JaDvSJViyXlCL6j_MKDnaWSHFfur-Zea82SZpj4IU/exec'; // Admin: paste your Script URL between these quotes
 
 // On every load: if hardcoded URL exists, use it regardless of localStorage
 if(HARDCODED_URL) {
