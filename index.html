@@ -960,24 +960,54 @@ async function serverCmd(action, payload){
   if(!url){ toast('No server URL configured','e'); return {ok:false}; }
   setSyncState('loading','Saving…');
   try{
-    // Encode payload as base64 to safely pass via URL
-    const data = payload ? btoa(unescape(encodeURIComponent(JSON.stringify(payload)))) : '';
+    // Check payload size — use GET for small, chunked GET for large
+    const json = payload ? JSON.stringify(payload) : '';
+    const data = json ? btoa(unescape(encodeURIComponent(json))) : '';
     const sep = url.includes('?') ? '&' : '?';
     const fullUrl = url + sep + 'action=' + action + (data ? '&data=' + encodeURIComponent(data) : '');
-    const res=await fetch(fullUrl);
-    const result=await res.json();
-    if(result.ok){
+
+    // If URL too long (>2000 chars), split payload into chunks
+    let result;
+    if(fullUrl.length > 2000 && payload){
+      result = await serverCmdChunked(url, action, json);
+    } else {
+      const res=await fetch(fullUrl);
+      result=await res.json();
+    }
+
+    if(result && result.ok){
       await syncNow(true);
     } else {
       setSyncState('err','Failed');
-      if(result.error) toast(result.error,'e');
+      if(result && result.error) toast(result.error,'e');
     }
-    return result;
+    return result || {ok:false};
   }catch(e){
     setSyncState('err','Failed');
     toast('Server error: '+e.message,'e');
     return {ok:false};
   }
+}
+
+// For large payloads: split into chunks sent as sequential GET requests
+async function serverCmdChunked(url, action, jsonStr){
+  const CHUNK = 1500; // safe URL chunk size in chars
+  const b64 = btoa(unescape(encodeURIComponent(jsonStr)));
+  const total = Math.ceil(b64.length / CHUNK);
+  const sep = url.includes('?') ? '&' : '?';
+
+  // Send chunks
+  for(let i=0; i<total; i++){
+    const chunk = b64.slice(i*CHUNK, (i+1)*CHUNK);
+    const isLast = i===total-1;
+    const chunkUrl = url+sep+'action=chunk&idx='+i+'&total='+total+'&cmd='+action+'&last='+(isLast?1:0)+'&data='+encodeURIComponent(chunk);
+    const res = await fetch(chunkUrl);
+    if(isLast){
+      const result = await res.json();
+      return result;
+    }
+  }
+  return {ok:false, error:'Chunk send failed'};
 }
 
 async function syncFormData(){
@@ -3127,7 +3157,7 @@ function downloadTeamsPDF(){
 // ═══════════════════════════════════════════
 
 // HARDCODED SCRIPT URL — set this once, works for everyone
-const HARDCODED_URL = 'https://script.google.com/macros/s/AKfycbw4wo6d8P08CehB-rRC7cSDy2ausm73SSQ2io29sofJOItoDfc0CfOw36nj2HVX95c/exec'; // Admin: paste your Script URL between these quotes
+const HARDCODED_URL = 'https://script.google.com/macros/s/AKfycbwqvGDR4jv8xAkbS35M6ngSKaIpY4-FQY_qdHkrOPiZGA5rVdbDNNEon5eytnI8Unk/exec'; // Admin: paste your Script URL between these quotes
 
 // On every load: if hardcoded URL exists, use it regardless of localStorage
 if(HARDCODED_URL) {
