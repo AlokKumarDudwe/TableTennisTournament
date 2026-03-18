@@ -955,17 +955,23 @@ async function syncNow(silent){
 }
 
 // Send ONE atomic command to server via GET (avoids CORS issues)
+// URL-safe base64 — only A-Za-z0-9-_. survive GET params without corruption
+function toUrlSafeB64(str){
+  return btoa(unescape(encodeURIComponent(str)))
+    .replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'.');
+}
+
 async function serverCmd(action, payload){
   const url=DB.settings.scriptURL;
   if(!url){ toast('No server URL configured','e'); return {ok:false}; }
   setSyncState('loading','Saving…');
   try{
     const json = payload ? JSON.stringify(payload) : '';
-    const encoded = json ? encodeURIComponent(json) : '';
-    const sep = url.includes('?') ? '&' : '?';
+    const b64  = json ? toUrlSafeB64(json) : '';
+    const sep  = url.includes('?') ? '&' : '?';
 
-    // If data fits in one URL, send directly
-    const directUrl = url + sep + 'action=' + action + (encoded ? '&data=' + encoded : '');
+    // Small payload — one request
+    const directUrl = url + sep + 'action=' + action + (b64 ? '&data=' + b64 : '');
     if(directUrl.length <= 1800){
       const res = await fetch(directUrl);
       const result = await res.json();
@@ -974,22 +980,21 @@ async function serverCmd(action, payload){
       return result;
     }
 
-    // Too large — split encoded JSON into chunks
-    const CHUNK = 600;
-    const total = Math.ceil(encoded.length / CHUNK);
+    // Large payload — send base64 in chunks (all chars are URL-safe, no splitting issues)
+    const CHUNK = 800;
+    const total = Math.ceil(b64.length / CHUNK);
     for(let i = 0; i < total; i++){
-      const chunk = encoded.slice(i*CHUNK, (i+1)*CHUNK);
+      const chunk = b64.slice(i*CHUNK, (i+1)*CHUNK);
       const storeUrl = url + sep + 'action=chunkStore&idx='+i+'&chunk='+chunk;
       const r = await fetch(storeUrl);
       const rd = await r.json();
       if(!rd.ok){
         setSyncState('err','Failed');
-        toast('Chunk upload failed at step '+i,'e');
+        toast('Chunk '+i+' failed: '+(rd.error||'unknown'),'e');
         return {ok:false};
       }
     }
-    // All chunks stored — execute
-    const execUrl = url + sep + 'action=chunkExec&cmd='+encodeURIComponent(action)+'&total='+total;
+    const execUrl = url + sep + 'action=chunkExec&cmd='+action+'&total='+total;
     const execRes = await fetch(execUrl);
     const result = await execRes.json();
     if(result.ok){ await syncNow(true); }
@@ -3150,7 +3155,7 @@ function downloadTeamsPDF(){
 // ═══════════════════════════════════════════
 
 // HARDCODED SCRIPT URL — set this once, works for everyone
-const HARDCODED_URL = 'https://script.google.com/macros/s/AKfycbyVdkVx9WMKdmXpVXUgrDthelbsVuB4mWBaxtDSVMIGOJIcxL-dYxUfU12bmIovUHk/exec'; // Admin: paste your Script URL between these quotes
+const HARDCODED_URL = 'https://script.google.com/macros/s/AKfycbzmtYN_ibISW0_3R_meKt8HJHp44DW4Rt1LrhHBi5soNHv40Cj5iM5t-GLB9mBhbXM/exec'; // Admin: paste your Script URL between these quotes
 
 // On every load: if hardcoded URL exists, use it regardless of localStorage
 if(HARDCODED_URL) {
