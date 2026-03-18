@@ -550,9 +550,12 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t1);displ
           <div class="t3 ts">No format set yet. Click Edit Format to define match slots.</div>
         </div>
       </div>
-      <div class="sec-row" style="margin-bottom:10px">
+      <div class="sec-row" style="margin-bottom:10px;flex-wrap:wrap;gap:6px">
         <button class="btn btn-lime btn-sm" onclick="openTeamModal()">+ New Team</button>
-        <button class="btn btn-ghost btn-sm" onclick="openGenerateModal()">⚡ Generate Matches</button>
+        <button class="btn btn-ghost btn-sm" onclick="openGenerateModal()">⚡ Group Matches</button>
+        <button class="btn btn-ghost btn-sm" onclick="generateSemiFinals()">🏅 Semi Finals</button>
+        <button class="btn btn-ghost btn-sm" onclick="generateFinal()">🏆 Final</button>
+        <button class="btn btn-pdf btn-sm" onclick="downloadTeamsPDF()">⬇ Teams PDF</button>
       </div>
       <div id="teams-body"></div>
     </div>
@@ -633,6 +636,18 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t1);displ
           </div>
           <div class="af-grid2">
             <div class="af-group"><label class="af-label">Registration Deadline</label><input class="af-input" id="s-regdeadline" type="date"/></div>
+          <div class="af-group"><label class="af-label">Cat A Group Stage Format</label>
+            <select class="af-select" id="s-catafmt">
+              <option value="bo3">Best of 3 Sets</option>
+              <option value="bo5">Best of 5 Sets</option>
+            </select>
+          </div>
+          <div class="af-group"><label class="af-label">Cat A Semis & Final Format</label>
+            <select class="af-select" id="s-catasfmt">
+              <option value="bo5">Best of 5 Sets</option>
+              <option value="bo3">Best of 3 Sets</option>
+            </select>
+          </div>
             <div class="af-group"><label class="af-label">Welcome Message</label><input class="af-input" id="s-msg"/></div>
           </div>
           <div class="af-group"><label class="af-label">Google Form URL (optional)</label><input class="af-input" id="s-gf" placeholder="https://forms.gle/..."/></div>
@@ -1102,6 +1117,14 @@ function validCPF(c){ const l=cleanCPF(c).length; return l>=5&&l<=6; }
 // ═══════════════════════════════════════════
 function standings(catKey,grp){
   const players=((DB.groups[catKey]||{})[grp]||[]);
+  if(!players.length) return [];
+
+  // ── Cat A: TEAM standings — points based on tie results ──
+  if(catKey==='A'){
+    return teamStandings(grp);
+  }
+
+  // ── B/C/D/E: individual player standings ──
   const s={};
   players.forEach(p=>{s[p]={name:p,mp:0,w:0,l:0,sw:0,sl:0,pts:0};});
   DB.results.filter(r=>r.cat===catKey&&r.grp===grp).forEach(r=>{
@@ -1112,6 +1135,53 @@ function standings(catKey,grp){
     if(s[ln]){s[ln].mp++;s[ln].l++;s[ln].pts+=(l>0?1:0);s[ln].sw+=Math.min(w,l);s[ln].sl+=Math.max(w,l);}
   });
   return Object.values(s).sort((a,b)=>b.pts-a.pts||(b.sw-b.sl)-(a.sw-a.sl));
+}
+
+// Cat A: calculate TEAM standings from individual match results
+// A tie = all games between Team1 vs Team2. Tie winner = more games won in the tie.
+// Team gets 2pts for tie win, 1pt for tie draw, 0pt for tie loss.
+function teamStandings(grp){
+  const teamNames=(DB.groups['A']||{})[grp]||[];
+  const s={};
+  teamNames.forEach(t=>{ s[t]={name:t,ties:0,tw:0,tl:0,td:0,gw:0,gl:0,pts:0}; });
+
+  // Group all results by tie (homeTeam vs awayTeam)
+  const tieResults={};
+  DB.results.filter(r=>r.cat==='A'&&r.grp===grp&&r.teamTie).forEach(r=>{
+    const key=r.teamTie; // e.g. "Team1 vs Team2"
+    if(!tieResults[key]) tieResults[key]={home:r.homeTeam,away:r.awayTeam,homeW:0,awayW:0,results:[]};
+    const[w,l]=(r.score||'0-0').split('-').map(Number);
+    if(isNaN(w)||isNaN(l)) return;
+    tieResults[key].results.push(r);
+    // Determine who won this individual game
+    const homeWon = (r.homeTeam===r.p1.split(':')[0].trim() && w>l) ||
+                    (r.homeTeam===r.p2.split(':')[0].trim() && l>w);
+    if(homeWon) tieResults[key].homeW++;
+    else if(w!==l) tieResults[key].awayW++;
+    // Count individual games won
+    if(s[r.homeTeam]){ if(homeWon) s[r.homeTeam].gw++; else if(w!==l) s[r.homeTeam].gl++; }
+    if(s[r.awayTeam]){ if(!homeWon&&w!==l) s[r.awayTeam].gw++; else if(w!==l) s[r.awayTeam].gl++; }
+  });
+
+  // Calculate tie points
+  Object.values(tieResults).forEach(tie=>{
+    const{home,away,homeW,awayW}=tie;
+    if(!s[home]||!s[away]) return;
+    s[home].ties++; s[away].ties++;
+    if(homeW>awayW){
+      s[home].tw++; s[home].pts+=2;
+      s[away].tl++;
+    } else if(awayW>homeW){
+      s[away].tw++; s[away].pts+=2;
+      s[home].tl++;
+    } else if(homeW===awayW&&homeW>0){
+      // Draw
+      s[home].td++; s[home].pts+=1;
+      s[away].td++; s[away].pts+=1;
+    }
+  });
+
+  return Object.values(s).sort((a,b)=>b.pts-a.pts||(b.tw-b.tl)-(a.tw-a.tl)||(b.gw-b.gl)-(a.gw-a.gl));
 }
 function rb(i){ const c=i===0?'r1':i===1?'r2':'rn'; return `<span class="rb ${c}">${i+1}</span>`; }
 
@@ -1141,26 +1211,52 @@ function renderHome(){
 function renderGCard(ck,grp,idx){
   const color=gc(idx);
   const rows=standings(ck,grp);
+  const isTeam=ck==='A';
+
+  // Recent matches — for Cat A show recent ties, else individual matches
   const recentM=DB.results.filter(r=>r.cat===ck&&r.grp===grp).slice(-2).reverse();
-  return `<div class="gcard">
-    <div class="gcard-head" style="color:${color}">
-      <span class="gcard-name">🏓 ${grp}</span>
-      <span class="gcard-cnt">${(DB.groups[ck][grp]||[]).length}p · ${CATS[ck].label} · ${CATS[ck].fmt}</span>
-    </div>
-    <div style="overflow-x:auto">
-    <table class="tbl">
-      <thead><tr><th>#</th><th>Player</th><th>MP</th><th>W</th><th>L</th><th>Pts</th></tr></thead>
-      <tbody>${rows.map((p,i)=>`<tr class="${i<2?'q':''}">
+
+  // Table headers and rows differ for Cat A vs others
+  const thead=isTeam
+    ?`<tr><th>#</th><th>Team</th><th>Ties</th><th>W</th><th>D</th><th>L</th><th>GW</th><th>Pts</th></tr>`
+    :`<tr><th>#</th><th>Player</th><th>MP</th><th>W</th><th>L</th><th>Pts</th></tr>`;
+
+  const tbody=isTeam
+    ?rows.map((t,i)=>`<tr class="${i<2?'q':''}">
+        <td>${rb(i)}</td>
+        <td><strong class="truncate" style="max-width:100px;display:block">${t.name}</strong></td>
+        <td class="mono">${t.ties}</td>
+        <td><span class="tag tw">${t.tw}</span></td>
+        <td class="mono t3">${t.td}</td>
+        <td><span class="tag tl">${t.tl}</span></td>
+        <td class="mono">${t.gw}</td>
+        <td><strong style="color:${color}">${t.pts}</strong></td>
+      </tr>`).join('')
+    :rows.map((p,i)=>`<tr class="${i<2?'q':''}">
         <td>${rb(i)}</td>
         <td><strong class="truncate" style="max-width:120px;display:block">${p.name}</strong></td>
         <td class="mono">${p.mp}</td>
         <td><span class="tag tw">${p.w}</span></td>
         <td><span class="tag tl">${p.l}</span></td>
         <td><strong style="color:${color}">${p.pts}</strong></td>
-      </tr>`).join('')}</tbody>
+      </tr>`).join('');
+
+  const cnt=isTeam
+    ?`${(DB.groups[ck][grp]||[]).length} teams · ${CATS[ck].label}`
+    :`${(DB.groups[ck][grp]||[]).length}p · ${CATS[ck].label} · ${CATS[ck].fmt}`;
+
+  return `<div class="gcard">
+    <div class="gcard-head" style="color:${color}">
+      <span class="gcard-name">🏓 ${grp}</span>
+      <span class="gcard-cnt">${cnt}</span>
+    </div>
+    <div style="overflow-x:auto">
+    <table class="tbl">
+      <thead>${thead}</thead>
+      <tbody>${tbody}</tbody>
     </table>
     </div>
-    ${recentM.length?`<div style="padding:8px 10px 10px;border-top:1px solid var(--b1)">${recentM.map(r=>{const[w,l]=(r.score||'0-0').split('-').map(Number);const pw=w>l;return`<div class="mrow" style="margin-bottom:4px"><span class="mp truncate" style="max-width:90px">${r.p1}</span><div class="ms-wrap"><span class="ms ${pw?'w':'l'}">${w}</span><span class="mvs">–</span><span class="ms ${pw?'l':'w'}">${l}</span></div><span class="mp r truncate" style="max-width:90px">${r.p2}</span></div>`}).join('')}</div>`:''}
+    ${recentM.length&&!isTeam?`<div style="padding:8px 10px 10px;border-top:1px solid var(--b1)">${recentM.map(r=>{const[w,l]=(r.score||'0-0').split('-').map(Number);const pw=w>l;return`<div class="mrow" style="margin-bottom:4px"><span class="mp truncate" style="max-width:90px">${r.p1}</span><div class="ms-wrap"><span class="ms ${pw?'w':'l'}">${w}</span><span class="mvs">–</span><span class="ms ${pw?'l':'w'}">${l}</span></div><span class="mp r truncate" style="max-width:90px">${r.p2}</span></div>`}).join('')}</div>`:''}
   </div>`;
 }
 
@@ -1366,7 +1462,9 @@ function renderSchBody(){
         <div style="padding:5px 12px;background:var(--s2);border-bottom:1px solid var(--b1);display:flex;align-items:center;justify-content:space-between;gap:6px">
           <div style="font-size:.7rem;color:var(--t3)">
             <span class="chip ${ci.css}" style="font-size:.58rem;padding:1px 5px">${ci.label}</span>
-            · ${m.grp||'—'} · <strong style="color:var(--t2)">${m.homeTeam||''} vs ${m.awayTeam||''}</strong>
+            · <strong style="color:${m.stage==='sf'?'var(--gold)':m.stage==='final'?'var(--pink)':'var(--t2)'}">${m.grp||'—'}</strong>
+            · ${m.homeTeam||''} vs ${m.awayTeam||''}
+            ${m.format?`<span style="margin-left:4px;color:var(--lime);font-size:.62rem;font-weight:700">[${m.format}]</span>`:''}
           </div>
           <span class="sp ${cls}" style="font-size:.62rem">${lbl}</span>
         </div>
@@ -1633,9 +1731,10 @@ function renderAdmSched(){
     const isTeam=m.cat==='A'&&m.teamTie;
     const hp=isTeam?(m.p1||'').replace(/^[^:]+:\s*/,''):m.p1;
     const ap=isTeam?(m.p2||'').replace(/^[^:]+:\s*/,''):m.p2;
-    const p1disp=isTeam?`<div style="font-size:.7rem"><span class="gtype ${typeCSS(m.gameType)}" style="font-size:.58rem;padding:1px 4px">${m.gameLabel||m.gameType}</span></div><div>${hp}</div>`:hp;
+    const p1disp=isTeam?`<div style="font-size:.7rem"><span class="gtype ${typeCSS(m.gameType)}" style="font-size:.58rem;padding:1px 4px">${m.gameLabel||m.gameType}</span>${m.format?`<span style="margin-left:3px;color:var(--lime);font-size:.58rem">[${m.format}]</span>`:''}</div><div>${hp}</div>`:hp;
     const p2disp=isTeam?`<div>${ap}</div>`:ap;
-    const grpDisp=isTeam?`${m.grp}<br><span style="font-size:.65rem;color:var(--t3)">${m.homeTeam} vs ${m.awayTeam}</span>`:m.grp||'—';
+    const stageColor=m.stage==='final'?'var(--pink)':m.stage==='sf'?'var(--gold)':'var(--t2)';
+    const grpDisp=isTeam?`<span style="color:${stageColor};font-weight:700">${m.grp}</span><br><span style="font-size:.65rem;color:var(--t3)">${m.homeTeam} vs ${m.awayTeam}</span>`:m.grp||'—';
     return `<tr><td><span class="chip ${ci.css}" style="font-size:.6rem;padding:2px 6px">${ci.label}</span></td>
       <td style="font-size:.75rem">${grpDisp}</td>
       <td style="font-size:.8rem">${p1disp}</td>
@@ -1778,6 +1877,8 @@ function loadSettings(){
   const s=DB.settings;
   document.getElementById('s-url').value=s.scriptURL||'';
   document.getElementById('s-regdeadline').value=s.regDeadline||'';
+  document.getElementById('s-catafmt').value=s.catAGroupFmt||'bo3';
+  document.getElementById('s-catasfmt').value=s.catASFFmt||'bo5';
   document.getElementById('s-name').value=s.name||'';
   document.getElementById('s-start').value=s.startDate||'';
   document.getElementById('s-end').value=s.endDate||'';
@@ -1817,6 +1918,8 @@ async function saveSettings(){
     fmt:document.getElementById('s-fmt').value,
     msg:document.getElementById('s-msg').value.trim(),
     regDeadline:document.getElementById('s-regdeadline').value,
+    catAGroupFmt:document.getElementById('s-catafmt').value,
+    catASFFmt:document.getElementById('s-catasfmt').value,
     gf:document.getElementById('s-gf').value.trim(),
     scriptURL:DB.settings.scriptURL,
   };
@@ -2292,8 +2395,18 @@ function renderTeamsSection(){
         </div>
       </div>
       <div class="team-members">
-        ${males.map((m,j)=>`<div class="team-member"><div class="gender-dot gd-m"></div><span class="t3 ts" style="min-width:28px">M${j+1}</span><span style="flex:1">${m.name}</span></div>`).join('')}
-        ${females.map((m,j)=>`<div class="team-member"><div class="gender-dot gd-f"></div><span class="t3 ts" style="min-width:28px">F${j+1}</span><span style="flex:1">${m.name}</span></div>`).join('')}
+        ${males.map((m,j)=>`<div class="team-member">
+          <div class="gender-dot gd-m"></div>
+          <span class="t3 ts" style="min-width:28px">M${j+1}</span>
+          <span style="flex:1">${m.name}</span>
+          <span style="font-size:.65rem;color:var(--t3);font-family:'JetBrains Mono',monospace">${m.cpf}${m.whatsapp?' · '+m.whatsapp:''}</span>
+        </div>`).join('')}
+        ${females.map((m,j)=>`<div class="team-member">
+          <div class="gender-dot gd-f"></div>
+          <span class="t3 ts" style="min-width:28px">F${j+1}</span>
+          <span style="flex:1">${m.name}</span>
+          <span style="font-size:.65rem;color:var(--t3);font-family:'JetBrains Mono',monospace">${m.cpf}${m.whatsapp?' · '+m.whatsapp:''}</span>
+        </div>`).join('')}
         ${!t.members?.length?'<div class="t3 ts">No members yet</div>':''}
       </div>
     </div>`;
@@ -2479,13 +2592,18 @@ function renderTeamPlayerList(query, selected, inOtherTeam){
     const inOther=inOtherTeam[p.cpf];
     const isChecked=selected.has(p.cpf);
     const nameDisp=p.partName||p.name;
-    return `<label style="display:flex;align-items:center;gap:8px;padding:6px 6px;border-bottom:1px solid var(--b1);cursor:pointer;font-size:.82rem;${inOther&&!isChecked?'opacity:.5':''}">
-      <input type="checkbox" ${isChecked?'checked':''} ${inOther&&!isChecked?'disabled':''} 
-        data-cpf="${p.cpf}" data-name="${nameDisp}" data-gender="${p.gender||''}" 
-        onchange="updateTeamPreview()" style="width:16px;height:16px;accent-color:var(--lime)"/>
-      <span style="flex:1;font-weight:${isChecked?'700':'400'}">${nameDisp}</span>
+    return `<label style="display:flex;align-items:center;gap:6px;padding:7px 6px;border-bottom:1px solid var(--b1);cursor:pointer;${inOther&&!isChecked?'opacity:.5':''}">
+      <input type="checkbox" ${isChecked?'checked':''} ${inOther&&!isChecked?'disabled':''}
+        data-cpf="${p.cpf}" data-name="${nameDisp}" data-gender="${p.gender||''}" data-whatsapp="${p.whatsapp||''}"
+        onchange="updateTeamPreview()" style="width:16px;height:16px;accent-color:var(--lime);flex-shrink:0"/>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:.82rem;font-weight:${isChecked?'700':'400'};overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${nameDisp}</div>
+        <div style="font-size:.68rem;color:var(--t3);font-family:'JetBrains Mono',monospace;margin-top:1px">
+          ID:${p.cpf} ${p.whatsapp?'· 📱'+p.whatsapp:''}
+        </div>
+      </div>
       <span style="font-size:.7rem;flex-shrink:0">${isFemale?'<span style="color:var(--pink);font-weight:700">👩 F</span>':'<span style="color:var(--blue)">👨 M</span>'}</span>
-      ${inOther&&!isChecked?`<span style="font-size:.62rem;color:var(--gold);flex-shrink:0">${inOther}</span>`:''}
+      ${inOther&&!isChecked?`<span style="font-size:.62rem;color:var(--gold);flex-shrink:0;max-width:60px;text-align:right;overflow:hidden;text-overflow:ellipsis">${inOther}</span>`:''}
     </label>`;
   }).join('');
 }
@@ -2508,7 +2626,7 @@ function clearTeamSelection(){
 
 function updateTeamPreview(){
   const checked=[...document.querySelectorAll('#mt-player-list input:checked')];
-  const members=checked.map(cb=>({cpf:cb.dataset.cpf,name:cb.dataset.name,gender:cb.dataset.gender}));
+  const members=checked.map(cb=>({cpf:cb.dataset.cpf,name:cb.dataset.name,gender:cb.dataset.gender,whatsapp:cb.dataset.whatsapp||''}));
   // Update count
   const countEl=document.getElementById('mt-count');
   if(countEl) countEl.textContent=`(${members.length} selected of ${_teamPlayers.length})`;
@@ -2528,7 +2646,7 @@ async function saveTeam(){
   if(!name){toast('Team name required','e');return;}
   const color=document.getElementById('mt-color').value;
   const checked=[...document.querySelectorAll('#mt-player-list input:checked')];
-  const members=checked.map(cb=>({cpf:cb.dataset.cpf,name:cb.dataset.name,gender:cb.dataset.gender}));
+  const members=checked.map(cb=>({cpf:cb.dataset.cpf,name:cb.dataset.name,gender:cb.dataset.gender,whatsapp:cb.dataset.whatsapp||''}));
   const editIdx=document.getElementById('mt-id').value;
   const teams=[...(DB.teams||[])];
   const team={name,color,members,gameTypes:getGameTypes(members)};
@@ -2602,32 +2720,33 @@ async function doGenerateTeamMatches(){
   const fmt=DB.settings.teamMatchFormat||[];
   const groups=DB.groups['A']||{};
   const hasGroups=Object.values(groups).some(g=>g.length>=2);
+  const groupFmt=DB.settings.catAGroupFmt||'bo3';
 
-  DB.schedule=DB.schedule.filter(m=>m.cat!=='A');
+  DB.schedule=DB.schedule.filter(m=>m.cat!=='A'||m.stage==='sf'||m.stage==='final');
   const newMatches=[];
 
   const pairs=[];
   if(hasGroups){
     Object.entries(groups).forEach(([grp,tns])=>{
-      for(let i=0;i<tns.length;i++) for(let j=i+1;j<tns.length;j++) pairs.push({t1:tns[i],t2:tns[j],grp});
+      for(let i=0;i<tns.length;i++) for(let j=i+1;j<tns.length;j++) pairs.push({t1:tns[i],t2:tns[j],grp,stage:'group'});
     });
   } else {
-    for(let i=0;i<teams.length;i++) for(let j=i+1;j<teams.length;j++) pairs.push({t1:teams[i].name,t2:teams[j].name,grp:'Team Event'});
+    for(let i=0;i<teams.length;i++) for(let j=i+1;j<teams.length;j++) pairs.push({t1:teams[i].name,t2:teams[j].name,grp:'Team Event',stage:'group'});
   }
 
-  pairs.forEach(({t1:t1Name,t2:t2Name,grp})=>{
+  pairs.forEach(({t1:t1Name,t2:t2Name,grp,stage})=>{
     const t1=teams.find(t=>t.name===t1Name), t2=teams.find(t=>t.name===t2Name);
     if(!t1||!t2) return;
-    fmt.forEach((slot,si)=>{
+    fmt.forEach((slot)=>{
       const hp=resolveRoles(t1,slot.home);
       const ap=resolveRoles(t2,slot.away);
       newMatches.push({
-        id:DB.nid++, cat:'A', grp,
+        id:DB.nid++, cat:'A', grp, stage,
+        format: groupFmt==='bo3'?'Best of 3':'Best of 5',
         teamTie:`${t1Name} vs ${t2Name}`,
         p1:`${t1Name}: ${hp}`,
         p2:`${t2Name}: ${ap}`,
-        gameType:slot.type,
-        gameLabel:typeLabel(slot.type),
+        gameType:slot.type, gameLabel:typeLabel(slot.type),
         homeRoles:slot.home, awayRoles:slot.away,
         homeTeam:t1Name, awayTeam:t2Name,
         status:'upcoming', date:'', time:'', tbl:''
@@ -2639,18 +2758,344 @@ async function doGenerateTeamMatches(){
   saveLocal(DB);
   await serverCmd('saveSchedule',{schedule:DB.schedule});
   closeM('m-generate');
-  toast(`✅ Generated ${newMatches.length} matches!`);
+  toast(`✅ Generated ${newMatches.length} group matches!`);
   showAdmSec('sched',document.querySelector('.atab[data-sec="sched"]'));
 }
 
+// Generate Semi Finals — A vs D, B vs C (group toppers)
+async function generateSemiFinals(){
+  const groups=DB.groups['A']||{};
+  const sfFmt=DB.settings.catASFFmt||'bo5';
+  const teams=DB.teams||[];
+  const fmt=DB.settings.teamMatchFormat||[];
+  if(!fmt.length){toast('Set match format first','e');return;}
+
+  // Get topper of each group
+  const toppers={};
+  ['A','B','C','D'].forEach(g=>{
+    const grpName='Group '+g;
+    const grpTeams=(groups[grpName]||[]);
+    if(!grpTeams.length) return;
+    const st=teamStandings(grpName);
+    if(st.length) toppers[g]=st[0].name;
+  });
+
+  const missing=(['A','B','C','D']).filter(g=>!toppers[g]);
+  if(missing.length){
+    toast(`Groups ${missing.join(',')} have no results yet — cannot determine toppers`,'e');
+    return;
+  }
+
+  confirm2('Generate Semi Finals?',
+    `SF1: Group A topper (${toppers['A']}) vs Group D topper (${toppers['D']})
+SF2: Group B topper (${toppers['B']}) vs Group C topper (${toppers['C']})
+
+Format: ${sfFmt==='bo5'?'Best of 5':'Best of 3'} sets`,
+    async()=>{
+      DB.schedule=DB.schedule.filter(m=>!(m.cat==='A'&&m.stage==='sf'));
+      const newMatches=[];
+      const sfPairs=[
+        {t1:toppers['A'],t2:toppers['D'],grp:'Semi Final 1',stage:'sf'},
+        {t1:toppers['B'],t2:toppers['C'],grp:'Semi Final 2',stage:'sf'},
+      ];
+      sfPairs.forEach(({t1:t1Name,t2:t2Name,grp,stage})=>{
+        const t1=teams.find(t=>t.name===t1Name), t2=teams.find(t=>t.name===t2Name);
+        if(!t1||!t2) return;
+        fmt.forEach(slot=>{
+          const hp=resolveRoles(t1,slot.home);
+          const ap=resolveRoles(t2,slot.away);
+          newMatches.push({
+            id:DB.nid++, cat:'A', grp, stage,
+            format:sfFmt==='bo5'?'Best of 5':'Best of 3',
+            teamTie:`${t1Name} vs ${t2Name}`,
+            p1:`${t1Name}: ${hp}`, p2:`${t2Name}: ${ap}`,
+            gameType:slot.type, gameLabel:typeLabel(slot.type),
+            homeRoles:slot.home, awayRoles:slot.away,
+            homeTeam:t1Name, awayTeam:t2Name,
+            status:'upcoming', date:'', time:'', tbl:''
+          });
+        });
+      });
+      DB.schedule=[...DB.schedule,...newMatches];
+      saveLocal(DB);
+      await serverCmd('saveSchedule',{schedule:DB.schedule});
+      toast('✅ Semi Finals generated!');
+      showAdmSec('sched',document.querySelector('.atab[data-sec="sched"]'));
+    }
+  );
+}
+
+// Generate Final — SF1 winner vs SF2 winner
+async function generateFinal(){
+  const sfFmt=DB.settings.catASFFmt||'bo5';
+  const teams=DB.teams||[];
+  const fmt=DB.settings.teamMatchFormat||[];
+  if(!fmt.length){toast('Set match format first','e');return;}
+
+  // Find SF winners from results
+  const sf1Results=DB.results.filter(r=>r.cat==='A'&&r.grp==='Semi Final 1'&&r.teamTie);
+  const sf2Results=DB.results.filter(r=>r.cat==='A'&&r.grp==='Semi Final 2'&&r.teamTie);
+
+  const getSFWinner=(sfResults,sfGrp)=>{
+    const ties={};
+    sfResults.forEach(r=>{
+      const key=r.teamTie;
+      if(!ties[key]) ties[key]={home:r.homeTeam,away:r.awayTeam,homeW:0,awayW:0};
+      const[w,l]=(r.score||'0-0').split('-').map(Number);
+      if(isNaN(w)||isNaN(l)) return;
+      const homeWon=(r.homeTeam===r.p1.split(':')[0].trim()&&w>l)||(r.homeTeam===r.p2.split(':')[0].trim()&&l>w);
+      if(homeWon) ties[key].homeW++; else if(w!==l) ties[key].awayW++;
+    });
+    const tieData=Object.values(ties)[0];
+    if(!tieData) return null;
+    if(tieData.homeW>tieData.awayW) return tieData.home;
+    if(tieData.awayW>tieData.homeW) return tieData.away;
+    return null; // draw — needs tiebreak
+  };
+
+  const sf1Winner=getSFWinner(sf1Results,'Semi Final 1');
+  const sf2Winner=getSFWinner(sf2Results,'Semi Final 2');
+
+  if(!sf1Winner||!sf2Winner){
+    toast('Semi final results not complete yet','e'); return;
+  }
+
+  confirm2('Generate Final?',
+    `🏆 FINAL: ${sf1Winner} vs ${sf2Winner}
+Format: ${sfFmt==='bo5'?'Best of 5':'Best of 3'} sets`,
+    async()=>{
+      DB.schedule=DB.schedule.filter(m=>!(m.cat==='A'&&m.stage==='final'));
+      const newMatches=[];
+      const t1=teams.find(t=>t.name===sf1Winner), t2=teams.find(t=>t.name===sf2Winner);
+      if(!t1||!t2){toast('Teams not found','e');return;}
+      fmt.forEach(slot=>{
+        const hp=resolveRoles(t1,slot.home);
+        const ap=resolveRoles(t2,slot.away);
+        newMatches.push({
+          id:DB.nid++, cat:'A', grp:'🏆 FINAL', stage:'final',
+          format:sfFmt==='bo5'?'Best of 5':'Best of 3',
+          teamTie:`${sf1Winner} vs ${sf2Winner}`,
+          p1:`${sf1Winner}: ${hp}`, p2:`${sf2Winner}: ${ap}`,
+          gameType:slot.type, gameLabel:typeLabel(slot.type),
+          homeRoles:slot.home, awayRoles:slot.away,
+          homeTeam:sf1Winner, awayTeam:sf2Winner,
+          status:'upcoming', date:'', time:'', tbl:''
+        });
+      });
+      DB.schedule=[...DB.schedule,...newMatches];
+      saveLocal(DB);
+      await serverCmd('saveSchedule',{schedule:DB.schedule});
+      toast('🏆 Final generated!');
+      showAdmSec('sched',document.querySelector('.atab[data-sec="sched"]'));
+    }
+  );
+}
+
 async function generateTeamMatches(){ openGenerateModal(); }
+
+// ═══════════════════════════════════════════
+// TEAMS PDF EXPORT
+// ═══════════════════════════════════════════
+function downloadTeamsPDF(){
+  const {jsPDF}=window.jspdf;
+  const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+  const pw=doc.internal.pageSize.getWidth();
+  const ph=doc.internal.pageSize.getHeight();
+  const teams=DB.teams||[];
+  const groups=DB.groups['A']||{};
+  const tourName=DB.settings.name||'Tournament';
+
+  if(!teams.length){toast('No teams to export','e');return;}
+
+  // ── Header ──
+  doc.setFillColor(26,35,64);
+  doc.rect(0,0,pw,28,'F');
+  doc.setFillColor(200,168,75);
+  doc.rect(0,26,pw,2,'F');
+  doc.setTextColor(255,255,255);
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(16);
+  doc.text('🏓 '+tourName.toUpperCase(),pw/2,11,{align:'center'});
+  doc.setFontSize(10);
+  doc.setTextColor(200,168,75);
+  doc.text('CATEGORY A — TEAMS & GROUPS DRAW',pw/2,19,{align:'center'});
+  doc.setFontSize(8);
+  doc.setTextColor(150,170,210);
+  doc.text('Generated: '+new Date().toLocaleDateString('en-IN',{day:'numeric',month:'long',year:'numeric'}),pw/2,24.5,{align:'center'});
+
+  let y=36;
+
+  // ── GROUPS SECTION ──
+  if(Object.keys(groups).length){
+    doc.setFillColor(240,244,250);
+    doc.rect(10,y,pw-20,7,'F');
+    doc.setFillColor(26,35,64);
+    doc.rect(10,y,4,7,'F');
+    doc.setTextColor(26,35,64);
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(11);
+    doc.text('GROUP DRAW',17,y+5);
+    y+=11;
+
+    const grpColors={A:[26,35,64],B:[200,168,75],C:[46,140,87],D:[180,60,80]};
+    Object.entries(groups).forEach(([grpName,teamNames])=>{
+      if(!teamNames.length) return;
+      if(y>ph-30){doc.addPage();y=15;}
+
+      const letter=grpName.replace('Group ','');
+      const col=(grpColors[letter]||[80,80,80]);
+      doc.setFillColor(...col);
+      doc.rect(10,y,pw-20,6,'F');
+      doc.setTextColor(255,255,255);
+      doc.setFont('helvetica','bold');
+      doc.setFontSize(9);
+      doc.text(grpName.toUpperCase()+' ('+teamNames.length+' teams)',14,y+4.2);
+      y+=6;
+
+      teamNames.forEach((tn,ti)=>{
+        const team=teams.find(t=>t.name===tn);
+        const mc=(team?.members||[]).filter(m=>m.gender==='Male').length;
+        const fc=(team?.members||[]).filter(m=>m.gender==='Female').length;
+        doc.setFillColor(ti%2===0?248:255,ti%2===0?250:255,ti%2===0?255:255);
+        doc.rect(10,y,pw-20,5.5,'F');
+        doc.setTextColor(26,35,64);
+        doc.setFont('helvetica','bold');
+        doc.setFontSize(8.5);
+        doc.text((ti+1)+'. '+tn,14,y+3.8);
+        doc.setFont('helvetica','normal');
+        doc.setTextColor(100,120,150);
+        doc.setFontSize(7.5);
+        doc.text(mc+'M + '+fc+'F',pw-14,y+3.8,{align:'right'});
+        y+=5.5;
+      });
+      y+=4;
+    });
+    y+=4;
+  }
+
+  // ── TEAMS DETAIL SECTION ──
+  if(y>ph-40){doc.addPage();y=15;}
+  doc.setFillColor(240,244,250);
+  doc.rect(10,y,pw-20,7,'F');
+  doc.setFillColor(26,35,64);
+  doc.rect(10,y,4,7,'F');
+  doc.setTextColor(26,35,64);
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(11);
+  doc.text('TEAM DETAILS',17,y+5);
+  y+=11;
+
+  // Find which group each team is in
+  const teamGroup={};
+  Object.entries(groups).forEach(([grp,tns])=>tns.forEach(tn=>teamGroup[tn]=grp));
+
+  const COLS=[26,35,64];
+  teams.forEach((team,ti)=>{
+    const males=(team.members||[]).filter(m=>m.gender==='Male');
+    const females=(team.members||[]).filter(m=>m.gender==='Female');
+    const allM=[...males,...females];
+    const rowH=7+allM.length*5.5;
+
+    if(y+rowH>ph-15){doc.addPage();y=15;}
+
+    // Team header
+    doc.setFillColor(...COLS);
+    doc.rect(10,y,pw-20,7,'F');
+    doc.setTextColor(255,255,255);
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(9);
+    doc.text('TEAM '+(ti+1)+': '+team.name.toUpperCase(),14,y+4.8);
+    const grpLabel=teamGroup[team.name]||'—';
+    doc.setTextColor(200,168,75);
+    doc.setFontSize(8);
+    doc.text(grpLabel,pw-14,y+4.8,{align:'right'});
+    y+=7;
+
+    // Column headers
+    doc.setFillColor(220,228,245);
+    doc.rect(10,y,pw-20,5,'F');
+    doc.setTextColor(60,80,120);
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(7);
+    doc.text('#',13,y+3.5);
+    doc.text('ROLE',20,y+3.5);
+    doc.text('NAME',38,y+3.5);
+    doc.text('CPF/ID',pw/2,y+3.5);
+    doc.text('WHATSAPP',pw-14,y+3.5,{align:'right'});
+    y+=5;
+
+    // Members
+    males.forEach((m,j)=>{
+      doc.setFillColor(j%2===0?250:255,j%2===0?252:255,j%2===0?255:255);
+      doc.rect(10,y,pw-20,5.5,'F');
+      doc.setFillColor(70,130,200);
+      doc.rect(10,y,2.5,5.5,'F');
+      doc.setTextColor(30,50,90);
+      doc.setFont('helvetica','normal');
+      doc.setFontSize(8);
+      doc.text(String(j+1),13,y+3.8);
+      doc.setFont('helvetica','bold');
+      doc.setTextColor(40,100,180);
+      doc.setFontSize(7.5);
+      doc.text('M'+(j+1),20,y+3.8);
+      doc.setFont('helvetica','normal');
+      doc.setTextColor(30,50,90);
+      doc.setFontSize(8);
+      doc.text(m.name,38,y+3.8,{maxWidth:pw/2-42});
+      doc.setFont('helvetica','normal');
+      doc.setTextColor(80,100,140);
+      doc.setFontSize(7.5);
+      doc.text(m.cpf||'—',pw/2,y+3.8);
+      doc.text(m.whatsapp||'—',pw-14,y+3.8,{align:'right'});
+      y+=5.5;
+    });
+    females.forEach((m,j)=>{
+      const ri=males.length+j;
+      doc.setFillColor(ri%2===0?255:250,ri%2===0?248:252,ri%2===0?255:255);
+      doc.rect(10,y,pw-20,5.5,'F');
+      doc.setFillColor(220,80,120);
+      doc.rect(10,y,2.5,5.5,'F');
+      doc.setTextColor(30,50,90);
+      doc.setFont('helvetica','normal');
+      doc.setFontSize(8);
+      doc.text(String(ri+1),13,y+3.8);
+      doc.setFont('helvetica','bold');
+      doc.setTextColor(180,60,100);
+      doc.setFontSize(7.5);
+      doc.text('F'+(j+1),20,y+3.8);
+      doc.setFont('helvetica','normal');
+      doc.setTextColor(30,50,90);
+      doc.setFontSize(8);
+      doc.text(m.name,38,y+3.8,{maxWidth:pw/2-42});
+      doc.setFont('helvetica','normal');
+      doc.setTextColor(80,100,140);
+      doc.setFontSize(7.5);
+      doc.text(m.cpf||'—',pw/2,y+3.8);
+      doc.text(m.whatsapp||'—',pw-14,y+3.8,{align:'right'});
+      y+=5.5;
+    });
+    y+=5;
+  });
+
+  // Page numbers
+  const pages=doc.internal.getNumberOfPages();
+  for(let i=1;i<=pages;i++){
+    doc.setPage(i);
+    doc.setFontSize(7);
+    doc.setTextColor(150,160,180);
+    doc.text(tourName+' · Cat A Teams · Page '+i+'/'+pages,pw/2,ph-5,{align:'center'});
+  }
+
+  doc.save(tourName.replace(/[^a-z0-9]/gi,'_').toLowerCase()+'_cat_a_teams.pdf');
+  toast('✅ Teams PDF downloaded!');
+}
 
 // ═══════════════════════════════════════════
 // INIT
 // ═══════════════════════════════════════════
 
 // HARDCODED SCRIPT URL — set this once, works for everyone
-const HARDCODED_URL = 'https://script.google.com/macros/s/AKfycbw4wo6d8P08CehB-rRC7cSDy2ausm73SSQ2io29sofJOItoDfc0CfOw36nj2HVX95c/exec'; // Admin: paste your Script URL between these quotes
+const HARDCODED_URL = ''; // Admin: paste your Script URL between these quotes
 
 // On every load: if hardcoded URL exists, use it regardless of localStorage
 if(HARDCODED_URL) {
