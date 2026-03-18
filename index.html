@@ -961,33 +961,39 @@ async function serverCmd(action, payload){
   setSyncState('loading','Saving…');
   try{
     const json = payload ? JSON.stringify(payload) : '';
-    const b64  = json ? btoa(unescape(encodeURIComponent(json))) : '';
-    const sep  = url.includes('?') ? '&' : '?';
+    const encoded = json ? encodeURIComponent(json) : '';
+    const sep = url.includes('?') ? '&' : '?';
 
     // If data fits in one URL, send directly
-    const directUrl = url + sep + 'action=' + action + (b64 ? '&data=' + encodeURIComponent(b64) : '');
+    const directUrl = url + sep + 'action=' + action + (encoded ? '&data=' + encoded : '');
     if(directUrl.length <= 1800){
       const res = await fetch(directUrl);
       const result = await res.json();
-      if(result.ok){ await syncNow(true); } else { setSyncState('err','Failed'); if(result.error) toast(result.error,'e'); }
+      if(result.ok){ await syncNow(true); }
+      else { setSyncState('err','Failed'); if(result.error) toast(result.error,'e'); }
       return result;
     }
 
-    // Too large — send in chunks then trigger execution
-    const CHUNK = 800; // small safe chunk size
-    const total = Math.ceil(b64.length / CHUNK);
+    // Too large — split encoded JSON into chunks
+    const CHUNK = 600;
+    const total = Math.ceil(encoded.length / CHUNK);
     for(let i = 0; i < total; i++){
-      const chunk = b64.slice(i*CHUNK, (i+1)*CHUNK);
-      const storeUrl = url + sep + 'action=chunkStore&idx='+i+'&chunk='+encodeURIComponent(chunk);
+      const chunk = encoded.slice(i*CHUNK, (i+1)*CHUNK);
+      const storeUrl = url + sep + 'action=chunkStore&idx='+i+'&chunk='+chunk;
       const r = await fetch(storeUrl);
       const rd = await r.json();
-      if(!rd.ok){ setSyncState('err','Failed'); toast('Chunk upload failed at '+i,'e'); return {ok:false}; }
+      if(!rd.ok){
+        setSyncState('err','Failed');
+        toast('Chunk upload failed at step '+i,'e');
+        return {ok:false};
+      }
     }
-    // All chunks stored — now execute
+    // All chunks stored — execute
     const execUrl = url + sep + 'action=chunkExec&cmd='+encodeURIComponent(action)+'&total='+total;
     const execRes = await fetch(execUrl);
     const result = await execRes.json();
-    if(result.ok){ await syncNow(true); } else { setSyncState('err','Failed'); if(result.error) toast(result.error,'e'); }
+    if(result.ok){ await syncNow(true); }
+    else { setSyncState('err','Failed'); if(result.error) toast(result.error,'e'); }
     return result;
   }catch(e){
     setSyncState('err','Failed');
@@ -3144,7 +3150,7 @@ function downloadTeamsPDF(){
 // ═══════════════════════════════════════════
 
 // HARDCODED SCRIPT URL — set this once, works for everyone
-const HARDCODED_URL = 'https://script.google.com/macros/s/AKfycbwxlDdYvndKwd3sUGdGkgJYTEsJo6Ba9muiYCVFcfvpvfozCeqMVsN94rmw2OrIe8M/exec'; // Admin: paste your Script URL between these quotes
+const HARDCODED_URL = 'https://script.google.com/macros/s/AKfycbyVdkVx9WMKdmXpVXUgrDthelbsVuB4mWBaxtDSVMIGOJIcxL-dYxUfU12bmIovUHk/exec'; // Admin: paste your Script URL between these quotes
 
 // On every load: if hardcoded URL exists, use it regardless of localStorage
 if(HARDCODED_URL) {
