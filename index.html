@@ -2558,35 +2558,26 @@ function openTeamModal(editIdx){
     return (a.partName||a.name).localeCompare(b.partName||b.name);
   });
 
-  renderTeamPlayerList('');
+  buildTeamPlayerList();
   updateTeamPreview();
   openM('m-team');
 }
 
-function renderTeamPlayerList(query){
-  const q=(query||'').toLowerCase().trim();
-  const filtered=q?_teamPlayers.filter(p=>(p.partName||p.name).toLowerCase().includes(q)):_teamPlayers;
-
-  const countEl=document.getElementById('mt-count');
-  if(countEl) countEl.textContent=`(${_teamSelected.size} selected of ${_teamPlayers.length})`;
-
-  if(!filtered.length){
-    document.getElementById('mt-player-list').innerHTML=
-      '<div class="t3 ts" style="padding:8px;text-align:center">No players match "'+q+'"</div>';
-    return;
-  }
-
-  document.getElementById('mt-player-list').innerHTML=filtered.map(p=>{
+// Build the full list ONCE — then just show/hide on search
+function buildTeamPlayerList(){
+  const el=document.getElementById('mt-player-list');
+  el.innerHTML=_teamPlayers.map(p=>{
     const isFemale=p.gender==='Female';
     const inOther=_teamInOther[p.cpf];
     const isChecked=_teamSelected.has(p.cpf);
     const nameDisp=p.partName||p.name;
-    return `<label style="display:flex;align-items:center;gap:6px;padding:7px 6px;border-bottom:1px solid var(--b1);cursor:pointer;${inOther&&!isChecked?'opacity:.5':''}">
+    return `<label data-cpf="${p.cpf}" data-name="${nameDisp.toLowerCase()}"
+      style="display:flex;align-items:center;gap:6px;padding:7px 6px;border-bottom:1px solid var(--b1);cursor:pointer;${inOther&&!isChecked?'opacity:.5':''}">
       <input type="checkbox" ${isChecked?'checked':''} ${inOther&&!isChecked?'disabled':''}
         data-cpf="${p.cpf}" data-name="${nameDisp}" data-gender="${p.gender||''}" data-whatsapp="${p.whatsapp||''}"
         onchange="onTeamCheckChange(this)" style="width:16px;height:16px;accent-color:var(--lime);flex-shrink:0"/>
       <div style="flex:1;min-width:0">
-        <div style="font-size:.82rem;font-weight:${isChecked?'700':'400'};overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${nameDisp}</div>
+        <div style="font-size:.82rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:${isChecked?'700':'400'}">${nameDisp}</div>
         <div style="font-size:.68rem;color:var(--t3);font-family:'JetBrains Mono',monospace;margin-top:1px">
           ID:${p.cpf}${p.whatsapp?' · 📱'+p.whatsapp:''}
         </div>
@@ -2595,20 +2586,51 @@ function renderTeamPlayerList(query){
       ${inOther&&!isChecked?`<span style="font-size:.62rem;color:var(--gold);flex-shrink:0;max-width:60px;overflow:hidden;text-overflow:ellipsis">${inOther}</span>`:''}
     </label>`;
   }).join('');
+  updateCount();
 }
 
-// Called when any checkbox changes — updates persistent Set
-function onTeamCheckChange(cb){
-  if(cb.checked) _teamSelected.add(cb.dataset.cpf);
-  else _teamSelected.delete(cb.dataset.cpf);
-  updateTeamPreview();
-  // Update count
+// Just show/hide — checkboxes are NEVER destroyed
+function renderTeamPlayerList(query){
+  const q=(query||'').toLowerCase().trim();
+  const labels=document.querySelectorAll('#mt-player-list label[data-cpf]');
+  let visible=0;
+  labels.forEach(lbl=>{
+    const name=lbl.getAttribute('data-name')||'';
+    const show=!q||name.includes(q);
+    lbl.style.display=show?'flex':'none';
+    if(show) visible++;
+  });
+  // Show "no results" message if needed
+  let noRes=document.getElementById('mt-no-results');
+  if(!noRes){
+    noRes=document.createElement('div');
+    noRes.id='mt-no-results';
+    noRes.className='t3 ts';
+    noRes.style='padding:8px;text-align:center';
+    document.getElementById('mt-player-list').appendChild(noRes);
+  }
+  noRes.style.display=visible===0?'block':'none';
+  noRes.textContent=visible===0?'No players match "'+q+'"':'';
+  updateCount();
+}
+
+function updateCount(){
   const countEl=document.getElementById('mt-count');
   if(countEl) countEl.textContent=`(${_teamSelected.size} selected of ${_teamPlayers.length})`;
 }
 
+// Checkbox change — update Set AND bold the name
+function onTeamCheckChange(cb){
+  if(cb.checked) _teamSelected.add(cb.dataset.cpf);
+  else _teamSelected.delete(cb.dataset.cpf);
+  // Update font weight of name in same label
+  const nameDiv=cb.closest('label').querySelector('div div');
+  if(nameDiv) nameDiv.style.fontWeight=cb.checked?'700':'400';
+  updateCount();
+  updateTeamPreview();
+}
+
 function filterTeamPlayers(query){
-  // Re-render with filter — selection is preserved in _teamSelected
   renderTeamPlayerList(query);
 }
 
@@ -3102,7 +3124,7 @@ function downloadTeamsPDF(){
 // ═══════════════════════════════════════════
 
 // HARDCODED SCRIPT URL — set this once, works for everyone
-const HARDCODED_URL = 'https://script.google.com/macros/s/AKfycbw4wo6d8P08CehB-rRC7cSDy2ausm73SSQ2io29sofJOItoDfc0CfOw36nj2HVX95c/exec'; // Admin: paste your Script URL between these quotes
+const HARDCODED_URL = ''; // Admin: paste your Script URL between these quotes
 
 // On every load: if hardcoded URL exists, use it regardless of localStorage
 if(HARDCODED_URL) {
