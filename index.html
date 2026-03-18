@@ -724,20 +724,36 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t1);displ
         <option value="E">E · Homemaker/Wife · Singles</option>
       </select>
     </div>
-    <div class="af-group"><label class="af-label">Group</label><select class="af-select" id="mm-grp" onchange="populateMMP()"></select></div>
-    <div class="af-group" id="mm-gt-row" style="display:none">
-      <label class="af-label">Game Type (Cat A)</label>
-      <select class="af-select" id="mm-gt">
-        <option value="MS">Men's Singles</option>
-        <option value="WS">Women's Singles</option>
-        <option value="MD">Men's Doubles</option>
-        <option value="WD">Women's Doubles</option>
-        <option value="XD">Mixed Doubles</option>
-      </select>
+    <div class="af-group"><label class="af-label">Group</label><select class="af-select" id="mm-grp" onchange="populateMM_grp()"></select></div>
+
+    <!-- Cat B/C/D/E: simple player vs player -->
+    <div id="mm-bcd-row">
+      <div class="af-grid2">
+        <div class="af-group"><label class="af-label">Player 1</label><select class="af-select" id="mm-p1"></select></div>
+        <div class="af-group"><label class="af-label">Player 2</label><select class="af-select" id="mm-p2"></select></div>
+      </div>
     </div>
-    <div class="af-grid2">
-      <div class="af-group"><label class="af-label" id="mm-p1-label">Team 1</label><select class="af-select" id="mm-p1"></select></div>
-      <div class="af-group"><label class="af-label" id="mm-p2-label">Team 2</label><select class="af-select" id="mm-p2"></select></div>
+
+    <!-- Cat A: team vs team with game type and specific players -->
+    <div id="mm-a-row" style="display:none">
+      <div class="af-group">
+        <label class="af-label">Game Type</label>
+        <select class="af-select" id="mm-gt" onchange="populateMMTeamPlayers()">
+          <option value="MS">Men's Singles</option>
+          <option value="WS">Women's Singles</option>
+          <option value="MD">Men's Doubles</option>
+          <option value="WD">Women's Doubles</option>
+          <option value="XD">Mixed Doubles</option>
+        </select>
+      </div>
+      <div class="af-grid2">
+        <div class="af-group"><label class="af-label">Home Team</label><select class="af-select" id="mm-team1" onchange="populateMMTeamPlayers()"></select></div>
+        <div class="af-group"><label class="af-label">Away Team</label><select class="af-select" id="mm-team2" onchange="populateMMTeamPlayers()"></select></div>
+      </div>
+      <div class="af-grid2" id="mm-player-selectors">
+        <div class="af-group"><label class="af-label" id="mm-hp-label">Home Player(s)</label><div id="mm-home-players"></div></div>
+        <div class="af-group"><label class="af-label" id="mm-ap-label">Away Player(s)</label><div id="mm-away-players"></div></div>
+      </div>
     </div>
     <div class="af-grid2">
       <div class="af-group"><label class="af-label">Date</label><input class="af-input" id="mm-date" type="date"/></div>
@@ -1778,28 +1794,77 @@ function populateMM(){
   const ck=document.getElementById('mm-cat').value;
   const gs=Object.keys(DB.groups[ck]||{});
   document.getElementById('mm-grp').innerHTML=gs.map(g=>`<option>${g}</option>`).join('');
-  // Show/hide game type row for Cat A
-  const gtRow=document.getElementById('mm-gt-row');
-  if(gtRow) gtRow.style.display=ck==='A'?'block':'none';
-  populateMMP();
+  const isA=ck==='A';
+  document.getElementById('mm-a-row').style.display=isA?'block':'none';
+  document.getElementById('mm-bcd-row').style.display=isA?'none':'block';
+  if(isA) populateMMTeams(); else populateMMPlayers();
 }
-function populateMMP(s1,s2){
-  const ck=document.getElementById('mm-cat').value, grp=document.getElementById('mm-grp').value;
-  if(ck==='A'){
-    // For Cat A: show teams in group as player options
-    const teamNames=(DB.groups['A']||{})[grp]||[];
-    const opts=teamNames.map(t=>`<option>${t}</option>`).join('');
-    ['mm-p1','mm-p2'].forEach(id=>{document.getElementById(id).innerHTML=opts||'<option>No teams in group</option>';});
-    if(s1) document.getElementById('mm-p1').value=s1;
-    if(s2) document.getElementById('mm-p2').value=s2;
-    return;
-  }
+
+function populateMM_grp(){
+  const ck=document.getElementById('mm-cat').value;
+  if(ck==='A') populateMMTeams(); else populateMMPlayers();
+}
+
+function populateMMPlayers(s1,s2){
+  const ck=document.getElementById('mm-cat').value;
+  const grp=document.getElementById('mm-grp').value;
   const pl=(DB.groups[ck]||{})[grp]||[];
   const opts=pl.map(p=>`<option>${p}</option>`).join('');
-  ['mm-p1','mm-p2'].forEach(id=>{document.getElementById(id).innerHTML=opts;});
+  ['mm-p1','mm-p2'].forEach(id=>{ document.getElementById(id).innerHTML=opts; });
   if(s1) document.getElementById('mm-p1').value=s1;
   if(s2) document.getElementById('mm-p2').value=s2;
 }
+
+function populateMMTeams(){
+  const grp=document.getElementById('mm-grp').value;
+  const teamNames=(DB.groups['A']||{})[grp]||[];
+  const opts=teamNames.map(t=>`<option>${t}</option>`).join('');
+  ['mm-team1','mm-team2'].forEach(id=>{ document.getElementById(id).innerHTML=opts||'<option>No teams</option>'; });
+  // Set team2 to second team if available
+  if(teamNames.length>1) document.getElementById('mm-team2').value=teamNames[1];
+  populateMMTeamPlayers();
+}
+
+function populateMMTeamPlayers(){
+  const gt=document.getElementById('mm-gt').value;
+  const t1name=document.getElementById('mm-team1').value;
+  const t2name=document.getElementById('mm-team2').value;
+  const t1=( DB.teams||[]).find(t=>t.name===t1name);
+  const t2=(DB.teams||[]).find(t=>t.name===t2name);
+
+  const isDoubles=gt==='MD'||gt==='WD'||gt==='XD';
+  const slots=isDoubles?2:1;
+
+  // Determine eligible players per team based on game type
+  const eligible=(team)=>{
+    if(!team) return [];
+    const m=(team.members||[]).filter(p=>p.gender==='Male');
+    const f=(team.members||[]).filter(p=>p.gender==='Female');
+    if(gt==='MS'||gt==='MD') return m;
+    if(gt==='WS'||gt==='WD') return f;
+    if(gt==='XD') return team.members||[];
+    return team.members||[];
+  };
+
+  const makeSelects=(teamObj, prefix, count)=>{
+    const players=eligible(teamObj);
+    const opts=players.map(p=>`<option value="${p.name}">${p.name} (${p.gender==='Female'?'F':'M'})</option>`).join('');
+    let html='';
+    for(let i=0;i<count;i++){
+      html+=`<select class="af-select" id="${prefix}${i}" style="margin-bottom:4px">
+        <option value="">— Select —</option>${opts}
+      </select>`;
+    }
+    return html;
+  };
+
+  const lbl=isDoubles?'Players (pick 2)':'Player';
+  document.getElementById('mm-hp-label').textContent='Home: '+t1name+' — '+lbl;
+  document.getElementById('mm-ap-label').textContent='Away: '+t2name+' — '+lbl;
+  document.getElementById('mm-home-players').innerHTML=makeSelects(t1,'mm-hp',slots);
+  document.getElementById('mm-away-players').innerHTML=makeSelects(t2,'mm-ap',slots);
+}
+
 function openMatchModal(eid){
   populateMM();
   document.getElementById('mm-eid').value=eid||'';
@@ -1807,27 +1872,71 @@ function openMatchModal(eid){
   if(eid){
     const m=DB.schedule.find(x=>x.id===eid); if(!m) return;
     document.getElementById('mm-cat').value=m.cat||'A'; populateMM();
-    document.getElementById('mm-grp').value=m.grp; populateMMP(m.p1,m.p2);
+    document.getElementById('mm-grp').value=m.grp;
+    if(m.cat==='A'){
+      populateMMTeams();
+      if(m.gameType) document.getElementById('mm-gt').value=m.gameType;
+      if(m.homeTeam) document.getElementById('mm-team1').value=m.homeTeam;
+      if(m.awayTeam) document.getElementById('mm-team2').value=m.awayTeam;
+      populateMMTeamPlayers();
+    } else {
+      populateMMPlayers(m.p1,m.p2);
+    }
     document.getElementById('mm-date').value=m.date||'';
     document.getElementById('mm-time').value=m.time||'';
     document.getElementById('mm-tbl').value=m.tbl||'';
-  } else ['mm-date','mm-time','mm-tbl'].forEach(id=>document.getElementById(id).value='');
+  } else {
+    ['mm-date','mm-time','mm-tbl'].forEach(id=>document.getElementById(id).value='');
+  }
   openM('m-match');
 }
+
 async function saveMatch(){
-  const p1=document.getElementById('mm-p1').value, p2=document.getElementById('mm-p2').value;
-  if(!p1||!p2||p1===p2){toast('Pick 2 different players','e');return;}
   const eid=parseInt(document.getElementById('mm-eid').value)||0;
   const mcat=document.getElementById('mm-cat').value;
-  const mgt=mcat==='A'?document.getElementById('mm-gt').value:'';
-  const mgtLabel=mcat==='A'?typeLabel(mgt):'';
-  const m={id:eid||0,cat:mcat,grp:document.getElementById('mm-grp').value,
-    p1,p2,
-    homeTeam:mcat==='A'?p1:'', awayTeam:mcat==='A'?p2:'',
-    gameType:mgt, gameLabel:mgtLabel,
-    teamTie:mcat==='A'?`${p1} vs ${p2}`:'',
-    date:document.getElementById('mm-date').value,time:document.getElementById('mm-time').value,
-    tbl:document.getElementById('mm-tbl').value,status:'upcoming'};
+  const grp=document.getElementById('mm-grp').value;
+  let m;
+
+  if(mcat==='A'){
+    const gt=document.getElementById('mm-gt').value;
+    const t1name=document.getElementById('mm-team1').value;
+    const t2name=document.getElementById('mm-team2').value;
+    if(!t1name||!t2name||t1name===t2name){toast('Select two different teams','e');return;}
+    const isDoubles=gt==='MD'||gt==='WD'||gt==='XD';
+    const slots=isDoubles?2:1;
+    // Collect home players
+    const hp=[],ap=[];
+    for(let i=0;i<slots;i++){
+      const hEl=document.getElementById('mm-hp'+i);
+      const aEl=document.getElementById('mm-ap'+i);
+      if(hEl&&hEl.value) hp.push(hEl.value);
+      if(aEl&&aEl.value) ap.push(aEl.value);
+    }
+    if(!hp.length||!ap.length){toast('Select players for both teams','e');return;}
+    const hpStr=hp.join(' / '), apStr=ap.join(' / ');
+    m={id:eid||0, cat:'A', grp,
+      stage:'group',
+      format:DB.settings.catAGroupFmt==='bo5'?'Best of 5':'Best of 3',
+      teamTie:`${t1name} vs ${t2name}`,
+      homeTeam:t1name, awayTeam:t2name,
+      p1:`${t1name}: ${hpStr}`,
+      p2:`${t2name}: ${apStr}`,
+      gameType:gt, gameLabel:typeLabel(gt),
+      date:document.getElementById('mm-date').value,
+      time:document.getElementById('mm-time').value,
+      tbl:document.getElementById('mm-tbl').value,
+      status:'upcoming'};
+  } else {
+    const p1=document.getElementById('mm-p1').value;
+    const p2=document.getElementById('mm-p2').value;
+    if(!p1||!p2||p1===p2){toast('Pick 2 different players','e');return;}
+    m={id:eid||0, cat:mcat, grp, p1, p2,
+      date:document.getElementById('mm-date').value,
+      time:document.getElementById('mm-time').value,
+      tbl:document.getElementById('mm-tbl').value,
+      status:'upcoming'};
+  }
+
   DB=loadDB();
   if(eid) DB.schedule=DB.schedule.map(x=>x.id===eid?{...m,id:eid}:x);
   else { m.id=DB.nid++; DB.schedule.push(m); }
