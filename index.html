@@ -2527,7 +2527,9 @@ async function saveFormat(){
 }
 
 // ── TEAM MODAL ────────────────────────────────
-let _teamPlayers = []; // cache for search filtering
+let _teamPlayers = [];   // all Cat A players sorted
+let _teamSelected = new Set(); // persists across searches
+let _teamInOther = {};   // players already in other teams
 
 function openTeamModal(editIdx){
   const teams=DB.teams||[];
@@ -2538,95 +2540,98 @@ function openTeamModal(editIdx){
   document.getElementById('mt-ttl').textContent=t?'✏️ EDIT TEAM':'👨‍👩‍👧 NEW TEAM';
   document.getElementById('mt-search').value='';
 
-  // Get all approved Cat A players, already-in-other-teams info
-  const allCatA=DB.noms.filter(n=>n.status==='approved'&&n.cat==='A');
-  const selected=new Set((t?.members||[]).map(m=>m.cpf));
+  // Init persistent selection from existing team members
+  _teamSelected=new Set((t?.members||[]).map(m=>m.cpf));
 
-  // Mark which players are already in other teams
-  const inOtherTeam={};
+  // Build in-other-teams map
+  _teamInOther={};
   (DB.teams||[]).forEach((team,ti)=>{
-    if(ti===editIdx) return; // skip current team
-    (team.members||[]).forEach(m=>{ inOtherTeam[m.cpf]=team.name; });
+    if(ti===editIdx) return;
+    (team.members||[]).forEach(m=>{ _teamInOther[m.cpf]=team.name; });
   });
 
-  // Sort: females first, then males, alphabetically within each
+  // Sort: females first, then males, alphabetically
+  const allCatA=DB.noms.filter(n=>n.status==='approved'&&n.cat==='A');
   _teamPlayers=[...allCatA].sort((a,b)=>{
     const ag=a.gender==='Female'?0:1, bg=b.gender==='Female'?0:1;
     if(ag!==bg) return ag-bg;
     return (a.partName||a.name).localeCompare(b.partName||b.name);
   });
 
-  renderTeamPlayerList('', selected, inOtherTeam);
+  renderTeamPlayerList('');
   updateTeamPreview();
   openM('m-team');
 }
 
-function renderTeamPlayerList(query, selected, inOtherTeam){
-  // If called from filter, get selected from current checkboxes
-  if(selected===undefined){
-    selected=new Set([...document.querySelectorAll('#mt-player-list input:checked')].map(cb=>cb.dataset.cpf));
-  }
-  if(inOtherTeam===undefined){
-    inOtherTeam={};
-    (DB.teams||[]).forEach((team,ti)=>{
-      const editIdx=document.getElementById('mt-id').value;
-      if(String(ti)===String(editIdx)) return;
-      (team.members||[]).forEach(m=>{ inOtherTeam[m.cpf]=team.name; });
-    });
-  }
-  const q=query.toLowerCase().trim();
+function renderTeamPlayerList(query){
+  const q=(query||'').toLowerCase().trim();
   const filtered=q?_teamPlayers.filter(p=>(p.partName||p.name).toLowerCase().includes(q)):_teamPlayers;
-  const total=_teamPlayers.length;
-  const selCount=[...document.querySelectorAll('#mt-player-list input:checked')].length;
 
   const countEl=document.getElementById('mt-count');
-  if(countEl) countEl.textContent=`(${selCount} selected of ${total})`;
+  if(countEl) countEl.textContent=`(${_teamSelected.size} selected of ${_teamPlayers.length})`;
 
   if(!filtered.length){
-    document.getElementById('mt-player-list').innerHTML='<div class="t3 ts" style="padding:8px;text-align:center">No players match "'+q+'"</div>';
+    document.getElementById('mt-player-list').innerHTML=
+      '<div class="t3 ts" style="padding:8px;text-align:center">No players match "'+q+'"</div>';
     return;
   }
 
   document.getElementById('mt-player-list').innerHTML=filtered.map(p=>{
     const isFemale=p.gender==='Female';
-    const inOther=inOtherTeam[p.cpf];
-    const isChecked=selected.has(p.cpf);
+    const inOther=_teamInOther[p.cpf];
+    const isChecked=_teamSelected.has(p.cpf);
     const nameDisp=p.partName||p.name;
     return `<label style="display:flex;align-items:center;gap:6px;padding:7px 6px;border-bottom:1px solid var(--b1);cursor:pointer;${inOther&&!isChecked?'opacity:.5':''}">
       <input type="checkbox" ${isChecked?'checked':''} ${inOther&&!isChecked?'disabled':''}
         data-cpf="${p.cpf}" data-name="${nameDisp}" data-gender="${p.gender||''}" data-whatsapp="${p.whatsapp||''}"
-        onchange="updateTeamPreview()" style="width:16px;height:16px;accent-color:var(--lime);flex-shrink:0"/>
+        onchange="onTeamCheckChange(this)" style="width:16px;height:16px;accent-color:var(--lime);flex-shrink:0"/>
       <div style="flex:1;min-width:0">
         <div style="font-size:.82rem;font-weight:${isChecked?'700':'400'};overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${nameDisp}</div>
         <div style="font-size:.68rem;color:var(--t3);font-family:'JetBrains Mono',monospace;margin-top:1px">
-          ID:${p.cpf} ${p.whatsapp?'· 📱'+p.whatsapp:''}
+          ID:${p.cpf}${p.whatsapp?' · 📱'+p.whatsapp:''}
         </div>
       </div>
       <span style="font-size:.7rem;flex-shrink:0">${isFemale?'<span style="color:var(--pink);font-weight:700">👩 F</span>':'<span style="color:var(--blue)">👨 M</span>'}</span>
-      ${inOther&&!isChecked?`<span style="font-size:.62rem;color:var(--gold);flex-shrink:0;max-width:60px;text-align:right;overflow:hidden;text-overflow:ellipsis">${inOther}</span>`:''}
+      ${inOther&&!isChecked?`<span style="font-size:.62rem;color:var(--gold);flex-shrink:0;max-width:60px;overflow:hidden;text-overflow:ellipsis">${inOther}</span>`:''}
     </label>`;
   }).join('');
 }
 
-function filterTeamPlayers(query){
-  renderTeamPlayerList(query);
+// Called when any checkbox changes — updates persistent Set
+function onTeamCheckChange(cb){
+  if(cb.checked) _teamSelected.add(cb.dataset.cpf);
+  else _teamSelected.delete(cb.dataset.cpf);
   updateTeamPreview();
+  // Update count
+  const countEl=document.getElementById('mt-count');
+  if(countEl) countEl.textContent=`(${_teamSelected.size} selected of ${_teamPlayers.length})`;
+}
+
+function filterTeamPlayers(query){
+  // Re-render with filter — selection is preserved in _teamSelected
+  renderTeamPlayerList(query);
 }
 
 function selectGender(gender){
-  const visible=[...document.querySelectorAll('#mt-player-list input:not(:disabled)')];
-  visible.forEach(cb=>{ if(cb.dataset.gender===gender) cb.checked=true; });
+  _teamPlayers.forEach(p=>{
+    if(p.gender===gender && !_teamInOther[p.cpf])
+      _teamSelected.add(p.cpf);
+  });
+  renderTeamPlayerList(document.getElementById('mt-search').value);
   updateTeamPreview();
 }
 
 function clearTeamSelection(){
-  document.querySelectorAll('#mt-player-list input').forEach(cb=>cb.checked=false);
+  _teamSelected.clear();
+  renderTeamPlayerList(document.getElementById('mt-search').value);
   updateTeamPreview();
 }
 
 function updateTeamPreview(){
-  const checked=[...document.querySelectorAll('#mt-player-list input:checked')];
-  const members=checked.map(cb=>({cpf:cb.dataset.cpf,name:cb.dataset.name,gender:cb.dataset.gender,whatsapp:cb.dataset.whatsapp||''}));
+  // Build members from persistent _teamSelected set
+  const members=_teamPlayers.filter(p=>_teamSelected.has(p.cpf)).map(p=>({
+    cpf:p.cpf, name:p.partName||p.name, gender:p.gender||'', whatsapp:p.whatsapp||''
+  }));
   // Update count
   const countEl=document.getElementById('mt-count');
   if(countEl) countEl.textContent=`(${members.length} selected of ${_teamPlayers.length})`;
@@ -2645,8 +2650,10 @@ async function saveTeam(){
   const name=document.getElementById('mt-name').value.trim();
   if(!name){toast('Team name required','e');return;}
   const color=document.getElementById('mt-color').value;
-  const checked=[...document.querySelectorAll('#mt-player-list input:checked')];
-  const members=checked.map(cb=>({cpf:cb.dataset.cpf,name:cb.dataset.name,gender:cb.dataset.gender,whatsapp:cb.dataset.whatsapp||''}));
+  // Build members from persistent _teamSelected set (not from visible checkboxes)
+  const members=_teamPlayers.filter(p=>_teamSelected.has(p.cpf)).map(p=>({
+    cpf:p.cpf, name:p.partName||p.name, gender:p.gender||'', whatsapp:p.whatsapp||''
+  }));
   const editIdx=document.getElementById('mt-id').value;
   const teams=[...(DB.teams||[])];
   const team={name,color,members,gameTypes:getGameTypes(members)};
@@ -3095,7 +3102,7 @@ function downloadTeamsPDF(){
 // ═══════════════════════════════════════════
 
 // HARDCODED SCRIPT URL — set this once, works for everyone
-const HARDCODED_URL = 'https://script.google.com/macros/s/AKfycbw4wo6d8P08CehB-rRC7cSDy2ausm73SSQ2io29sofJOItoDfc0CfOw36nj2HVX95c/exec'; // Admin: paste your Script URL between these quotes
+const HARDCODED_URL = ''; // Admin: paste your Script URL between these quotes
 
 // On every load: if hardcoded URL exists, use it regardless of localStorage
 if(HARDCODED_URL) {
