@@ -587,9 +587,10 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t1);displ
 
     <!-- RESULTS -->
     <div class="adm-sec" id="asec-results" style="display:none">
-      <div class="sec-row" style="margin-bottom:10px">
+      <div class="sec-row" style="margin-bottom:10px;flex-wrap:wrap;gap:6px">
         <button class="btn btn-pdf btn-sm" onclick="downloadPDF()">⬇ PDF</button>
-        <button class="btn btn-lime btn-sm" onclick="openResultModal()">+ Result</button>
+        <button class="btn btn-lime btn-sm" onclick="openTieModal()">🏆 Cat A Tie</button>
+        <button class="btn btn-ghost btn-sm" onclick="openResultModal()">+ B/C/D/E Result</button>
       </div>
       <div class="tbl-scroll">
         <table class="dtbl">
@@ -786,7 +787,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t1);displ
     <input type="hidden" id="mr-eid"/>
     <div class="af-group"><label class="af-label">Category</label>
       <select class="af-select" id="mr-cat" onchange="populateMRG()">
-        <option value="A">A · Employee (M/F) · Team</option>
         <option value="B">B · Wards ≤10 yrs · Singles</option>
         <option value="C">C · Wards Girls >10 · Singles</option>
         <option value="D">D · Wards Boys >10 · Singles</option>
@@ -2091,7 +2091,44 @@ function delMatch(id){confirm2('Delete match?','',async()=>{ DB=loadDB(); DB.sch
 function renderAdmResults(){
   const tb=document.getElementById('res-tbody');
   if(!DB.results.length){tb.innerHTML=`<tr><td colspan="7" class="empty" style="padding:30px;text-align:center">No results.</td></tr>`;return;}
-  tb.innerHTML=[...DB.results].reverse().map(r=>{
+
+  // Group Cat A results by tie, show others individually
+  const catAByTie={};
+  const others=[];
+  [...DB.results].reverse().forEach(r=>{
+    if(r.cat==='A'&&r.teamTie){
+      const key=r.grp+'||'+r.teamTie;
+      if(!catAByTie[key]) catAByTie[key]={grp:r.grp,tie:r.teamTie,home:r.homeTeam,away:r.awayTeam,games:[]};
+      catAByTie[key].games.push(r);
+    } else {
+      others.push(r);
+    }
+  });
+
+  // Cat A tie rows
+  const aRows=Object.values(catAByTie).map(tie=>{
+    const homeW=tie.games.filter(g=>{const[h,a]=(g.score||'0-0').split('-').map(Number);return h>a;}).length;
+    const awayW=tie.games.filter(g=>{const[h,a]=(g.score||'0-0').split('-').map(Number);return a>h;}).length;
+    const tieWinner=homeW>awayW?tie.home:awayW>homeW?tie.away:'Draw';
+    return `<tr>
+      <td><span class="chip chip-a" style="font-size:.6rem;padding:2px 6px">Cat A</span></td>
+      <td style="font-size:.75rem">${tie.grp}</td>
+      <td colspan="2">
+        <strong>${tie.home}</strong> <span style="color:var(--lime);font-weight:700">${homeW}</span>
+        <span style="color:var(--t3)"> — </span>
+        <span style="color:var(--blue);font-weight:700">${awayW}</span> <strong>${tie.away}</strong>
+        <div style="font-size:.65rem;color:var(--t3);margin-top:2px">${tie.games.map(g=>`${g.gameLabel||g.gameType}:${g.score||'?'}`).join(' · ')}</div>
+      </td>
+      <td><strong style="color:${tieWinner==='Draw'?'var(--gold)':'var(--lime)'}">${tieWinner}</strong></td>
+      <td class="mono">${tie.games[0]?.date||'—'}</td>
+      <td><div style="display:flex;gap:3px">
+        <button class="btn btn-xs btn-ghost" onclick="openTieModal({grp:'${tie.grp}',homeTeam:'${tie.home}',awayTeam:'${tie.away}'})">✏️</button>
+        <button class="btn btn-xs btn-red" onclick="delTieResults('${tie.grp}','${tie.tie}')">🗑</button>
+      </div></td></tr>`;
+  }).join('');
+
+  // B/C/D/E individual rows
+  const bRows=others.map(r=>{
     const ci=CATS[r.cat]||{label:'—',css:'chip-a'};
     return `<tr><td><span class="chip ${ci.css}" style="font-size:.6rem;padding:2px 6px">${ci.label}</span></td>
       <td>${r.grp||'—'}</td><td>${r.p1}</td>
@@ -2102,6 +2139,21 @@ function renderAdmResults(){
         <button class="btn btn-xs btn-red" onclick="delResult(${r.id})">🗑</button>
       </div></td></tr>`;
   }).join('');
+
+  tb.innerHTML = aRows + bRows ||
+    `<tr><td colspan="7" class="empty" style="padding:30px;text-align:center">No results.</td></tr>`;
+}
+
+function delTieResults(grp,tieKey){
+  confirm2('Delete all results for this tie?','',async()=>{
+    DB=loadDB();
+    DB.results=DB.results.filter(r=>!(r.cat==='A'&&r.grp===grp&&r.teamTie===tieKey));
+    DB.schedule=DB.schedule.filter(m=>!(m.cat==='A'&&m.grp===grp&&m.teamTie===tieKey));
+    saveLocal(DB);
+    await serverCmd('saveSchedule',{schedule:DB.schedule});
+    await serverCmd('addResult',{results:DB.results,bulkCatA:true,replaceAll:true});
+    renderAdmResults(); toast('Tie deleted');
+  });
 }
 function populateMRG(selGrp){
   const ck=document.getElementById('mr-cat').value;
@@ -2124,7 +2176,8 @@ function openResultModal(eid){
   document.getElementById('mr-ttl').textContent=eid?'✏️ EDIT RESULT':'✅ ENTER RESULT';
   if(eid){
     const r=DB.results.find(x=>x.id===eid); if(!r) return;
-    document.getElementById('mr-cat').value=r.cat||'A'; populateMRG(r.grp); populateMRP(r.p1,r.p2);
+    if(r.cat==='A'){ openTieModal({grp:r.grp,homeTeam:r.homeTeam,awayTeam:r.awayTeam}); return; }
+    document.getElementById('mr-cat').value=r.cat||'B'; populateMRG(r.grp); populateMRP(r.p1,r.p2);
     document.getElementById('mr-score').value=r.score||'';
     document.getElementById('mr-sets').value=r.sets||'';
     document.getElementById('mr-date').value=r.date||'';
@@ -2142,7 +2195,11 @@ async function saveResult(){
   const result=await serverCmd(eid?'updateResult':'addResult', r);
   if(result.ok){ closeM('m-result'); toast('✅ Result saved!'); }
 }
-function editResult(id){openResultModal(id);}
+function editResult(id){
+  const r=DB.results.find(x=>x.id===id);
+  if(r&&r.cat==='A'){ openTieModal({grp:r.grp,homeTeam:r.homeTeam,awayTeam:r.awayTeam}); return; }
+  openResultModal(id);
+}
 function delResult(id){confirm2('Delete result?','',async()=>{ await serverCmd('deleteResult', {id}); });}
 
 // ═══════════════════════════════════════════
@@ -3402,7 +3459,7 @@ function downloadTeamsPDF(){
 // ═══════════════════════════════════════════
 
 // HARDCODED SCRIPT URL — set this once, works for everyone
-const HARDCODED_URL = 'https://script.google.com/macros/s/AKfycbxuA0yXnsJA4_Zu70VTSmsTq0JaDvSJViyXlCL6j_MKDnaWSHFfur-Zea82SZpj4IU/exec'; // Admin: paste your Script URL between these quotes
+const HARDCODED_URL = 'https://script.google.com/macros/s/AKfycbwb19wDOEVuYf4Wpu17xL_Qvlcz2I6nXOJOHNlzEjVJ151Mr6mfCBrhcOQb77ZFQTk/exec'; // Admin: paste your Script URL between these quotes
 
 // On every load: if hardcoded URL exists, use it regardless of localStorage
 if(HARDCODED_URL) {
