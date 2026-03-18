@@ -2532,11 +2532,12 @@ let _teamSelected = new Set(); // persists across searches
 let _teamInOther = {};   // players already in other teams
 
 function openTeamModal(editIdx){
+  DB=loadDB(); // always use latest data
   const teams=DB.teams||[];
   const t=editIdx!==undefined?teams[editIdx]:null;
   document.getElementById('mt-id').value=editIdx!==undefined?editIdx:'';
   document.getElementById('mt-name').value=t?t.name:'';
-  document.getElementById('mt-color').value=t?t.color||TEAM_COLORS[editIdx%TEAM_COLORS.length]:TEAM_COLORS[teams.length%TEAM_COLORS.length];
+  document.getElementById('mt-color').value=t?(t.color||TEAM_COLORS[(editIdx||0)%TEAM_COLORS.length]):TEAM_COLORS[(teams.length||0)%TEAM_COLORS.length];
   document.getElementById('mt-ttl').textContent=t?'✏️ EDIT TEAM':'👨‍👩‍👧 NEW TEAM';
   document.getElementById('mt-search').value='';
 
@@ -2566,6 +2567,7 @@ function openTeamModal(editIdx){
 // Build the full list ONCE — then just show/hide on search
 function buildTeamPlayerList(){
   const el=document.getElementById('mt-player-list');
+  if(!el) return;
   el.innerHTML=_teamPlayers.map(p=>{
     const isFemale=p.gender==='Female';
     const inOther=_teamInOther[p.cpf];
@@ -2673,6 +2675,7 @@ async function saveTeam(){
   if(!name){toast('Team name required','e');return;}
   const color=document.getElementById('mt-color').value;
   // Build members from persistent _teamSelected set (not from visible checkboxes)
+  if(!_teamPlayers.length){toast('No players loaded — try closing and reopening the form','e');return;}
   const members=_teamPlayers.filter(p=>_teamSelected.has(p.cpf)).map(p=>({
     cpf:p.cpf, name:p.partName||p.name, gender:p.gender||'', whatsapp:p.whatsapp||''
   }));
@@ -3124,7 +3127,7 @@ function downloadTeamsPDF(){
 // ═══════════════════════════════════════════
 
 // HARDCODED SCRIPT URL — set this once, works for everyone
-const HARDCODED_URL = 'https://script.google.com/macros/s/AKfycbw4wo6d8P08CehB-rRC7cSDy2ausm73SSQ2io29sofJOItoDfc0CfOw36nj2HVX95c/exec'; // Admin: paste your Script URL between these quotes
+const HARDCODED_URL = ''; // Admin: paste your Script URL between these quotes
 
 // On every load: if hardcoded URL exists, use it regardless of localStorage
 if(HARDCODED_URL) {
