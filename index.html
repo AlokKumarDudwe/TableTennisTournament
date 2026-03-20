@@ -533,6 +533,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t1);displ
           <button class="btn btn-ghost btn-sm" onclick="autoAssign()">⚡ Auto</button>
           <button class="btn btn-ghost btn-sm" onclick="addGroup()">+ Group</button>
           <button class="btn btn-lime btn-sm" onclick="saveAndSync()">💾 Save</button>
+          <button class="btn btn-pdf btn-sm" onclick="downloadGroupsPDF()">⬇ Groups PDF</button>
         </div>
       </div>
       <div class="cat-tabs" id="gb-tabs"></div>
@@ -700,18 +701,39 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t1);displ
   <div class="mo-box">
     <div class="mo-handle"></div>
     <div class="mo-title">➕ ADD PLAYER</div>
-    <div class="af-group"><label class="af-label">CPF / ID *</label><input class="af-input mono" id="mp-cpf" maxlength="6" inputmode="numeric" placeholder="e.g. 12345"/></div>
-    <div class="af-group"><label class="af-label">Full Name *</label><input class="af-input" id="mp-name"/></div>
+
     <div class="af-group"><label class="af-label">Category *</label>
-      <select class="af-select" id="mp-cat">
+      <select class="af-select" id="mp-cat" onchange="onAdminCatChange()">
         <option value="">— Select —</option>
-        <option value="A">A · Employee (M/F) · Team</option>
-        <option value="B">B · Wards ≤10 yrs · Singles All</option>
-        <option value="C">C · Wards Girls >10 · Singles</option>
-        <option value="D">D · Wards Boys >10 · Singles</option>
-        <option value="E">E · Homemaker/Wife · Singles</option>
+        <option value="A">A · Employee (M/F) · Team Event</option>
+        <option value="B">B · Wards up to 10 yrs · Singles</option>
+        <option value="C">C · Wards Girls above 10 yrs · Singles</option>
+        <option value="D">D · Wards Boys above 10 yrs · Singles</option>
+        <option value="E">E · Homemaker / Wife · Singles</option>
       </select>
     </div>
+
+    <!-- Cat A fields -->
+    <div id="mp-a-fields" style="display:none">
+      <div class="af-group"><label class="af-label">Employee CPF / ID *</label><input class="af-input mono" id="mp-cpf" maxlength="6" inputmode="numeric" placeholder="e.g. 12345"/></div>
+      <div class="af-group"><label class="af-label">Employee Name *</label><input class="af-input" id="mp-name" placeholder="Full name"/></div>
+      <div class="af-group"><label class="af-label">Gender *</label>
+        <select class="af-select" id="mp-gender"><option value="">—</option><option value="Male">Male</option><option value="Female">Female</option></select>
+      </div>
+      <div class="af-group"><label class="af-label">WhatsApp Number *</label><input class="af-input" id="mp-whatsapp-a" placeholder="e.g. 9876543210" inputmode="numeric" maxlength="15"/></div>
+    </div>
+
+    <!-- Cat B/C/D/E fields -->
+    <div id="mp-bcd-fields" style="display:none">
+      <div class="af-group"><label class="af-label">Employee Name *</label><input class="af-input" id="mp-empname" placeholder="Employee full name"/></div>
+      <div class="af-group"><label class="af-label">Employee CPF / ID *</label><input class="af-input mono" id="mp-cpf-bcd" maxlength="6" inputmode="numeric" placeholder="e.g. 12345"/></div>
+      <div class="af-group"><label class="af-label" id="mp-partname-label">Participant Name *</label><input class="af-input" id="mp-partname" placeholder="Ward / Homemaker name"/></div>
+      <div class="af-group" id="mp-gender-row"><label class="af-label">Gender *</label>
+        <select class="af-select" id="mp-gender-bcd"><option value="">—</option><option value="Male">Male</option><option value="Female">Female</option></select>
+      </div>
+      <div class="af-group"><label class="af-label">WhatsApp Number *</label><input class="af-input" id="mp-whatsapp" placeholder="e.g. 9876543210" inputmode="numeric" maxlength="15"/></div>
+    </div>
+
     <div class="af-group"><label class="af-label">Status</label>
       <select class="af-select" id="mp-status"><option value="approved">Approved</option><option value="pending">Pending</option></select>
     </div>
@@ -1627,17 +1649,63 @@ function exportCSV(){
   const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);a.download='registrations.csv';a.click();
 }
 function openAddModal(){
-  ['mp-cpf','mp-name'].forEach(id=>document.getElementById(id).value='');
+  // Reset all fields
+  ['mp-cpf','mp-name','mp-empname','mp-cpf-bcd','mp-partname','mp-whatsapp','mp-whatsapp-a'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.value='';
+  });
+  ['mp-gender','mp-gender-bcd'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.selectedIndex=0;
+  });
   document.getElementById('mp-cat').selectedIndex=0;
   document.getElementById('mp-status').selectedIndex=0;
+  document.getElementById('mp-a-fields').style.display='none';
+  document.getElementById('mp-bcd-fields').style.display='none';
   openM('m-addplayer');
 }
-async function saveAddPlayer(){
-  const cpf=document.getElementById('mp-cpf').value.trim(), name=document.getElementById('mp-name').value.trim();
+
+function onAdminCatChange(){
   const cat=document.getElementById('mp-cat').value;
-  if(!cpf||!name||!cat){toast('All fields required','e');return;}
-  if(!validCPF(cpf)){toast('Invalid ID','e');return;}
-  const nom={cpf,name,cat,status:document.getElementById('mp-status').value,ts:new Date().toISOString()};
+  document.getElementById('mp-a-fields').style.display=cat==='A'?'block':'none';
+  document.getElementById('mp-bcd-fields').style.display=(cat&&cat!=='A')?'block':'none';
+  // Update participant label
+  const lbl=document.getElementById('mp-partname-label');
+  if(lbl) lbl.textContent=(cat==='E'?'Homemaker / Wife Name':cat==='C'?"Girl's Name":cat==='D'?"Boy's Name":'Ward / Child Name')+' *';
+  // Gender field: hide for C (auto Female), D (auto Male), E (auto Female)
+  const gRow=document.getElementById('mp-gender-row');
+  if(gRow) gRow.style.display=(cat==='B')?'block':'none';
+}
+
+async function saveAddPlayer(){
+  const cat=document.getElementById('mp-cat').value;
+  if(!cat){toast('Select a category','e');return;}
+
+  let nom={cat, status:document.getElementById('mp-status').value, ts:new Date().toISOString()};
+
+  if(cat==='A'){
+    const cpf=document.getElementById('mp-cpf').value.trim();
+    const name=document.getElementById('mp-name').value.trim();
+    const gender=document.getElementById('mp-gender').value;
+    const whatsapp=document.getElementById('mp-whatsapp-a').value.trim();
+    if(!cpf||!name||!gender||!whatsapp){toast('All fields required','e');return;}
+    if(!validCPF(cpf)){toast('Invalid ID','e');return;}
+    nom={...nom, cpf, name, gender, whatsapp};
+  } else {
+    const cpf=document.getElementById('mp-cpf-bcd').value.trim();
+    const empName=document.getElementById('mp-empname').value.trim();
+    const partName=document.getElementById('mp-partname').value.trim();
+    const whatsapp=document.getElementById('mp-whatsapp').value.trim();
+    // Auto-set gender for C/D/E
+    let gender='';
+    if(cat==='B') gender=document.getElementById('mp-gender-bcd').value;
+    else if(cat==='C') gender='Female';
+    else if(cat==='D') gender='Male';
+    else if(cat==='E') gender='Female';
+    if(!cpf||!empName||!partName||!whatsapp){toast('All fields required','e');return;}
+    if(cat==='B'&&!gender){toast('Select gender','e');return;}
+    if(!validCPF(cpf)){toast('Invalid Employee ID','e');return;}
+    nom={...nom, cpf, name:partName, empName, partName, gender, whatsapp};
+  }
+
   const result=await serverCmd('addPlayerDirect', nom);
   if(result.ok){ closeM('m-addplayer'); updateSBC(); toast('✅ Player added!'); }
 }
@@ -3452,6 +3520,200 @@ function downloadTeamsPDF(){
 
   doc.save(tourName.replace(/[^a-z0-9]/gi,'_').toLowerCase()+'_cat_a_teams.pdf');
   toast('✅ Teams PDF downloaded!');
+}
+
+// ═══════════════════════════════════════════
+// GROUPS PDF EXPORT
+// ═══════════════════════════════════════════
+function downloadGroupsPDF(){
+  const {jsPDF}=window.jspdf;
+  const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+  const pw=doc.internal.pageSize.getWidth();
+  const ph=doc.internal.pageSize.getHeight();
+  const tourName=DB.settings.name||'Tournament';
+  const allGroups=DB.groups||{};
+  const allNoms=DB.noms||[];
+  const teams=DB.teams||[];
+
+  // Check if any group has data
+  const hasData=Object.values(allGroups).some(cg=>Object.values(cg).some(g=>g.length>0));
+  if(!hasData){toast('No groups set up yet','e');return;}
+
+  // ── Header ──
+  doc.setFillColor(26,35,64);
+  doc.rect(0,0,pw,28,'F');
+  doc.setFillColor(200,168,75);
+  doc.rect(0,26,pw,2,'F');
+  doc.setTextColor(255,255,255);
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(16);
+  doc.text('🏓 '+tourName.toUpperCase(),pw/2,11,{align:'center'});
+  doc.setFontSize(10);
+  doc.setTextColor(200,168,75);
+  doc.text('ALL GROUPS DRAW — WITH CONTACT DETAILS',pw/2,19,{align:'center'});
+  doc.setFontSize(8);
+  doc.setTextColor(150,170,210);
+  doc.text('Generated: '+new Date().toLocaleDateString('en-IN',{day:'numeric',month:'long',year:'numeric'}),pw/2,24.5,{align:'center'});
+
+  let y=35;
+
+  // ── Cat colors ──
+  const catColors={A:[26,35,64],B:[45,180,196],C:[220,80,120],D:[46,160,87],E:[200,168,75]};
+  const catLabels={A:'Category A · Employee Team Event',B:'Category B · Wards ≤10 yrs · Singles',
+    C:'Category C · Wards Girls >10 · Singles',D:'Category D · Wards Boys >10 · Singles',
+    E:'Category E · Homemaker / Wife · Singles'};
+
+  Object.entries(CATS).forEach(([catKey,catInfo])=>{
+    const catGroups=allGroups[catKey]||{};
+    const groupKeys=Object.keys(catGroups).filter(g=>(catGroups[g]||[]).length>0);
+    if(!groupKeys.length) return;
+
+    // Cat header
+    if(y>ph-40){doc.addPage();y=15;}
+    const col=catColors[catKey]||[60,60,60];
+    doc.setFillColor(...col);
+    doc.rect(0,y,pw,8,'F');
+    doc.setTextColor(255,255,255);
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(11);
+    doc.text(catLabels[catKey]||catInfo.full,pw/2,y+5.5,{align:'center'});
+    y+=12;
+
+    groupKeys.forEach((grpName)=>{
+      const members=catGroups[grpName]||[];
+      if(!members.length) return;
+
+      // For Cat A, members are team names
+      const isTeam=catKey==='A';
+
+      // Estimate rows needed
+      let rowsNeeded=members.length;
+      if(isTeam){
+        members.forEach(tn=>{
+          const team=teams.find(t=>t.name===tn);
+          rowsNeeded+=(team?.members?.length||0);
+        });
+      }
+      const neededHeight=10+rowsNeeded*5.5+8;
+      if(y+neededHeight>ph-15){doc.addPage();y=15;}
+
+      // Group sub-header
+      doc.setFillColor(230,235,245);
+      doc.rect(10,y,pw-20,7,'F');
+      doc.setFillColor(...col);
+      doc.rect(10,y,4,7,'F');
+      doc.setTextColor(26,35,64);
+      doc.setFont('helvetica','bold');
+      doc.setFontSize(10);
+      doc.text(grpName+' ('+members.length+(isTeam?' teams':' players')+')',16,y+4.8);
+      y+=7;
+
+      if(isTeam){
+        // Cat A: show teams with their members
+        members.forEach((tn,ti)=>{
+          if(y>ph-20){doc.addPage();y=15;}
+          const team=teams.find(t=>t.name===tn);
+          // Team name row
+          doc.setFillColor(ti%2===0?240:248,ti%2===0?244:250,ti%2===0?255:255);
+          doc.rect(10,y,pw-20,6,'F');
+          doc.setTextColor(26,35,64);
+          doc.setFont('helvetica','bold');
+          doc.setFontSize(9);
+          doc.text((ti+1)+'. '+tn,14,y+4.2);
+          const mc=(team?.members||[]).filter(m=>m.gender==='Male').length;
+          const fc=(team?.members||[]).filter(m=>m.gender==='Female').length;
+          doc.setFont('helvetica','normal');
+          doc.setTextColor(100,120,150);
+          doc.setFontSize(8);
+          doc.text(mc+'M + '+fc+'F',pw-14,y+4.2,{align:'right'});
+          y+=6;
+
+          // Team members
+          (team?.members||[]).forEach((m,mi)=>{
+            if(y>ph-15){doc.addPage();y=15;}
+            const isFemale=m.gender==='Female';
+            doc.setFillColor(isFemale?255:248,isFemale?245:250,isFemale?250:255);
+            doc.rect(14,y,pw-24,5,'F');
+            // Role dot
+            doc.setFillColor(isFemale?220:70,isFemale?80:130,isFemale?120:200);
+            doc.circle(17,y+2.5,1,'F');
+            doc.setTextColor(40,50,80);
+            doc.setFont('helvetica','normal');
+            doc.setFontSize(7.5);
+            doc.text((isFemale?'F':'M')+(mi+1),20,y+3.5);
+            doc.setFont('helvetica','bold');
+            doc.setFontSize(8);
+            doc.text(m.name,28,y+3.5,{maxWidth:pw/2-32});
+            doc.setFont('helvetica','normal');
+            doc.setTextColor(80,100,140);
+            doc.setFontSize(7.5);
+            doc.text('ID:'+m.cpf,pw/2,y+3.5);
+            doc.text(m.whatsapp||'—',pw-14,y+3.5,{align:'right'});
+            y+=5;
+          });
+          y+=2;
+        });
+      } else {
+        // B/C/D/E: show individual players
+        // Column headers
+        doc.setFillColor(220,228,245);
+        doc.rect(10,y,pw-20,5,'F');
+        doc.setTextColor(60,80,120);
+        doc.setFont('helvetica','bold');
+        doc.setFontSize(7);
+        doc.text('#',13,y+3.5);
+        doc.text('PARTICIPANT',22,y+3.5);
+        doc.text('EMPLOYEE',pw/2-10,y+3.5);
+        doc.text('WHATSAPP',pw-14,y+3.5,{align:'right'});
+        y+=5;
+
+        members.forEach((playerName,pi)=>{
+          if(y>ph-15){doc.addPage();y=15;}
+          // Find nomination for this player
+          const nom=allNoms.find(n=>
+            n.cat===catKey&&n.status==='approved'&&
+            (n.partName===playerName||n.name===playerName)
+          );
+          const empName=nom?.empName||nom?.name||'—';
+          const phone=nom?.whatsapp||'—';
+          const isFemale=(nom?.gender==='Female');
+
+          doc.setFillColor(pi%2===0?248:255,pi%2===0?250:255,pi%2===0?255:255);
+          doc.rect(10,y,pw-20,5.5,'F');
+          // Gender dot
+          doc.setFillColor(isFemale?220:70,isFemale?80:130,isFemale?120:200);
+          doc.circle(13.5,y+2.75,1,'F');
+          doc.setTextColor(30,50,90);
+          doc.setFont('helvetica','normal');
+          doc.setFontSize(7.5);
+          doc.text(String(pi+1),16,y+3.8);
+          doc.setFont('helvetica','bold');
+          doc.setFontSize(8);
+          doc.text(playerName,22,y+3.8,{maxWidth:pw/2-28});
+          doc.setFont('helvetica','normal');
+          doc.setFontSize(7.5);
+          doc.setTextColor(80,100,140);
+          doc.text(empName,pw/2-10,y+3.8,{maxWidth:pw/2-20});
+          doc.text(phone,pw-14,y+3.8,{align:'right'});
+          y+=5.5;
+        });
+      }
+      y+=5;
+    });
+    y+=4;
+  });
+
+  // Page numbers
+  const pages=doc.internal.getNumberOfPages();
+  for(let i=1;i<=pages;i++){
+    doc.setPage(i);
+    doc.setFontSize(7);
+    doc.setTextColor(150,160,180);
+    doc.text(tourName+' · All Groups · Page '+i+'/'+pages,pw/2,ph-5,{align:'center'});
+  }
+
+  doc.save(tourName.replace(/[^a-z0-9]/gi,'_').toLowerCase()+'_all_groups.pdf');
+  toast('✅ Groups PDF downloaded!');
 }
 
 // ═══════════════════════════════════════════
