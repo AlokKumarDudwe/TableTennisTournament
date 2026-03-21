@@ -577,6 +577,15 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t1);displ
       <div class="sec-row" style="margin-bottom:10px;flex-wrap:wrap;gap:6px">
         <button class="btn btn-lime btn-sm" onclick="openTieModal()">🏆 Cat A Tie</button>
         <button class="btn btn-ghost btn-sm" onclick="openMatchModal()">+ B/C/D/E Match</button>
+        <button class="btn btn-ghost btn-sm" onclick="openLeagueGenModal()">⚡ Generate League</button>
+      </div>
+      <!-- League gen modal trigger row -->
+      <div id="bcd-ko-btns" style="display:none;flex-wrap:wrap;gap:6px;margin-bottom:8px">
+        <span style="font-size:.78rem;color:var(--t3);align-self:center">Cat D &amp; E knockouts:</span>
+        <button class="btn btn-ghost btn-sm" onclick="generateBCDESemis('D')">🏅 Cat D Semis</button>
+        <button class="btn btn-ghost btn-sm" onclick="generateBCDEFinal('D')">🏆 Cat D Final</button>
+        <button class="btn btn-ghost btn-sm" onclick="generateBCDESemis('E')">🏅 Cat E Semis</button>
+        <button class="btn btn-ghost btn-sm" onclick="generateBCDEFinal('E')">🏆 Cat E Final</button>
       </div>
       <div class="tbl-scroll">
         <table class="dtbl">
@@ -2255,13 +2264,25 @@ function openResultModal(eid){
 async function saveResult(){
   const p1=document.getElementById('mr-p1').value, p2=document.getElementById('mr-p2').value;
   const score=document.getElementById('mr-score').value.trim();
+  // Determine winner from score for knockout stages
+  const scoreWinner=(sc)=>{
+    if(!sc) return '';
+    const[w,l]=sc.split('-').map(Number);
+    return w>l?p1:l>w?p2:'';
+  };
   if(!p1||!p2||p1===p2||!score){toast('Fill required fields','e');return;}
   if(!/^\d+-\d+$/.test(score)){toast('Score format: 3-1','e');return;}
   const eid=parseInt(document.getElementById('mr-eid').value)||0;
-  const r={id:eid||0,cat:document.getElementById('mr-cat').value,grp:document.getElementById('mr-grp').value,
-    p1,p2,score,sets:document.getElementById('mr-sets').value.trim(),date:document.getElementById('mr-date').value};
+  const rcat=document.getElementById('mr-cat').value;
+  const rgrp=document.getElementById('mr-grp').value;
+  const matchRef=DB.schedule.find(m=>m.cat===rcat&&m.grp===rgrp&&((m.p1===p1&&m.p2===p2)||(m.p1===p2&&m.p2===p1)));
+  const stage=matchRef?.stage||'league';
+  const r={id:eid||0,cat:rcat,grp:rgrp,p1,p2,score,stage,
+    winner:scoreWinner(score),
+    sets:document.getElementById('mr-sets').value.trim(),
+    date:document.getElementById('mr-date').value};
   const result=await serverCmd(eid?'updateResult':'addResult', r);
-  if(result.ok){ closeM('m-result'); toast('✅ Result saved!'); }
+  if(result.ok){ closeM('m-result'); toast('✅ Result saved!'); renderAdmResults(); }
 }
 function editResult(id){
   const r=DB.results.find(x=>x.id===id);
@@ -3717,6 +3738,166 @@ function downloadGroupsPDF(){
 }
 
 // ═══════════════════════════════════════════
+// CAT B/C/D/E — LEAGUE & KNOCKOUT GENERATION
+// ═══════════════════════════════════════════
+
+// Show modal with preview of matches to be generated
+function openLeagueGenModal(){
+  document.getElementById('lg-date').value='';
+  lgCatChange();
+  document.getElementById('bcd-ko-btns').style.display='flex';
+  openM('m-league-gen');
+}
+
+function lgCatChange(){
+  const cat=document.getElementById('lg-cat').value;
+  const groups=DB.groups[cat]||{};
+  const grpKeys=Object.keys(groups).filter(g=>(groups[g]||[]).length>1);
+  if(!grpKeys.length){
+    document.getElementById('lg-preview').innerHTML=
+      `<div class="al al-warn">No groups with 2+ players found for Cat ${cat}. Set up groups first.</div>`;
+    return;
+  }
+  let total=0, html='';
+  grpKeys.forEach(grp=>{
+    const players=groups[grp]||[];
+    const matches=(players.length*(players.length-1))/2;
+    total+=matches;
+    html+=`<div style="background:var(--s2);border-radius:var(--rsm);padding:8px 10px;margin-bottom:6px;font-size:.8rem">
+      <strong style="color:var(--lime)">${grp}</strong>
+      <span style="color:var(--t3);margin-left:6px">${players.length} players → ${matches} matches</span>
+      <div style="color:var(--t3);font-size:.72rem;margin-top:4px">${players.join(' · ')}</div>
+    </div>`;
+  });
+  const isDE=cat==='D'||cat==='E';
+  html+=`<div class="al al-info" style="margin-top:6px;font-size:.78rem">
+    <strong>${total} total matches</strong> · Best of 3 Sets each
+    ${isDE?'<br>Top 2 from each group advance to Semis':'<br>Group 1st = Winner · 2nd = Runner Up · 3rd = 2nd Runner Up'}
+  </div>`;
+  document.getElementById('lg-preview').innerHTML=html;
+}
+
+async function doGenerateLeague(){
+  const cat=document.getElementById('lg-cat').value;
+  const date=document.getElementById('lg-date').value;
+  const groups=DB.groups[cat]||{};
+  const grpKeys=Object.keys(groups).filter(g=>(groups[g]||[]).length>1);
+  if(!grpKeys.length){toast('No groups with players found','e');return;}
+
+  DB=loadDB();
+  // Remove existing league matches for this cat
+  DB.schedule=DB.schedule.filter(m=>!(m.cat===cat&&m.stage==='league'));
+
+  const newMatches=[];
+  grpKeys.forEach(grp=>{
+    const players=groups[grp]||[];
+    for(let i=0;i<players.length;i++){
+      for(let j=i+1;j<players.length;j++){
+        newMatches.push({
+          id:DB.nid++, cat, grp,
+          stage:'league',
+          format:'Best of 3',
+          p1:players[i], p2:players[j],
+          date, time:'', tbl:'',
+          status:'upcoming'
+        });
+      }
+    }
+  });
+
+  DB.schedule=[...DB.schedule,...newMatches];
+  saveLocal(DB);
+  const r=await serverCmd('saveSchedule',{schedule:DB.schedule});
+  if(r.ok){
+    closeM('m-league-gen');
+    renderAdmSched();
+    toast(`✅ Generated ${newMatches.length} league matches for Cat ${cat}!`);
+  }
+}
+
+// ── Cat D/E Semi Finals ──────────────────────────
+// SF1: Group 1 Topper vs Group 2 Runner Up
+// SF2: Group 1 Runner Up vs Group 2 Topper
+
+async function generateBCDESemis(cat){
+  const catGroups=DB.groups[cat]||{};
+  const grpKeys=Object.keys(catGroups).filter(g=>(catGroups[g]||[]).length>0);
+
+  if(grpKeys.length<2){
+    toast(`Cat ${cat} needs 2 groups for semis. Only ${grpKeys.length} found.`,'e');
+    return;
+  }
+
+  const g1=grpKeys[0], g2=grpKeys[1];
+  const st1=standings(cat,g1);
+  const st2=standings(cat,g2);
+
+  if(st1.length<2||st2.length<2){
+    toast(`Need at least 2 players in each group with results`,'e');
+    return;
+  }
+
+  const g1top=st1[0].name, g1run=st1[1].name;
+  const g2top=st2[0].name, g2run=st2[1].name;
+
+  confirm2(`Generate Cat ${cat} Semi Finals?`,
+    `SF1: ${g1} Topper (${g1top}) vs ${g2} Runner Up (${g2run})
+SF2: ${g1} Runner Up (${g1run}) vs ${g2} Topper (${g2top})
+Format: Best of 3`,
+    async()=>{
+      DB=loadDB();
+      DB.schedule=DB.schedule.filter(m=>!(m.cat===cat&&m.stage==='sf'));
+      const sfMatches=[
+        {cat,grp:'Semi Final 1',stage:'sf',format:'Best of 3',p1:g1top,p2:g2run,status:'upcoming',date:'',time:'',tbl:''},
+        {cat,grp:'Semi Final 2',stage:'sf',format:'Best of 3',p1:g1run,p2:g2top,status:'upcoming',date:'',time:'',tbl:''},
+      ];
+      sfMatches.forEach(m=>{ m.id=DB.nid++; DB.schedule.push(m); });
+      saveLocal(DB);
+      const r=await serverCmd('saveSchedule',{schedule:DB.schedule});
+      if(r.ok){ renderAdmSched(); toast(`✅ Cat ${cat} Semi Finals generated!`); }
+    }
+  );
+}
+
+// ── Cat D/E Final + 3rd Place ────────────────────
+async function generateBCDEFinal(cat){
+  // Find SF results
+  const sfResults=DB.results.filter(r=>r.cat===cat&&r.stage==='sf');
+  const sf1Res=sfResults.find(r=>r.grp==='Semi Final 1');
+  const sf2Res=sfResults.find(r=>r.grp==='Semi Final 2');
+
+  // Also check SF schedule to know who played
+  const sf1Match=DB.schedule.find(m=>m.cat===cat&&m.grp==='Semi Final 1'&&m.stage==='sf');
+  const sf2Match=DB.schedule.find(m=>m.cat===cat&&m.grp==='Semi Final 2'&&m.stage==='sf');
+
+  if(!sf1Match||!sf2Match){ toast(`Generate Cat ${cat} Semis first`,'e'); return; }
+  if(!sf1Res||!sf2Res){ toast(`Enter Cat ${cat} Semi Final results first`,'e'); return; }
+
+  const sf1Winner=sf1Res.winner;
+  const sf2Winner=sf2Res.winner;
+  const sf1Loser=sf1Match.p1===sf1Winner?sf1Match.p2:sf1Match.p1;
+  const sf2Loser=sf2Match.p1===sf2Winner?sf2Match.p2:sf2Match.p1;
+
+  confirm2(`Generate Cat ${cat} Final & 3rd Place?`,
+    `🏆 FINAL: ${sf1Winner} vs ${sf2Winner}
+🥉 3RD PLACE: ${sf1Loser} vs ${sf2Loser}
+Format: Best of 3`,
+    async()=>{
+      DB=loadDB();
+      DB.schedule=DB.schedule.filter(m=>!(m.cat===cat&&(m.stage==='final'||m.stage==='3rd')));
+      const koMatches=[
+        {cat,grp:'🏆 Final',stage:'final',format:'Best of 3',p1:sf1Winner,p2:sf2Winner,status:'upcoming',date:'',time:'',tbl:''},
+        {cat,grp:'🥉 3rd Place',stage:'3rd',format:'Best of 3',p1:sf1Loser,p2:sf2Loser,status:'upcoming',date:'',time:'',tbl:''},
+      ];
+      koMatches.forEach(m=>{ m.id=DB.nid++; DB.schedule.push(m); });
+      saveLocal(DB);
+      const r=await serverCmd('saveSchedule',{schedule:DB.schedule});
+      if(r.ok){ renderAdmSched(); toast(`✅ Cat ${cat} Final & 3rd Place generated!`); }
+    }
+  );
+}
+
+// ═══════════════════════════════════════════
 // INIT
 // ═══════════════════════════════════════════
 
@@ -3741,6 +3922,32 @@ if(DB.settings.scriptURL){
   document.getElementById('setup-notice').style.display='block';
 }
 </script>
+<!-- League Generate Modal -->
+<div class="mo" id="m-league-gen">
+  <div class="mo-box">
+    <div class="mo-handle"></div>
+    <div class="mo-title">⚡ GENERATE LEAGUE MATCHES</div>
+    <div class="af-group">
+      <label class="af-label">Category</label>
+      <select class="af-select" id="lg-cat" onchange="lgCatChange()">
+        <option value="B">Cat B — Wards ≤10 yrs</option>
+        <option value="C">Cat C — Wards Girls >10</option>
+        <option value="D">Cat D — Wards Boys >10</option>
+        <option value="E">Cat E — Homemaker/Wife</option>
+      </select>
+    </div>
+    <div class="af-group">
+      <label class="af-label">Date (optional)</label>
+      <input class="af-input" id="lg-date" type="date"/>
+    </div>
+    <div id="lg-preview" style="margin-top:8px"></div>
+    <div class="mo-footer">
+      <button class="btn btn-ghost btn-sm" onclick="closeM('m-league-gen')">Cancel</button>
+      <button class="btn btn-lime btn-sm" onclick="doGenerateLeague()">⚡ Generate</button>
+    </div>
+  </div>
+</div>
+
 <!-- FOOTER -->
 <div id="site-footer" style="display:none;background:var(--s1);border-top:1px solid var(--b1);padding:14px 16px;text-align:center;flex-shrink:0">
   <div style="font-size:.75rem;color:var(--t2);font-weight:600;margin-bottom:4px">📞 For registration issues, contact:</div>
